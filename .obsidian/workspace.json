@@ -11,14 +11,10 @@
             "id": "9f6ebd33193ec19f",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "docs/adr/ADR-0016-domain-model-and-entity-architecture.md.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "ADR-0016-domain-model-and-entity-architecture.md"
+              "title": "Новая вкладка"
             }
           }
         ]
@@ -83,7 +79,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 439.1000061035156
+    "width": 300
   },
   "right": {
     "id": "7cccb5d7473e64d6",
@@ -190,6 +186,17 @@
   },
   "active": "9f6ebd33193ec19f",
   "lastOpenFiles": [
+    "build/114e4ac0",
+    "build/windows/x64/x64/Debug/INSTALL/INSTALL.tlog/unsuccessfulbuild",
+    "build/windows/x64/x64/Debug/ALL_BUILD/ALL_BUILD.tlog/unsuccessfulbuild",
+    "build/windows/x64/runner/lifeos.dir/Debug/lifeos.tlog/unsuccessfulbuild",
+    "build/windows/x64/flutter/flutter_wrapper_plugin.dir/Debug/flutter_.2CC30D74.tlog/unsuccessfulbuild",
+    "build/windows/x64/flutter/flutter_wrapper_app.dir/Debug/flutter_.B906FA1F.tlog/unsuccessfulbuild",
+    "build/windows/x64/flutter/x64/Debug/flutter_assemble/flutter_assemble.tlog/unsuccessfulbuild",
+    "build/windows/x64/x64/Debug/ZERO_CHECK/ZERO_CHECK.tlog/unsuccessfulbuild",
+    "build/windows/x64/CMakeCache.txt.tmpb0215",
+    "build/windows/x64/runner/runner.slnx.tmp40c96",
+    "build/windows/x64/runner/INSTALL.vcxproj.filters.tmpe79b2",
     "docs/adr/ADR-0022-flutter-project-architecture.md.md",
     "docs/adr/ADR-0021-flutter-persistence-stack.md.md",
     "docs/adr/ADR-0020-sqlite-persistence-schema.md.md",
@@ -205,7 +212,6 @@
     "docs/adr/ADR-0002-application-stack.md.md",
     "docs/adr/ADR-0007-dependency-injection-strategy.md.md",
     "docs/adr/ADR-0010-security-architecture.md.md",
-    "Без названия.base",
     "docs/adr/ADR-0009-synchronization-architecture.md.md",
     "docs/adr/ADR-0003-project-structure.md.md",
     "docs/adr/ADR-0008-ai-provider-architecture.md.md",
@@ -215,16 +221,6 @@
     "docs/00-vision/vision.md.md",
     "docs/00-vision/lifeos_core_concept.md.md",
     "docs/04-ai/ai-architecture.md.md",
-    "docs/05-ui-ux/ui-ux-architecture.md.md",
-    "docs/02-architecture/technical-architecture.md.md",
-    "docs/adr",
-    "docs/07-roadmap",
-    "docs/06-sync",
-    "docs/05-ui-ux",
-    "docs/04-ai",
-    "docs/03-database",
-    "docs/02-architecture",
-    "docs/01-product",
-    "docs/00-vision"
+    "docs/05-ui-ux/ui-ux-architecture.md.md"
   ]
 }
