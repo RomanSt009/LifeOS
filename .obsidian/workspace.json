@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/04-ai/ai-architecture.md.md",
+                "file": "docs/adr/ADR-0008-ai-provider-architecture.md.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ai-architecture.md"
+              "title": "ADR-0008-ai-provider-architecture.md"
             }
           }
         ]
@@ -190,14 +190,19 @@
   },
   "active": "9f6ebd33193ec19f",
   "lastOpenFiles": [
+    "docs/adr/ADR-0007-dependency-injection-strategy.md.md",
+    "docs/adr/ADR-0006-database-schema.md.md",
+    "docs/adr/ADR-0005-local-first-data-architecture.md.md",
+    "docs/adr/ADR-0004-domain-entity-architecture.md.md",
+    "docs/adr/ADR-0003-project-structure.md.md",
+    "docs/adr/ADR-0002-application-stack.md.md",
+    "docs/adr/ADR-0001-flutter.md.md",
+    "docs/04-ai/ai-architecture.md.md",
     "docs/03-database/database-overview.md.md",
     "docs/03-database/data-model.md.md",
-    "docs/04-ai/ai-architecture.md.md",
     "docs/05-ui-ux/ui-ux-architecture.md.md",
     "docs/07-roadmap/roadmap.md.md",
     "docs/06-sync/sync-architecture.md.md",
-    "docs/adr/ADR-0002-application-stack.md.md",
-    "docs/adr/ADR-0001-flutter.md.md",
     "docs/02-architecture/technical-architecture.md.md",
     "docs/02-architecture/architecture-overview.md.md",
     "docs/01-product/product-overview.md.md",
@@ -220,11 +225,6 @@
     "docs/adr/ADR-0018-sync-and-conflict-resolution-architecture.md.md",
     "docs/adr/ADR-0017-database-and-persistence-architecture.md.md",
     "docs/adr/ADR-0016-domain-model-and-entity-architecture.md.md",
-    "docs/adr/ADR-0015-semantic-search-and-embeddings.md.md",
-    "docs/adr/ADR-0014-ai-tool-calling-and-permissions.md.md",
-    "docs/adr/ADR-0013-ai-context-engine.md.md",
-    "docs/adr/ADR-0012-search-architecture.md.md",
-    "docs/adr/ADR-0011-backup-export-architecture.md.md",
-    "docs/adr/ADR-0007-dependency-injection-strategy.md.md"
+    "docs/adr/ADR-0015-semantic-search-and-embeddings.md.md"
   ]
 }
