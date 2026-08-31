@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/adr/ADR-0022-flutter-project-architecture.md.md",
+                "file": "docs/adr/ADR-0016-domain-model-and-entity-architecture.md.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ADR-0022-flutter-project-architecture.md"
+              "title": "ADR-0016-domain-model-and-entity-architecture.md"
             }
           }
         ]
@@ -83,7 +83,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 439.1000061035156
   },
   "right": {
     "id": "7cccb5d7473e64d6",
@@ -190,8 +190,8 @@
   },
   "active": "9f6ebd33193ec19f",
   "lastOpenFiles": [
-    "docs/adr/ADR-0021-flutter-persistence-stack.md.md",
     "docs/adr/ADR-0022-flutter-project-architecture.md.md",
+    "docs/adr/ADR-0021-flutter-persistence-stack.md.md",
     "docs/adr/ADR-0020-sqlite-persistence-schema.md.md",
     "docs/adr/ADR-0019-change-tracking-and-sync-data-model.md.md",
     "docs/adr/ADR-0018-sync-and-conflict-resolution-architecture.md.md",
