@@ -1,9 +1,3 @@
-
----
-
-## 3. `docs/07-roadmap/roadmap.md`
-
-```markdown
 # LifeOS Roadmap
 
 **Status:** Draft  
