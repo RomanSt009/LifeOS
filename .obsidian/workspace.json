@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/adr/ADR-0008-ai-provider-architecture.md.md",
+                "file": "AGENTS.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ADR-0008-ai-provider-architecture.md"
+              "title": "AGENTS"
             }
           }
         ]
@@ -83,7 +83,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 439.1000061035156
   },
   "right": {
     "id": "7cccb5d7473e64d6",
@@ -188,43 +188,42 @@
       "bases:Создать новую базу": false
     }
   },
-  "active": "9f6ebd33193ec19f",
+  "active": "c4e5766c590e764a",
   "lastOpenFiles": [
-    "docs/adr/ADR-0007-dependency-injection-strategy.md.md",
-    "docs/adr/ADR-0006-database-schema.md.md",
-    "docs/adr/ADR-0005-local-first-data-architecture.md.md",
-    "docs/adr/ADR-0004-domain-entity-architecture.md.md",
+    "AGENTS.md",
+    "Без названия.base",
     "docs/adr/ADR-0003-project-structure.md.md",
-    "docs/adr/ADR-0002-application-stack.md.md",
-    "docs/adr/ADR-0001-flutter.md.md",
-    "docs/04-ai/ai-architecture.md.md",
-    "docs/03-database/database-overview.md.md",
-    "docs/03-database/data-model.md.md",
-    "docs/05-ui-ux/ui-ux-architecture.md.md",
-    "docs/07-roadmap/roadmap.md.md",
-    "docs/06-sync/sync-architecture.md.md",
-    "docs/02-architecture/technical-architecture.md.md",
-    "docs/02-architecture/architecture-overview.md.md",
-    "docs/01-product/product-overview.md.md",
-    "docs/00-vision/vision.md.md",
-    "docs/00-vision/lifeos_core_concept.md.md",
-    "build/114e4ac0",
-    "build/windows/x64/x64/Debug/INSTALL/INSTALL.tlog/unsuccessfulbuild",
-    "build/windows/x64/x64/Debug/ALL_BUILD/ALL_BUILD.tlog/unsuccessfulbuild",
-    "build/windows/x64/runner/lifeos.dir/Debug/lifeos.tlog/unsuccessfulbuild",
-    "build/windows/x64/flutter/flutter_wrapper_plugin.dir/Debug/flutter_.2CC30D74.tlog/unsuccessfulbuild",
-    "build/windows/x64/flutter/flutter_wrapper_app.dir/Debug/flutter_.B906FA1F.tlog/unsuccessfulbuild",
-    "build/windows/x64/flutter/x64/Debug/flutter_assemble/flutter_assemble.tlog/unsuccessfulbuild",
-    "build/windows/x64/x64/Debug/ZERO_CHECK/ZERO_CHECK.tlog/unsuccessfulbuild",
-    "build/windows/x64/CMakeCache.txt.tmpb0215",
-    "build/windows/x64/runner/runner.slnx.tmp40c96",
+    "docs/adr/ADR-0016-domain-model-and-entity-architecture.md.md",
+    "build/a8b7dbc6",
+    "build/windows/x64/runner/INSTALL.vcxproj.tmpf3204",
+    "build/windows/x64/runner/ALL_BUILD.vcxproj.tmpf4308",
+    "build/windows/x64/runner/lifeos.vcxproj.tmpb2314",
+    "build/windows/x64/flutter/INSTALL.vcxproj.filters.tmp7c735",
+    "build/windows/x64/flutter/INSTALL.vcxproj.tmpe13ab",
+    "build/windows/x64/flutter/flutter_wrapper_app.vcxproj.filters.tmpa6514",
+    "build/windows/x64/flutter/flutter_wrapper_app.vcxproj.tmpd5c74",
+    "build/windows/x64/flutter/flutter_wrapper_plugin.vcxproj.filters.tmp959d4",
     "docs/adr/ADR-0022-flutter-project-architecture.md.md",
     "docs/adr/ADR-0021-flutter-persistence-stack.md.md",
     "docs/adr/ADR-0020-sqlite-persistence-schema.md.md",
     "docs/adr/ADR-0019-change-tracking-and-sync-data-model.md.md",
     "docs/adr/ADR-0018-sync-and-conflict-resolution-architecture.md.md",
     "docs/adr/ADR-0017-database-and-persistence-architecture.md.md",
-    "docs/adr/ADR-0016-domain-model-and-entity-architecture.md.md",
-    "docs/adr/ADR-0015-semantic-search-and-embeddings.md.md"
+    "docs/adr/ADR-0015-semantic-search-and-embeddings.md.md",
+    "docs/adr/ADR-0014-ai-tool-calling-and-permissions.md.md",
+    "docs/adr/ADR-0013-ai-context-engine.md.md",
+    "docs/adr/ADR-0012-search-architecture.md.md",
+    "docs/adr/ADR-0011-backup-export-architecture.md.md",
+    "docs/adr/ADR-0002-application-stack.md.md",
+    "docs/adr/ADR-0007-dependency-injection-strategy.md.md",
+    "docs/adr/ADR-0010-security-architecture.md.md",
+    "docs/adr/ADR-0009-synchronization-architecture.md.md",
+    "docs/adr/ADR-0008-ai-provider-architecture.md.md",
+    "docs/adr/ADR-0006-database-schema.md.md",
+    "docs/adr/ADR-0005-local-first-data-architecture.md.md",
+    "docs/adr/ADR-0004-domain-entity-architecture.md.md",
+    "docs/00-vision/vision.md.md",
+    "docs/00-vision/lifeos_core_concept.md.md",
+    "docs/04-ai/ai-architecture.md.md"
   ]
 }
