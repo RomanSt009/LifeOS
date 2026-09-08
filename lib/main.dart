@@ -1,7 +1,11 @@
 import 'package:flutter/widgets.dart';
 
 import 'app/app.dart';
+import 'app/dependencies.dart';
 
-void main() {
-  runApp(const LifeOSApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final dependencies = await createProductionDependencies();
+  runApp(LifeOSApp(dependencies: dependencies));
 }

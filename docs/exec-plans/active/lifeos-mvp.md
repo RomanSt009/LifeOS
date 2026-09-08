@@ -90,11 +90,11 @@ Milestone: Local persistent Task vertical slice
 
 Status: active
 
-Current checkpoint: CP-01
+Current checkpoint: CP-02
 
-Next ready checkpoint: CP-01
+Next ready checkpoint: none while CP-02 is blocked
 
-Blockers: none.
+Blockers: CP-02 — production `change_id` generation and stable `device_id` lifecycle are not defined by an accepted ADR.
 
 ---
 
@@ -102,7 +102,7 @@ Blockers: none.
 
 ## CP-01 — Production database lifecycle decision
 
-Status: pending
+Status: done
 
 ### Goal
 
@@ -162,7 +162,7 @@ When implementation occurs:
 
 ### Result / evidence
 
-Pending implementation.
+Completed on 2026-09-08.
 
 Evidence:
 
@@ -171,17 +171,25 @@ Evidence:
 - the production database uses the OS application-support directory with the filename `lifeos.db`;
 - the application-support directory is resolved through an appropriate Flutter platform abstraction rather than a hardcoded OS path;
 - the composition root owns one production database instance per application process and closes it when the persistence lifecycle ends;
-- `LifeOsDatabase` currently accepts an externally supplied Drift executor and has no production opener;
-- existing persistence tests use `NativeDatabase.memory()` and therefore do not establish a production file lifecycle;
-- the current dependencies do not include a platform path provider or a Drift Flutter database-opening helper.
+- `openProductionDatabase` resolves the application-support directory through `path_provider`, appends `lifeos.db` with `path`, and opens Drift on a background native executor;
+- `LifeOsAppDependencies` owns the database and provides idempotent asynchronous disposal;
+- `LifeOSApp` closes the owned dependencies for an exit request and when the root widget is disposed;
+- the focused file-backed test saves a Task and Outbox change, closes the database, reopens the same file, and verifies persisted state;
+- the app lifecycle test verifies that removing the root app closes the owned database.
 
-The architecture gate is resolved. No production implementation has been performed yet.
+Validation:
+
+- focused database/app lifecycle tests: PASS — 2 tests;
+- flutter analyze: PASS — no issues;
+- flutter test: PASS — 18 tests;
+- import-boundary scan: PASS;
+- git diff --check: PASS.
 
 ---
 
 ## CP-02 — Production repository composition
 
-Status: pending
+Status: blocked
 
 Depends on: CP-01
 
@@ -227,7 +235,26 @@ Wire the production LifeOsTaskRepository implementation through the app composit
 
 ### Result / evidence
 
-Pending.
+Blocked at the production composition gate on 2026-09-08.
+
+Evidence:
+
+- `DriftLifeOsTaskRepository` requires both a `ChangeIdGenerator` and a `deviceId` to construct a repository capable of persisting mutations;
+- ADR-0023 requires `change_id` to be injected at the Infrastructure boundary but explicitly does not select a UUID/ULID package or production generation strategy;
+- ADR-0023 requires `device_id` to be supplied through Infrastructure composition and explicitly defers its production creation, persistence, and restoration lifecycle;
+- ADR-0024 explicitly leaves device identity lifecycle deferred;
+- deterministic IDs are authorized only for tests;
+- wiring a fixed placeholder device ID or an ad-hoc timestamp/random change ID into production composition would be an unsafe architectural assumption.
+
+Exact unresolved architecture question:
+
+- How does the production application generate collision-safe `change_id` values, and how does it create, persist, restore, and provide one stable local `device_id` to Infrastructure composition?
+
+Smallest decision requested:
+
+- accept an ADR defining the production ID format/generator and the local device identity lifecycle/storage boundary; it may defer registration and remote Sync while still providing stable local identity.
+
+No repository/provider composition was implemented past this gate.
 
 ---
 
@@ -547,39 +574,46 @@ Do not implement as part of this plan unless an accepted architecture decision e
 
 This section is maintained by Codex.
 
-Last checkpoint update: 2026-09-08 — ADR-0024 accepted; CP-01 returned to pending
+Last checkpoint update: 2026-09-08 — CP-01 done; CP-02 blocked at production identity composition gate
 
-Current checkpoint: CP-01
+Current checkpoint: CP-02
 
-Current checkpoint status: pending
+Current checkpoint status: blocked
 
 Last successful validation:
 
 - Foundation flutter analyze: PASS
 - Foundation flutter test: PASS — 16 tests
 - Foundation git diff --check: PASS
-- CP-01 implementation validation: not run; implementation has not started
+- CP-01 focused lifecycle tests: PASS — 2 tests
+- CP-01 flutter analyze: PASS — no issues
+- CP-01 flutter test: PASS — 18 tests
+- CP-01 import-boundary scan: PASS
+- CP-01 git diff --check: PASS
 
 Work completed in current checkpoint:
 
-- read AGENTS.md and the active execution plan completely;
-- confirmed CP-01 is the next ready checkpoint;
-- reconciled the plan with repository files and Git state;
-- read the persistence/composition ADRs relevant to CP-01, including ADR-0005, ADR-0006, ADR-0007, ADR-0017, ADR-0019, ADR-0020, ADR-0021, ADR-0022, and ADR-0023;
-- inspected the existing database, repository, composition, dependencies, and persistence tests;
-- identified the missing production database location and platform path-resolution decision;
-- read accepted ADR-0024 and confirmed that it resolves the CP-01 architecture gate.
+- CP-01 completed and validated;
+- CP-02 marked active before implementation;
+- CP-02 governing ADRs were read completely during the immediately preceding CP-01 audit;
+- inspected the concrete repository constructor and existing Riverpod provider contracts;
+- confirmed that production `change_id` and `device_id` dependencies have no accepted lifecycle/implementation decision;
+- recorded the exact architecture decision required before repository composition.
 
 Work remaining in current checkpoint:
 
-- implement the smallest compliant database opener and app-lifetime disposal boundary;
-- add focused file-based database lifecycle tests;
-- run flutter analyze, flutter test, relevant lifecycle tests, and git diff --check;
-- mark CP-01 done only after all required validation passes.
+- obtain and record an accepted production `change_id` generation and stable local `device_id` lifecycle decision;
+- re-read the accepted decision and CP-02 governing ADRs;
+- construct `DriftLifeOsTaskRepository` at the app composition boundary;
+- expose repository-backed Application behavior through app-owned Riverpod overrides;
+- add composition tests while preserving provider override testing;
+- run flutter analyze, flutter test, the import-boundary scan, and git diff --check;
+- mark CP-02 done only after its Definition of Done and validation pass.
 
 Known blockers:
 
-- none.
+- CP-02 is blocked because production `change_id` generation and stable local `device_id` lifecycle are unresolved;
+- CP-03 is not ready while CP-02 remains blocked.
 
 Architecture decision:
 
@@ -587,9 +621,12 @@ Architecture decision:
 
 Working-tree notes:
 
-- repository was clean before this bookkeeping update;
-- agent change: docs/exec-plans/active/lifeos-mvp.md checkpoint status, ADR-0024 evidence, and resume bookkeeping;
-- no production code, generated code, dependencies, or tests were changed;
+- repository was clean before CP-01 started;
+- user/IDE change outside scope: .obsidian/workspace.json;
+- CP-01 agent changes: production database opener, app dependencies/lifecycle wiring, path dependencies, generated plugin registration, lifecycle tests, and execution-plan bookkeeping;
+- CP-02 agent change: execution-plan blocker/evidence bookkeeping only;
+- no CP-02 production code or tests were changed;
+- no ADR, Domain, Application, or Presentation files were changed by CP-01;
 - never assume this section is newer than repository evidence.
 
 ---

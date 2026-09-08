@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/exec-plans/active/lifeos-mvp.md",
+                "file": "docs/exec-plans/README.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "lifeos-mvp"
+              "title": "README"
             }
           }
         ]
@@ -190,23 +190,23 @@
   },
   "active": "9f6ebd33193ec19f",
   "lastOpenFiles": [
+    "docs/exec-plans/active/lifeos-mvp.md",
+    "build/test_cache/build/c6eb2f03",
+    "build/test_cache/build/f102881a",
+    "build/test_cache/build/713f5984",
+    "build/test_cache/build/cda58fa4",
+    "build/native_assets/windows/780056a2",
+    "build/test_cache/build/eba3a5c5",
+    "build/unit_test_assets/NativeAssetsManifest.json",
+    "build/unit_test_assets/shaders/ink_sparkle.frag.spirv",
+    "build/unit_test_assets/shaders/stretch_effect.frag.spirv",
+    "build/unit_test_assets/shaders/ink_sparkle.frag",
     "docs/adr/ADR-0024-production-database-lifecycle.md",
     "docs/exec-plans/README.md",
     "docs/00-vision/exec-plans/README.md",
-    "docs/exec-plans/active/lifeos-mvp.md",
     "docs/00-vision/exec-plans/active/lifeos-mvp.md",
-    "docs/exec-plans/active",
-    "docs/exec-plans",
     "AGENTS.md",
-    "docs/00-vision/exec-plans/active",
-    "docs/00-vision/exec-plans",
     "docs/adr/ADR-0023-initial-entity-persistence-and-outbox-decisions.md",
-    "build/test_cache/build/70a94684",
-    "build/test_cache/build/16f5d611",
-    "build/test_cache/build/20142da2",
-    "build/unit_test_assets/NativeAssetsManifest.json",
-    "build/unit_test_assets/shaders/stretch_effect.frag.spirv",
-    "build/unit_test_assets/shaders/ink_sparkle.frag.spirv",
     "docs/adr/ADR-0020-sqlite-persistence-schema.md",
     "docs/adr/ADR-0022-flutter-project-architecture.md",
     "docs/adr/ADR-0021-flutter-persistence-stack.md",
@@ -224,7 +224,6 @@
     "docs/adr/ADR-0008-ai-provider-architecture.md",
     "docs/adr/ADR-0007-dependency-injection-strategy.md",
     "docs/adr/ADR-0006-database-schema.md",
-    "docs/adr/ADR-0005-local-first-data-architecture.md",
-    "docs/adr/ADR-0004-domain-entity-architecture.md"
+    "docs/adr/ADR-0005-local-first-data-architecture.md"
   ]
 }
