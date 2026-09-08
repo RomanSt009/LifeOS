@@ -33,4 +33,41 @@ void main() {
     expect(task.version, 1);
     expect(task.source, LifeOsEntitySource.user);
   });
+
+  test('toggles completion immutably and advances entity metadata', () {
+    final createdAt = DateTime.utc(2026, 9, 5, 10);
+    final initialUpdatedAt = DateTime.utc(2026, 9, 5, 11);
+    final toggledAt = DateTime.utc(2026, 9, 5, 12);
+    final task = LifeOsTask(
+      id: const LifeOsEntityId(
+        value: 'task-1',
+        entityType: LifeOsEntityType.task,
+      ),
+      title: 'Keep completion behavior in Domain',
+      isCompleted: false,
+      createdAt: createdAt,
+      updatedAt: initialUpdatedAt,
+      lifecycle: LifeOsEntityLifecycle.active,
+      version: 1,
+      source: LifeOsEntitySource.user,
+    );
+
+    final completed = task.toggleCompletion(updatedAt: toggledAt);
+    final reopened = completed.toggleCompletion(updatedAt: toggledAt);
+
+    expect(completed.isCompleted, isTrue);
+    expect(completed.id, task.id);
+    expect(completed.title, task.title);
+    expect(completed.createdAt, task.createdAt);
+    expect(completed.updatedAt, toggledAt);
+    expect(completed.lifecycle, task.lifecycle);
+    expect(completed.version, 2);
+    expect(completed.source, task.source);
+    expect(reopened.isCompleted, isFalse);
+    expect(reopened.version, 3);
+    expect(task.isCompleted, isFalse);
+    expect(task.updatedAt, initialUpdatedAt);
+    expect(task.version, 1);
+    expect(completed, isNot(same(task)));
+  });
 }

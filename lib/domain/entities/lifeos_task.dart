@@ -36,6 +36,19 @@ class LifeOsTask implements LifeOsEntity {
   @override
   final LifeOsEntitySource source;
 
+  LifeOsTask toggleCompletion({required DateTime updatedAt}) {
+    return LifeOsTask(
+      id: id,
+      title: title,
+      isCompleted: !isCompleted,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      lifecycle: lifecycle,
+      version: version + 1,
+      source: source,
+    );
+  }
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
