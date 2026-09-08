@@ -576,3 +576,165 @@ When uncertain, ask rather than guessing.
 The goal is not to maximize the amount of code produced.
 
 The goal is to build a maintainable LifeOS architecture incrementally and correctly.
+
+---
+## 28. Autonomous execution workflow
+
+LifeOS may use repository-backed execution plans for multi-step implementation work.
+
+### Execution plan location
+
+Active execution plans live under:
+
+`docs/exec-plans/active/`
+
+Before starting autonomous or continuation work, inspect that directory.
+
+If exactly one active execution plan exists, use it unless the user explicitly names another plan.
+
+The execution plan is the persistent source of truth for:
+
+- current milestone;
+- completed checkpoints;
+- current checkpoint;
+- next ready checkpoint;
+- validation state;
+- known blockers;
+- deferred work;
+- decisions that require user input.
+
+Do not rely on conversation history alone to determine progress.
+
+### Starting or continuing work
+
+When instructed to start or continue the active execution plan:
+
+1. Read `AGENTS.md`.
+2. Read the active execution plan completely.
+3. Read every ADR referenced by the current checkpoint.
+4. Inspect `git status --short --branch`.
+5. Inspect the relevant existing implementation and tests.
+6. Reconcile the execution plan with the actual repository state.
+7. Select only the next ready unfinished checkpoint.
+8. Perform its architecture gate before editing.
+9. Implement the smallest complete vertical change for that checkpoint.
+10. Run the checkpoint validation.
+11. Update the execution plan with factual results.
+12. Continue to the next ready checkpoint only when:
+    - the previous checkpoint is complete;
+    - validation passes;
+    - no unresolved architecture decision exists;
+    - continuing does not require unsafe assumptions.
+
+Repository state and accepted ADRs take precedence over stale execution-plan text.
+
+Never mark work complete merely because the plan says it should be complete.
+
+### Checkpoint discipline
+
+Keep checkpoints small enough that each checkpoint can normally be:
+
+- understood independently;
+- implemented in one bounded work unit;
+- validated independently;
+- safely resumed after interruption.
+
+For every checkpoint, maintain:
+
+- Status: pending / active / blocked / done
+- Goal
+- Relevant ADRs
+- Allowed scope
+- Explicit non-goals
+- Definition of Done
+- Validation
+- Result / evidence
+- Blocker, when applicable
+
+Set a checkpoint to `active` before implementation.
+
+Set it to `done` only after its Definition of Done is satisfied and required validation succeeds.
+
+If interrupted by usage limits, tool failure, permission boundary, IDE shutdown, or user stop, leave the checkpoint as `active` and record the latest factual state before stopping whenever possible.
+
+Do not mark partially completed work as `done`.
+
+### Resume protocol
+
+After an interrupted session:
+
+1. Read the active execution plan.
+2. Inspect Git status and diff.
+3. Inspect the files associated with the `active` checkpoint.
+4. Determine which planned actions actually completed.
+5. Do not repeat completed destructive or state-changing actions unnecessarily.
+6. Continue from the first incomplete action.
+7. Re-run validation appropriate to the final state.
+8. Update the checkpoint evidence.
+
+If execution-plan state and repository state disagree, stop and reconcile them from repository evidence rather than guessing.
+
+### Architecture gates
+
+Stop before implementation when the next step requires an architectural decision not already resolved by accepted ADRs.
+
+Record the checkpoint as `blocked` and document:
+
+- the exact unresolved question;
+- relevant ADRs;
+- why proceeding would require guessing;
+- the smallest decision needed from the user.
+
+Do not create a temporary architecture merely to continue autonomous execution.
+
+### Failure handling
+
+Do not skip a failing checkpoint and continue with later dependent work.
+
+For a validation failure:
+
+1. determine whether it was caused by the current checkpoint;
+2. attempt only a bounded fix supported by existing architecture;
+3. validate again;
+4. if resolution requires an architecture decision or speculative redesign, mark the checkpoint `blocked` and stop.
+
+### Scope control
+
+Autonomous execution does not grant permission for unrelated cleanup.
+
+Do not use an execution plan as permission to:
+
+- redesign unrelated architecture;
+- mass rename files;
+- mass format unrelated code;
+- replace selected technologies;
+- introduce speculative abstractions;
+- modify accepted ADRs silently;
+- modify user-owned unrelated changes;
+- implement later milestones early.
+
+Follow the existing Git safety rules in this file at all times.
+
+### Git during autonomous execution
+
+The execution plan is a progress mechanism, not permission to publish changes.
+
+Unless the user explicitly grants a different policy:
+
+- do not commit;
+- do not push;
+- do not rewrite history;
+- do not reset or clean user work.
+
+The agent may update the active execution-plan file as part of checkpoint bookkeeping.
+
+### Completion
+
+When all checkpoints in an active execution plan are complete:
+
+1. run the plan-level final validation;
+2. update the plan status to `completed`;
+3. record final validation evidence;
+4. stop for user review.
+
+Do not automatically begin a new execution plan.

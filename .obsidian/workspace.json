@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/adr/ADR-0023-initial-entity-persistence-and-outbox-decisions.md",
+                "file": "docs/exec-plans/README.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ADR-0023-initial-entity-persistence-and-outbox-decisions"
+              "title": "README"
             }
           }
         ]
@@ -190,20 +190,23 @@
   },
   "active": "9f6ebd33193ec19f",
   "lastOpenFiles": [
+    "docs/00-vision/exec-plans/README.md",
+    "docs/exec-plans/active/lifeos-mvp.md",
+    "docs/00-vision/exec-plans/active/lifeos-mvp.md",
+    "docs/exec-plans/README.md",
+    "docs/exec-plans/active",
+    "docs/exec-plans",
+    "AGENTS.md",
+    "docs/00-vision/exec-plans/active",
+    "docs/00-vision/exec-plans",
+    "docs/adr/ADR-0023-initial-entity-persistence-and-outbox-decisions.md",
     "build/test_cache/build/70a94684",
     "build/test_cache/build/16f5d611",
     "build/test_cache/build/20142da2",
     "build/unit_test_assets/NativeAssetsManifest.json",
     "build/unit_test_assets/shaders/stretch_effect.frag.spirv",
     "build/unit_test_assets/shaders/ink_sparkle.frag.spirv",
-    "build/unit_test_assets/shaders/stretch_effect.frag",
-    "build/unit_test_assets/shaders/ink_sparkle.frag",
-    "build/unit_test_assets/fonts/2d7d52b9",
-    "build/native_assets/windows/ead00a29",
-    "test/presentation/tasks/task_completion_card_test.dart",
     "docs/adr/ADR-0020-sqlite-persistence-schema.md",
-    "docs/adr/ADR-0023-initial-entity-persistence-and-outbox-decisions.md",
-    "AGENTS.md",
     "docs/adr/ADR-0022-flutter-project-architecture.md",
     "docs/adr/ADR-0021-flutter-persistence-stack.md",
     "docs/adr/ADR-0019-change-tracking-and-sync-data-model.md",
@@ -222,9 +225,6 @@
     "docs/adr/ADR-0006-database-schema.md",
     "docs/adr/ADR-0005-local-first-data-architecture.md",
     "docs/adr/ADR-0004-domain-entity-architecture.md",
-    "docs/adr/ADR-0003-project-structure.md",
-    "docs/adr/ADR-0002-application-stack.md",
-    "docs/adr/ADR-0001-flutter.md",
-    "docs/07-roadmap/roadmap.md"
+    "docs/adr/ADR-0003-project-structure.md"
   ]
 }
