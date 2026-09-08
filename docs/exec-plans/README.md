@@ -137,6 +137,8 @@ docs/exec-plans/README.md
 
 Там будет и команда запуска, и команда восстановления после лимита.
 ```
+
+---
 ## Как безопасно закончить рабочую сессию
 
 Prepare to stop the current LifeOS execution session.
@@ -171,6 +173,30 @@ After recording the checkpoint, stop. Do not begin additional work.
 | Начать обычную работу              | `Continue the active LifeOS execution plan...`                              |
 | Продолжить после прерывания/лимита | `Resume the active LifeOS execution plan from the repository checkpoint...` |
 | Нужно выключать ПК                 | `Prepare to stop the current LifeOS execution session...`                   |
+После следующего запуска используй:
+
+```
+Resume the active LifeOS execution plan from the repository checkpoint.
+
+The previous session may have been interrupted unexpectedly.
+Do not assume the checkpoint file is current.
+First reconcile AGENTS.md, the active execution plan, git status, git diff, existing implementation, and tests.
+Determine the first incomplete safe action and continue from there.
+Do not discard or overwrite existing work merely because it is not recorded in the execution plan.
+```
+
+
+---
+
+И ещё я бы **не делал Git commit после каждого checkpoint автоматически**. Пусть Codex работает внутри нескольких checkpoints, а мы после логически законченного блока смотрим:
+
+```
+git status --short --branch
+git diff --stat
+git diff
+flutter analyze
+flutter test
+```
 
 ---
 

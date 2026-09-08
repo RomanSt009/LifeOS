@@ -94,7 +94,7 @@ Current checkpoint: CP-01
 
 Next ready checkpoint: CP-01
 
-Blockers: none known at plan creation.
+Blockers: CP-01 — accepted ADRs do not specify the production SQLite file location or the platform mechanism used to resolve it.
 
 ---
 
@@ -102,7 +102,7 @@ Blockers: none known at plan creation.
 
 ## CP-01 — Production database lifecycle decision
 
-Status: pending
+Status: blocked
 
 ### Goal
 
@@ -161,7 +161,28 @@ When implementation occurs:
 
 ### Result / evidence
 
-Pending.
+Blocked at the architecture gate on 2026-09-08.
+
+Evidence:
+
+- ADR-0007 specifies one database instance for the application lifetime, created and disposed through the composition root;
+- ADR-0017 names `lifeos.db` only provisionally and explicitly states that its physical path may change during implementation;
+- ADR-0021 requires file-based database lifecycle testing but does not select a production location or path-resolution mechanism;
+- ADR-0022 assigns initialization and concrete dependency construction to `app/` but does not choose the database location;
+- ADR-0023 defines atomic Domain State + Outbox writes and injected change/device identity, but leaves production device identity lifecycle deferred;
+- `LifeOsDatabase` currently accepts an externally supplied Drift executor and has no production opener;
+- existing persistence tests use `NativeDatabase.memory()` and therefore do not establish a production file lifecycle;
+- the current dependencies do not include a platform path provider or a Drift Flutter database-opening helper.
+
+Exact unresolved architecture question:
+
+- Which OS-managed per-user directory must contain the production SQLite database, what filename must be used, and which platform path-resolution mechanism may Infrastructure/composition use to obtain that location?
+
+Smallest decision requested:
+
+- approve or replace the proposed convention: use the OS-provided per-user application-support directory, store the database as `lifeos.db`, resolve the directory through a dedicated Flutter platform-path dependency, and let the composition root own and close one `LifeOsDatabase` instance for the application lifetime.
+
+No production path, dependency, or bootstrap was implemented because doing so would require guessing this decision.
 
 ---
 
@@ -533,35 +554,49 @@ Do not implement as part of this plan unless an accepted architecture decision e
 
 This section is maintained by Codex.
 
-Last checkpoint update: plan created
+Last checkpoint update: 2026-09-08 — CP-01 blocked at the production database location architecture gate
 
 Current checkpoint: CP-01
 
-Current checkpoint status: pending
+Current checkpoint status: blocked
 
 Last successful validation:
 
 - Foundation flutter analyze: PASS
 - Foundation flutter test: PASS — 16 tests
 - Foundation git diff --check: PASS
+- CP-01 implementation validation: not run because no implementation was permitted past the architecture gate
 
 Work completed in current checkpoint:
 
-- none
+- read AGENTS.md and the active execution plan completely;
+- confirmed CP-01 is the next ready checkpoint;
+- reconciled the plan with repository files and Git state;
+- read the persistence/composition ADRs relevant to CP-01, including ADR-0005, ADR-0006, ADR-0007, ADR-0017, ADR-0019, ADR-0020, ADR-0021, ADR-0022, and ADR-0023;
+- inspected the existing database, repository, composition, dependencies, and persistence tests;
+- established that database ownership/disposal is specified, but production location and platform path resolution are not;
+- preserved the pre-existing user change in docs/exec-plans/README.md;
+- recorded the exact architecture decision required before implementation.
 
 Work remaining in current checkpoint:
 
-- read governing ADRs;
-- determine whether production database lifecycle is sufficiently specified;
-- proceed according to CP-01 architecture gate.
+- obtain and record the production database location/path-resolution decision in an accepted ADR or ADR amendment;
+- re-read the accepted decision;
+- implement the smallest compliant database opener and app-lifetime disposal boundary;
+- add focused file-based database lifecycle tests;
+- run flutter analyze, flutter test, relevant lifecycle tests, and git diff --check;
+- mark CP-01 done only after all required validation passes.
 
 Known blockers:
 
-- none known; CP-01 may discover an unresolved database lifecycle decision.
+- CP-01 is blocked because the accepted architecture does not specify the production SQLite file location or permitted platform path-resolution mechanism;
+- CP-02 is not ready while CP-01 remains blocked.
 
 Working-tree notes:
 
-- determine from Git at execution time;
+- pre-existing user change: docs/exec-plans/README.md;
+- agent change: docs/exec-plans/active/lifeos-mvp.md checkpoint status, blocker, evidence, and resume bookkeeping;
+- no production code, generated code, dependencies, or tests were changed;
 - never assume this section is newer than repository evidence.
 
 ---
