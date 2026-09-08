@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/use_cases/get_lifeos_identity.dart';
 import '../presentation/shell/lifeos_shell_page.dart';
+import '../presentation/tasks/task_completion_providers.dart';
 import 'dependencies.dart';
 
 class LifeOSApp extends StatefulWidget {
@@ -41,6 +42,11 @@ class _LifeOSAppState extends State<LifeOSApp> {
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
+      overrides: [
+        lifeOsTaskRepositoryProvider.overrideWithValue(
+          widget.dependencies.taskRepository,
+        ),
+      ],
       child: MaterialApp(
         title: 'LifeOS',
         theme: ThemeData(colorSchemeSeed: Colors.indigo),

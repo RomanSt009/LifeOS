@@ -10,11 +10,22 @@ const productionDatabaseFileName = 'lifeos.db';
 
 typedef ApplicationSupportDirectoryProvider = Future<Directory> Function();
 
+Future<Directory> resolveApplicationSupportDirectory() {
+  return getApplicationSupportDirectory();
+}
+
 Future<LifeOsDatabase> openProductionDatabase({
   ApplicationSupportDirectoryProvider applicationSupportDirectoryProvider =
-      getApplicationSupportDirectory,
+      resolveApplicationSupportDirectory,
 }) async {
   final supportDirectory = await applicationSupportDirectoryProvider();
+
+  return openProductionDatabaseIn(supportDirectory);
+}
+
+Future<LifeOsDatabase> openProductionDatabaseIn(
+  Directory supportDirectory,
+) async {
   await supportDirectory.create(recursive: true);
 
   final databaseFile = File(

@@ -68,6 +68,9 @@ class FakeLifeOsTaskRepository implements LifeOsTaskRepository {
   final List<LifeOsTask> savedTasks = [];
 
   @override
+  Future<List<LifeOsTask>> getAll() async => [task];
+
+  @override
   Future<LifeOsTask?> getById(LifeOsEntityId id) async {
     return id == task.id ? task : null;
   }

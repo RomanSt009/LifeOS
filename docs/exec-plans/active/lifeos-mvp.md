@@ -90,9 +90,9 @@ Milestone: Local persistent Task vertical slice
 
 Status: active
 
-Current checkpoint: CP-02
+Current checkpoint: CP-04
 
-Next ready checkpoint: CP-02
+Next ready checkpoint: CP-04
 
 Blockers: none.
 
@@ -189,7 +189,7 @@ Validation:
 
 ## CP-02 — Production repository composition
 
-Status: pending
+Status: done
 
 Depends on: CP-01
 
@@ -236,24 +236,32 @@ Wire the production LifeOsTaskRepository implementation through the app composit
 
 ### Result / evidence
 
-Pending implementation.
+Completed on 2026-09-08.
 
 Evidence:
 
-- `DriftLifeOsTaskRepository` requires both a `ChangeIdGenerator` and a `deviceId` to construct a repository capable of persisting mutations;
-- ADR-0025 is accepted and resolves the production identity composition gate;
-- production `change_id` values use UUID v4 generated in Infrastructure through an injectable generator;
-- production `device_id` uses UUID v4 generated once, persisted in application-support storage, and reused across launches;
-- the composition root resolves the stable `device_id` before constructing syncable repositories;
-- deterministic IDs remain injectable for tests.
+- ADR-0025 resolved the production identity composition gate;
+- Infrastructure now provides an injectable UUID v4 generator;
+- the file-backed device identity store creates one identifier in application-support storage and reuses it across reopen;
+- the composition root resolves the stable device ID, opens the owned database, and constructs `DriftLifeOsTaskRepository` with the UUID generator;
+- `LifeOsAppDependencies` exposes the repository through its Domain interface and retains ownership of database disposal;
+- `LifeOSApp` overrides the Domain repository provider at the app boundary;
+- the Application-derived toggle use case is available without Infrastructure imports in Presentation or Application;
+- direct provider overrides used by existing widget tests remain supported.
 
-The architecture gate is resolved. No CP-02 production implementation has been performed yet.
+Validation:
+
+- focused identity/composition/app tests: PASS — 5 tests;
+- flutter analyze: PASS — no issues;
+- flutter test: PASS — 22 tests;
+- import-boundary scan: PASS;
+- git diff --check: PASS.
 
 ---
 
 ## CP-03 — Read Task collection
 
-Status: pending
+Status: done
 
 Depends on: CP-02
 
@@ -299,7 +307,24 @@ Do not add a generic Repository<T>.
 
 ### Result / evidence
 
-Pending.
+Completed on 2026-09-08.
+
+Evidence:
+
+- the architecture gate selected one focused `getAll` operation on the existing Domain-owned `LifeOsTaskRepository`;
+- no generic repository, pagination, filtering, search, or sorting framework was introduced;
+- `GetLifeOsTasks` exposes the collection query through Application;
+- `DriftLifeOsTaskRepository` loads Task Entity metadata and typed Task fields through a joined Drift query and maps them to Domain entities;
+- an empty database returns an empty collection;
+- Application and Infrastructure collection behavior is covered by focused tests.
+
+Validation:
+
+- focused Application/Infrastructure tests: PASS — 7 tests;
+- flutter analyze: PASS — no issues after resolving two local style findings;
+- flutter test: PASS — 25 tests;
+- import-boundary scan: PASS;
+- git diff --check: PASS.
 
 ---
 
@@ -567,9 +592,9 @@ Do not implement as part of this plan unless an accepted architecture decision e
 
 This section is maintained by Codex.
 
-Last checkpoint update: 2026-09-08 — ADR-0025 accepted; CP-02 returned to pending
+Last checkpoint update: 2026-09-08 — CP-03 completed; autonomous run limit reached
 
-Current checkpoint: CP-02
+Current checkpoint: CP-04
 
 Current checkpoint status: pending
 
@@ -583,23 +608,28 @@ Last successful validation:
 - CP-01 flutter test: PASS — 18 tests
 - CP-01 import-boundary scan: PASS
 - CP-01 git diff --check: PASS
+- CP-02 focused identity/composition/app tests: PASS — 5 tests
+- CP-02 flutter analyze: PASS — no issues
+- CP-02 flutter test: PASS — 22 tests
+- CP-02 import-boundary scan: PASS
+- CP-02 git diff --check: PASS
+- CP-03 focused Application/Infrastructure tests: PASS — 7 tests
+- CP-03 flutter analyze: PASS — no issues
+- CP-03 flutter test: PASS — 25 tests
+- CP-03 import-boundary scan: PASS
+- CP-03 git diff --check: PASS
 
 Work completed in current checkpoint:
 
-- CP-01 completed and validated;
-- CP-02 marked active before implementation;
-- CP-02 governing ADRs were read completely during the immediately preceding CP-01 audit;
-- inspected the concrete repository constructor and existing Riverpod provider contracts;
-- identified the missing production `change_id` and stable `device_id` lifecycle decision;
-- read accepted ADR-0025 and confirmed that it resolves the CP-02 architecture gate.
+- CP-01, CP-02, and CP-03 completed and validated;
+- none in CP-04.
 
 Work remaining in current checkpoint:
 
-- construct `DriftLifeOsTaskRepository` at the app composition boundary;
-- expose repository-backed Application behavior through app-owned Riverpod overrides;
-- add composition tests while preserving provider override testing;
-- run flutter analyze, flutter test, the import-boundary scan, and git diff --check;
-- mark CP-02 done only after its Definition of Done and validation pass.
+- read the CP-04-relevant repository and Presentation state;
+- mark CP-04 active before implementation;
+- implement the minimal Task list loading, empty, and bounded error states through Riverpod and Application behavior;
+- run CP-04 validation.
 
 Known blockers:
 
@@ -614,9 +644,9 @@ Architecture decision:
 
 Working-tree notes:
 
-- repository was clean before this bookkeeping update;
-- agent change: docs/exec-plans/active/lifeos-mvp.md CP-02 status, ADR-0025 evidence, and resume bookkeeping;
-- no CP-02 production code or tests were changed;
+- repository was clean at the start of this run;
+- CP-02 and CP-03 code, tests, dependency metadata, and this execution plan are modified by the agent;
+- `.obsidian/workspace.json` became modified during execution and is treated as unrelated user-owned work; it has not been modified by the agent;
 - never assume this section is newer than repository evidence.
 
 ---

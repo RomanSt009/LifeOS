@@ -21,13 +21,14 @@ void main() {
   final secondUpdatedAt = DateTime.utc(2026, 9, 6, 12);
 
   LifeOsTask createTask({
+    LifeOsEntityId id = taskId,
     required String title,
     required bool isCompleted,
     required DateTime updatedAt,
     required int version,
   }) {
     return LifeOsTask(
-      id: taskId,
+      id: id,
       title: title,
       isCompleted: isCompleted,
       createdAt: createdAt,
@@ -146,6 +147,34 @@ void main() {
     );
 
     expect(await repository.getById(missingId), isNull);
+  });
+
+  test('returns an empty Task collection for an empty database', () async {
+    expect(await repository.getAll(), isEmpty);
+  });
+
+  test('loads the mapped Task collection', () async {
+    final firstTask = createTask(
+      title: 'First Task',
+      isCompleted: false,
+      updatedAt: firstUpdatedAt,
+      version: 1,
+    );
+    final secondTask = createTask(
+      id: const LifeOsEntityId(
+        value: 'task-2',
+        entityType: LifeOsEntityType.task,
+      ),
+      title: 'Second Task',
+      isCompleted: true,
+      updatedAt: secondUpdatedAt,
+      version: 2,
+    );
+
+    await repository.save(firstTask);
+    await repository.save(secondTask);
+
+    expect(await repository.getAll(), unorderedEquals([firstTask, secondTask]));
   });
 
   test('rolls back Domain State when the outbox write fails', () async {

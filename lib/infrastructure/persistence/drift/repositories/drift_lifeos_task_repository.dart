@@ -23,6 +23,26 @@ class DriftLifeOsTaskRepository implements LifeOsTaskRepository {
   final String _deviceId;
 
   @override
+  Future<List<LifeOsTask>> getAll() async {
+    final query = _database.select(_database.entities).join([
+      innerJoin(
+        _database.taskRecords,
+        _database.taskRecords.entityId.equalsExp(_database.entities.id),
+      ),
+    ])..where(_database.entities.entityType.equals(LifeOsEntityType.task.name));
+
+    final rows = await query.get();
+    return rows
+        .map(
+          (row) => LifeOsTaskMapper.toDomain(
+            row.readTable(_database.entities),
+            row.readTable(_database.taskRecords),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  @override
   Future<LifeOsTask?> getById(LifeOsEntityId id) async {
     final query =
         _database.select(_database.entities).join([
