@@ -92,9 +92,9 @@ Status: active
 
 Current checkpoint: CP-02
 
-Next ready checkpoint: none while CP-02 is blocked
+Next ready checkpoint: CP-02
 
-Blockers: CP-02 — production `change_id` generation and stable `device_id` lifecycle are not defined by an accepted ADR.
+Blockers: none.
 
 ---
 
@@ -189,7 +189,7 @@ Validation:
 
 ## CP-02 — Production repository composition
 
-Status: blocked
+Status: pending
 
 Depends on: CP-01
 
@@ -203,6 +203,7 @@ Wire the production LifeOsTaskRepository implementation through the app composit
 - ADR-0021
 - ADR-0022
 - ADR-0023
+- ADR-0025
 
 ### Allowed scope
 
@@ -235,26 +236,18 @@ Wire the production LifeOsTaskRepository implementation through the app composit
 
 ### Result / evidence
 
-Blocked at the production composition gate on 2026-09-08.
+Pending implementation.
 
 Evidence:
 
 - `DriftLifeOsTaskRepository` requires both a `ChangeIdGenerator` and a `deviceId` to construct a repository capable of persisting mutations;
-- ADR-0023 requires `change_id` to be injected at the Infrastructure boundary but explicitly does not select a UUID/ULID package or production generation strategy;
-- ADR-0023 requires `device_id` to be supplied through Infrastructure composition and explicitly defers its production creation, persistence, and restoration lifecycle;
-- ADR-0024 explicitly leaves device identity lifecycle deferred;
-- deterministic IDs are authorized only for tests;
-- wiring a fixed placeholder device ID or an ad-hoc timestamp/random change ID into production composition would be an unsafe architectural assumption.
+- ADR-0025 is accepted and resolves the production identity composition gate;
+- production `change_id` values use UUID v4 generated in Infrastructure through an injectable generator;
+- production `device_id` uses UUID v4 generated once, persisted in application-support storage, and reused across launches;
+- the composition root resolves the stable `device_id` before constructing syncable repositories;
+- deterministic IDs remain injectable for tests.
 
-Exact unresolved architecture question:
-
-- How does the production application generate collision-safe `change_id` values, and how does it create, persist, restore, and provide one stable local `device_id` to Infrastructure composition?
-
-Smallest decision requested:
-
-- accept an ADR defining the production ID format/generator and the local device identity lifecycle/storage boundary; it may defer registration and remote Sync while still providing stable local identity.
-
-No repository/provider composition was implemented past this gate.
+The architecture gate is resolved. No CP-02 production implementation has been performed yet.
 
 ---
 
@@ -574,11 +567,11 @@ Do not implement as part of this plan unless an accepted architecture decision e
 
 This section is maintained by Codex.
 
-Last checkpoint update: 2026-09-08 — CP-01 done; CP-02 blocked at production identity composition gate
+Last checkpoint update: 2026-09-08 — ADR-0025 accepted; CP-02 returned to pending
 
 Current checkpoint: CP-02
 
-Current checkpoint status: blocked
+Current checkpoint status: pending
 
 Last successful validation:
 
@@ -597,13 +590,11 @@ Work completed in current checkpoint:
 - CP-02 marked active before implementation;
 - CP-02 governing ADRs were read completely during the immediately preceding CP-01 audit;
 - inspected the concrete repository constructor and existing Riverpod provider contracts;
-- confirmed that production `change_id` and `device_id` dependencies have no accepted lifecycle/implementation decision;
-- recorded the exact architecture decision required before repository composition.
+- identified the missing production `change_id` and stable `device_id` lifecycle decision;
+- read accepted ADR-0025 and confirmed that it resolves the CP-02 architecture gate.
 
 Work remaining in current checkpoint:
 
-- obtain and record an accepted production `change_id` generation and stable local `device_id` lifecycle decision;
-- re-read the accepted decision and CP-02 governing ADRs;
 - construct `DriftLifeOsTaskRepository` at the app composition boundary;
 - expose repository-backed Application behavior through app-owned Riverpod overrides;
 - add composition tests while preserving provider override testing;
@@ -612,21 +603,20 @@ Work remaining in current checkpoint:
 
 Known blockers:
 
-- CP-02 is blocked because production `change_id` generation and stable local `device_id` lifecycle are unresolved;
-- CP-03 is not ready while CP-02 remains blocked.
+- none.
 
 Architecture decision:
 
 - ADR-0024 accepted: production DB uses OS application-support directory / `lifeos.db`; composition root owns one production database instance and closes it at lifecycle end.
+- ADR-0025 accepted.
+- Production `change_id` = UUID v4 generated in Infrastructure through an injectable generator.
+- Production `device_id` = UUID v4 generated once, persisted in application-support storage, reused across launches.
 
 Working-tree notes:
 
-- repository was clean before CP-01 started;
-- user/IDE change outside scope: .obsidian/workspace.json;
-- CP-01 agent changes: production database opener, app dependencies/lifecycle wiring, path dependencies, generated plugin registration, lifecycle tests, and execution-plan bookkeeping;
-- CP-02 agent change: execution-plan blocker/evidence bookkeeping only;
+- repository was clean before this bookkeeping update;
+- agent change: docs/exec-plans/active/lifeos-mvp.md CP-02 status, ADR-0025 evidence, and resume bookkeeping;
 - no CP-02 production code or tests were changed;
-- no ADR, Domain, Application, or Presentation files were changed by CP-01;
 - never assume this section is newer than repository evidence.
 
 ---
