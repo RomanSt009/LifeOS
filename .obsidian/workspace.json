@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/exec-plans/README.md",
+                "file": "docs/adr/ADR-0025-local-change-and-device-identity.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "README"
+              "title": "ADR-0025-local-change-and-device-identity"
             }
           }
         ]
@@ -190,6 +190,8 @@
   },
   "active": "9f6ebd33193ec19f",
   "lastOpenFiles": [
+    "docs/exec-plans/README.md",
+    "docs/adr/ADR-0025-local-change-and-device-identity.md",
     "docs/exec-plans/active/lifeos-mvp.md",
     "build/test_cache/build/c6eb2f03",
     "build/test_cache/build/f102881a",
@@ -202,7 +204,6 @@
     "build/unit_test_assets/shaders/stretch_effect.frag.spirv",
     "build/unit_test_assets/shaders/ink_sparkle.frag",
     "docs/adr/ADR-0024-production-database-lifecycle.md",
-    "docs/exec-plans/README.md",
     "docs/00-vision/exec-plans/README.md",
     "docs/00-vision/exec-plans/active/lifeos-mvp.md",
     "AGENTS.md",
