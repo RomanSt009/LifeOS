@@ -136,3 +136,41 @@ AGENTS.md + active execution plan + Git + tests
 docs/exec-plans/README.md
 
 Там будет и команда запуска, и команда восстановления после лимита.
+```
+## Как безопасно закончить рабочую сессию
+
+Prepare to stop the current LifeOS execution session.
+
+Do not start another checkpoint.
+
+Finish only the current safe atomic action if one is already in progress.
+
+Then:
+- stop implementation;
+- inspect git status and the relevant diff;
+- update the active execution plan;
+- record the exact current checkpoint and its status;
+- record what has actually been completed;
+- record what remains;
+- record the latest validation results;
+- record any blockers;
+- record relevant working-tree state;
+- leave incomplete work as active, never done;
+- do not commit or push.
+
+Run validation only if it is safe and reasonably bounded at the current state.
+
+Finish with a concise RESUME POINT describing exactly where the next Codex session should continue.
+
+After recording the checkpoint, stop. Do not begin additional work.
+
+### Тогда у тебя будут фактически **три команды управления Codex**:
+
+| Ситуация                           | Команда                                                                     |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| Начать обычную работу              | `Continue the active LifeOS execution plan...`                              |
+| Продолжить после прерывания/лимита | `Resume the active LifeOS execution plan from the repository checkpoint...` |
+| Нужно выключать ПК                 | `Prepare to stop the current LifeOS execution session...`                   |
+
+---
+
