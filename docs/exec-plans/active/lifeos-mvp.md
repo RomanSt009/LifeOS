@@ -92,9 +92,9 @@ Status: active
 
 Current checkpoint: CP-05
 
-Next ready checkpoint: none — CP-05 blocked
+Next ready checkpoint: CP-05
 
-Blockers: CP-05 requires an accepted production Entity creation identity and metadata decision.
+Blockers: none.
 
 ---
 
@@ -394,7 +394,7 @@ Validation:
 
 ## CP-05 — Create Task vertical path
 
-Status: blocked
+Status: pending
 
 Depends on: CP-04
 
@@ -449,34 +449,16 @@ Mark blocked and request the smallest required decision.
 
 ### Result / evidence
 
-Blocked on 2026-09-09 at the architecture gate. No CP-05 production code or tests were changed.
+Pending implementation.
 
 Evidence:
 
-- ADR-0016 requires stable typed Entity identity, lifecycle, version, timestamps, and source;
-- ADR-0017 requires Entity IDs to be stable, unique, and generated offline, but explicitly leaves the concrete ID format to a later implementation decision and lists UUID/ULID only as examples;
-- ADR-0025 governs UUID v4 production generation only for `change_id` and `device_id`; extending it to Entity IDs would exceed its explicit scope;
-- the repository currently has no accepted production Entity ID generator contract, creation factory/use case, or clock composition;
-- UTC storage is recommended, but ownership/injection of the production clock and the initial Task metadata policy are not explicitly resolved.
-
-### Blocker
-
-Exact unresolved question:
-
-- what production format generates new Entity IDs and which layer owns/injects that generator;
-- whether Task creation receives an injectable UTC clock and which layer owns it;
-- which initial values are authoritative for `version`, `lifecycle`, and `source` for a user-created Task.
-
-Why proceeding would require guessing:
-
-- reusing the ADR-0025 UUID generator for Entity IDs would silently broaden an ADR whose scope excludes Entity identity;
-- hardcoding `DateTime.now().toUtc()`, version `1`, lifecycle `active`, and source `user` would establish production creation policy without an accepted decision.
-
-Smallest decision required:
-
-- accept one offline Entity ID format and generation boundary;
-- accept the production clock boundary;
-- accept initial metadata values for a user-created Task.
+- ADR-0026 is accepted and resolves the Entity creation architecture gate;
+- production Entity IDs use UUID v4 through an injectable generator at the Application composition boundary;
+- production UTC time is supplied through an injectable clock;
+- a new user Task starts active at version 1 with source `user`;
+- creation obtains one UTC timestamp and uses it for both `createdAt` and `updatedAt`;
+- no CP-05 production implementation has been performed yet.
 
 ---
 
@@ -636,11 +618,11 @@ Do not implement as part of this plan unless an accepted architecture decision e
 
 This section is maintained by Codex.
 
-Last checkpoint update: 2026-09-09 — CP-04 completed; CP-05 blocked at architecture gate
+Last checkpoint update: 2026-09-09 — ADR-0026 accepted; CP-05 returned to pending
 
 Current checkpoint: CP-05
 
-Current checkpoint status: blocked
+Current checkpoint status: pending
 
 Last successful validation:
 
@@ -672,19 +654,16 @@ Work completed in current checkpoint:
 
 - CP-01 through CP-04 completed and validated;
 - CP-05 architecture gate audited ADR-0016, ADR-0017, ADR-0023, ADR-0025, and the current Domain constructors/composition;
+- ADR-0026 was accepted and resolves the architecture gate;
 - no CP-05 implementation was started.
 
 Work remaining in current checkpoint:
 
-- accept and record the smallest Entity creation identity/clock/initial-metadata decision;
-- return CP-05 to pending or active;
 - implement and validate the minimal create-Task vertical path.
 
 Known blockers:
 
-- production Entity ID format and generation boundary are unresolved;
-- production creation clock ownership/injection is unresolved;
-- initial `version`, `lifecycle`, and `source` for a user-created Task are unresolved.
+- none.
 
 Architecture decision:
 
@@ -692,14 +671,21 @@ Architecture decision:
 - ADR-0025 accepted.
 - Production `change_id` = UUID v4 generated in Infrastructure through an injectable generator.
 - Production `device_id` = UUID v4 generated once, persisted in application-support storage, reused across launches.
-- ADR-0025 does not decide Entity ID generation.
+- ADR-0026 accepted.
+- Production Entity ID = UUID v4 through an injectable generator at the Application composition boundary.
+- Production UTC time = injectable clock supplied by composition.
+- New user Task defaults:
+  - lifecycle = active
+  - version = 1
+  - source = user
+  - createdAt = updatedAt = one injected UTC timestamp
 
 Working-tree notes:
 
-- repository was clean at the start of this run;
-- CP-04 Presentation code, tests, and this execution plan are modified by the agent;
-- `.obsidian/workspace.json` became modified during execution and is treated as unrelated user-owned work; it has not been modified by the agent;
-- CP-05 made no code or test changes because its architecture gate is blocked;
+- before this bookkeeping update, `.obsidian/workspace.json` was modified and ADR-0026 was untracked user-owned work;
+- agent change: only this execution plan bookkeeping;
+- `.obsidian/workspace.json` and ADR-0026 were not modified by the agent;
+- no CP-05 production code or tests were changed;
 - never assume this section is newer than repository evidence.
 
 ---
