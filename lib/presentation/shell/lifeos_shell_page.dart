@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../application/use_cases/get_lifeos_identity.dart';
+import '../tasks/task_list.dart';
 
 class LifeosShellPage extends StatelessWidget {
-  const LifeosShellPage({
-    required this.getLifeOsIdentity,
-    super.key,
-  });
+  const LifeosShellPage({required this.getLifeOsIdentity, super.key});
 
   final GetLifeOsIdentity getLifeOsIdentity;
 
@@ -23,13 +21,14 @@ class LifeosShellPage extends StatelessWidget {
           children: [
             Text(
               identity.applicationName,
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(identity.applicationDescription),
+            const SizedBox(height: 24),
+            const Text('Tasks', style: TextStyle(fontSize: 20)),
+            const SizedBox(height: 8),
+            const Expanded(child: TaskList()),
           ],
         ),
       ),
