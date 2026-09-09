@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/adr/ADR-0025-local-change-and-device-identity.md",
+                "file": "docs/adr/ADR-0026-entity-creation-identity-and-defaults.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ADR-0025-local-change-and-device-identity"
+              "title": "ADR-0026-entity-creation-identity-and-defaults"
             }
           }
         ]
@@ -190,6 +190,8 @@
   },
   "active": "9f6ebd33193ec19f",
   "lastOpenFiles": [
+    "docs/adr/ADR-0025-local-change-and-device-identity.md",
+    "docs/adr/ADR-0026-entity-creation-identity-and-defaults.md",
     "build/test_cache/build/176cb199",
     "build/test_cache/build/a0463fa",
     "build/native_assets/windows/209242ca",
@@ -200,9 +202,7 @@
     "build/test_cache/build/d5092ceb",
     "build/test_cache/build/372834f5",
     "build/native_assets/windows/a9b67174",
-    "build/test_cache/build/9cd37655",
     "docs/exec-plans/README.md",
-    "docs/adr/ADR-0025-local-change-and-device-identity.md",
     "docs/exec-plans/active/lifeos-mvp.md",
     "docs/adr/ADR-0024-production-database-lifecycle.md",
     "docs/00-vision/exec-plans/README.md",
