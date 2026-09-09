@@ -12,6 +12,45 @@ class LifeOsTask implements LifeOsEntity {
     required this.source,
   });
 
+  factory LifeOsTask.createUserTask({
+    required LifeOsEntityId id,
+    required String title,
+    required DateTime timestamp,
+  }) {
+    final normalizedTitle = title.trim();
+    if (id.entityType != LifeOsEntityType.task) {
+      throw ArgumentError.value(id, 'id', 'A Task requires a Task entity ID.');
+    }
+    if (id.value.trim().isEmpty) {
+      throw ArgumentError.value(id, 'id', 'A Task entity ID cannot be empty.');
+    }
+    if (normalizedTitle.isEmpty) {
+      throw ArgumentError.value(
+        title,
+        'title',
+        'A Task title cannot be empty.',
+      );
+    }
+    if (!timestamp.isUtc) {
+      throw ArgumentError.value(
+        timestamp,
+        'timestamp',
+        'A Task creation timestamp must be UTC.',
+      );
+    }
+
+    return LifeOsTask(
+      id: id,
+      title: normalizedTitle,
+      isCompleted: false,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      lifecycle: LifeOsEntityLifecycle.active,
+      version: 1,
+      source: LifeOsEntitySource.user,
+    );
+  }
+
   @override
   final LifeOsEntityId id;
 

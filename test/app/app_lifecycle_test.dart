@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/app/app.dart';
 import 'package:lifeos/app/dependencies.dart';
+import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
 import 'package:lifeos/infrastructure/persistence/drift/lifeos_database.dart';
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_task_repository.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
@@ -19,6 +20,15 @@ void main() {
         database,
         () => 'change-test',
         'device-test',
+      ),
+      createTask: CreateLifeOsTask(
+        repository: DriftLifeOsTaskRepository(
+          database,
+          () => 'unused-change-test',
+          'device-test',
+        ),
+        entityIdGenerator: () => 'task-test',
+        utcClock: () => DateTime.utc(2026, 9, 9),
       ),
     );
 
@@ -46,6 +56,11 @@ void main() {
     final dependencies = LifeOsAppDependencies(
       database: database,
       taskRepository: repository,
+      createTask: CreateLifeOsTask(
+        repository: repository,
+        entityIdGenerator: () => 'task-test',
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
     );
 
     await tester.pumpWidget(LifeOSApp(dependencies: dependencies));

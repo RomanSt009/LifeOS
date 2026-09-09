@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifeos/application/use_cases/toggle_stored_task_completion.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/infrastructure/persistence/drift/production_database.dart';
@@ -65,4 +66,85 @@ void main() {
       );
     },
   );
+
+  test('retains both completion transitions after reopen with one Outbox change each', () async {
+    final supportDirectory = await Directory.systemTemp.createTemp(
+      'lifeos-toggle-restart-',
+    );
+    addTearDown(() => supportDirectory.delete(recursive: true));
+    const taskId = LifeOsEntityId(
+      value: 'task-toggle-restart',
+      entityType: LifeOsEntityType.task,
+    );
+    final createdAt = DateTime.utc(2026, 9, 9, 10);
+    final completedAt = DateTime.utc(2026, 9, 9, 11);
+    final reopenedAt = DateTime.utc(2026, 9, 9, 12);
+    final original = LifeOsTask.createUserTask(
+      id: taskId,
+      title: 'Persist both completion states',
+      timestamp: createdAt,
+    );
+
+    final firstDatabase = await openProductionDatabase(
+      applicationSupportDirectoryProvider: () async => supportDirectory,
+    );
+    final firstChangeIds = ['change-create', 'change-complete'];
+    final firstRepository = DriftLifeOsTaskRepository(
+      firstDatabase,
+      () => firstChangeIds.removeAt(0),
+      'device-test',
+    );
+    await firstRepository.save(original);
+    final completed = await ToggleStoredTaskCompletion(
+      repository: firstRepository,
+    )(taskId, updatedAt: completedAt);
+    expect(completed?.isCompleted, isTrue);
+    await firstDatabase.close();
+
+    final secondDatabase = await openProductionDatabase(
+      applicationSupportDirectoryProvider: () async => supportDirectory,
+    );
+    final secondRepository = DriftLifeOsTaskRepository(
+      secondDatabase,
+      () => 'change-incomplete',
+      'device-test',
+    );
+    expect((await secondRepository.getById(taskId))?.isCompleted, isTrue);
+    final incomplete = await ToggleStoredTaskCompletion(
+      repository: secondRepository,
+    )(taskId, updatedAt: reopenedAt);
+    expect(incomplete?.isCompleted, isFalse);
+    await secondDatabase.close();
+
+    final finalDatabase = await openProductionDatabase(
+      applicationSupportDirectoryProvider: () async => supportDirectory,
+    );
+    addTearDown(finalDatabase.close);
+    final finalRepository = DriftLifeOsTaskRepository(
+      finalDatabase,
+      () => 'unused-change-id',
+      'device-test',
+    );
+    final persisted = await finalRepository.getById(taskId);
+    final outbox = await finalDatabase
+        .select(finalDatabase.outboxEntries)
+        .get();
+
+    expect(persisted?.isCompleted, isFalse);
+    expect(persisted?.version, 3);
+    expect(persisted?.updatedAt, reopenedAt);
+    expect(outbox, hasLength(3));
+    expect(
+      outbox.map((entry) => entry.operation),
+      unorderedEquals(['CREATE', 'UPDATE', 'UPDATE']),
+    );
+    expect(
+      outbox.map((entry) => entry.changeId),
+      unorderedEquals([
+        'change-create',
+        'change-complete',
+        'change-incomplete',
+      ]),
+    );
+  });
 }

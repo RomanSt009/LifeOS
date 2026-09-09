@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/app/dependencies.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
-import 'package:lifeos/domain/entities/lifeos_task.dart';
 
 void main() {
   test(
@@ -17,29 +16,27 @@ void main() {
       final dependencies = await createProductionDependencies(
         applicationSupportDirectoryProvider: () async => supportDirectory,
         identifierGenerator: () => generatedIdentifiers.removeAt(0),
+        entityIdGenerator: () => 'composed-task',
+        utcClock: () => DateTime.utc(2026, 9, 8, 12),
       );
       addTearDown(dependencies.close);
       const taskId = LifeOsEntityId(
         value: 'composed-task',
         entityType: LifeOsEntityType.task,
       );
-      final task = LifeOsTask(
-        id: taskId,
-        title: 'Use the production composition',
-        isCompleted: false,
-        createdAt: DateTime.utc(2026, 9, 8, 12),
-        updatedAt: DateTime.utc(2026, 9, 8, 12),
-        lifecycle: LifeOsEntityLifecycle.active,
-        version: 1,
-        source: LifeOsEntitySource.user,
+      final task = await dependencies.createTask(
+        'Use the production composition',
       );
-
-      await dependencies.taskRepository.save(task);
       final outbox = await dependencies.database
           .select(dependencies.database.outboxEntries)
           .getSingle();
 
       expect(await dependencies.taskRepository.getById(taskId), task);
+      expect(task.createdAt, DateTime.utc(2026, 9, 8, 12));
+      expect(task.updatedAt, task.createdAt);
+      expect(task.lifecycle, LifeOsEntityLifecycle.active);
+      expect(task.version, 1);
+      expect(task.source, LifeOsEntitySource.user);
       expect(outbox.changeId, 'change-test');
       expect(outbox.deviceId, 'device-test');
     },

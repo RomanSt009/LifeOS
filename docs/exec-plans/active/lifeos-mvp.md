@@ -90,9 +90,9 @@ Milestone: Local persistent Task vertical slice
 
 Status: active
 
-Current checkpoint: CP-05
+Current checkpoint: CP-07
 
-Next ready checkpoint: CP-05
+Next ready checkpoint: CP-07
 
 Blockers: none.
 
@@ -394,7 +394,7 @@ Validation:
 
 ## CP-05 — Create Task vertical path
 
-Status: pending
+Status: done
 
 Depends on: CP-04
 
@@ -449,7 +449,7 @@ Mark blocked and request the smallest required decision.
 
 ### Result / evidence
 
-Pending implementation.
+Completed on 2026-09-09.
 
 Evidence:
 
@@ -458,13 +458,25 @@ Evidence:
 - production UTC time is supplied through an injectable clock;
 - a new user Task starts active at version 1 with source `user`;
 - creation obtains one UTC timestamp and uses it for both `createdAt` and `updatedAt`;
-- no CP-05 production implementation has been performed yet.
+- `LifeOsTask.createUserTask` owns title, typed-ID, UTC, and initial metadata invariants;
+- `CreateLifeOsTask` obtains one injected ID and UTC timestamp, saves through the Domain repository, and returns the persisted Task;
+- production composition supplies UUID v4 Entity IDs and the production UTC clock;
+- the Task list UI accepts a title and displays the saved Task immediately;
+- focused Domain, Application, composition, persistence, and widget tests cover the vertical path.
+
+Validation:
+
+- focused CP-05 tests: PASS — 19 tests;
+- flutter analyze: PASS — no issues;
+- flutter test: PASS — 33 tests;
+- import-boundary scan: PASS;
+- git diff --check: PASS.
 
 ---
 
 ## CP-06 — Persistent completion toggle
 
-Status: pending
+Status: done
 
 Depends on: CP-05
 
@@ -505,7 +517,23 @@ Connect the existing Task completion behavior to the real persisted Task list.
 
 ### Result / evidence
 
-Pending.
+Completed on 2026-09-09.
+
+Evidence:
+
+- the persisted Task list invokes the existing Application toggle use case through Riverpod;
+- incomplete-to-complete and complete-to-incomplete transitions update the UI and persistence;
+- Domain completion behavior remains immutable and advances Entity version metadata;
+- each completion mutation produces its own atomic `UPDATE` Outbox change;
+- a focused file-backed test verifies both transitions, three total Outbox changes including creation, and the final state after database reopen.
+
+Validation:
+
+- focused CP-06 tests: PASS — 16 tests;
+- flutter analyze: PASS — no issues;
+- flutter test: PASS — 34 tests;
+- import-boundary scan: PASS;
+- git diff --check: PASS.
 
 ---
 
@@ -618,9 +646,9 @@ Do not implement as part of this plan unless an accepted architecture decision e
 
 This section is maintained by Codex.
 
-Last checkpoint update: 2026-09-09 — ADR-0026 accepted; CP-05 returned to pending
+Last checkpoint update: 2026-09-09 — CP-06 completed; stopped before CP-07
 
-Current checkpoint: CP-05
+Current checkpoint: CP-07
 
 Current checkpoint status: pending
 
@@ -649,17 +677,25 @@ Last successful validation:
 - CP-04 flutter test: PASS — 28 tests
 - CP-04 import-boundary scan: PASS
 - CP-04 git diff --check: PASS
+- CP-05 focused tests: PASS — 19 tests
+- CP-05 flutter analyze: PASS — no issues
+- CP-05 flutter test: PASS — 33 tests
+- CP-05 import-boundary scan: PASS
+- CP-05 git diff --check: PASS
+- CP-06 focused tests: PASS — 16 tests
+- CP-06 flutter analyze: PASS — no issues
+- CP-06 flutter test: PASS — 34 tests
+- CP-06 import-boundary scan: PASS
+- CP-06 git diff --check: PASS
 
 Work completed in current checkpoint:
 
-- CP-01 through CP-04 completed and validated;
-- CP-05 architecture gate audited ADR-0016, ADR-0017, ADR-0023, ADR-0025, and the current Domain constructors/composition;
-- ADR-0026 was accepted and resolves the architecture gate;
-- no CP-05 implementation was started.
+- CP-01 through CP-06 completed and validated;
+- CP-06 persistent completion, UI state, Outbox, and restart behavior are complete.
 
 Work remaining in current checkpoint:
 
-- implement and validate the minimal create-Task vertical path.
+- begin CP-07 restart persistence verification after its architecture gate.
 
 Known blockers:
 
@@ -685,7 +721,9 @@ Working-tree notes:
 - before this bookkeeping update, `.obsidian/workspace.json` was modified and ADR-0026 was untracked user-owned work;
 - agent change: only this execution plan bookkeeping;
 - `.obsidian/workspace.json` and ADR-0026 were not modified by the agent;
-- no CP-05 production code or tests were changed;
+- CP-05 production code, tests, and this plan were changed by the agent;
+- CP-06 production code, tests, and this plan were changed by the agent;
+- CP-07 has not started;
 - never assume this section is newer than repository evidence.
 
 ---

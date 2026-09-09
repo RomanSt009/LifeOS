@@ -70,4 +70,50 @@ void main() {
     expect(task.version, 1);
     expect(completed, isNot(same(task)));
   });
+
+  test('creates a valid user Task with the required initial metadata', () {
+    final timestamp = DateTime.utc(2026, 9, 9, 14);
+
+    final task = LifeOsTask.createUserTask(
+      id: const LifeOsEntityId(
+        value: 'task-created',
+        entityType: LifeOsEntityType.task,
+      ),
+      title: '  Create a Task  ',
+      timestamp: timestamp,
+    );
+
+    expect(task.title, 'Create a Task');
+    expect(task.isCompleted, isFalse);
+    expect(task.createdAt, timestamp);
+    expect(task.updatedAt, same(timestamp));
+    expect(task.lifecycle, LifeOsEntityLifecycle.active);
+    expect(task.version, 1);
+    expect(task.source, LifeOsEntitySource.user);
+  });
+
+  test('rejects invalid user Task creation input', () {
+    expect(
+      () => LifeOsTask.createUserTask(
+        id: const LifeOsEntityId(
+          value: 'task-created',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: '   ',
+        timestamp: DateTime.utc(2026, 9, 9, 14),
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => LifeOsTask.createUserTask(
+        id: const LifeOsEntityId(
+          value: 'task-created',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Create a Task',
+        timestamp: DateTime(2026, 9, 9, 14),
+      ),
+      throwsArgumentError,
+    );
+  });
 }
