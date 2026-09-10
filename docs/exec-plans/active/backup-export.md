@@ -1,6 +1,6 @@
 # LifeOS Backup / Export — план выполнения
 
-Статус: blocked
+Статус: active
 
 ## Цель
 
@@ -27,7 +27,8 @@ Milestone не должен связывать пользовательский 
 - ADR-0024 — production database lifecycle;
 - ADR-0025 — local change и device identity;
 - ADR-0026 — Entity creation identity/defaults;
-- ADR-0027 — localization strategy.
+- ADR-0027 — localization strategy;
+- ADR-0028 — Backup, Export и Restore contract.
 
 Сохраняется направление зависимостей:
 
@@ -54,7 +55,7 @@ Composition root -> concrete Infrastructure lifecycle
 
 ## BE-01 — Аудит требований и architecture gate
 
-Статус: blocked
+Статус: done
 
 ### Goal
 
@@ -67,7 +68,7 @@ Composition root -> concrete Infrastructure lifecycle
 - ADR-0009;
 - ADR-0010;
 - ADR-0011;
-- ADR-0016 — ADR-0027.
+- ADR-0016 — ADR-0028.
 
 ### Scope
 
@@ -105,7 +106,7 @@ Composition root -> concrete Infrastructure lifecycle
 
 ### Result / blocker
 
-Architecture gate: BLOCKED. До BE-02 требуется новый принятый ADR, потому что существующие ADR намеренно не определяют несколько связанных долгоживущих решений, непосредственно формирующих внешний Backup contract.
+Architecture gate: PASS после принятия ADR-0028. Первичный аудит корректно остановил BE-01 как `blocked`, потому что существующие ADR намеренно не определяли несколько связанных долгоживущих решений, непосредственно формирующих внешний Backup contract. ADR-0028 теперь закрывает эти вопросы и снимает blocker перед BE-02.
 
 #### Сверка Git, планов и repository
 
@@ -226,7 +227,7 @@ ADR-0011 уже задаёт высокоуровневое направлени
 - минимальный Presentation entry point без Settings;
 - необходимость узкой file-picker dependency после отдельного approval.
 
-**C. Требует нового ADR до BE-02**
+**C. Требовало нового ADR до BE-02; снято ADR-0028**
 
 - точный initial Backup artifact contract и его отношение к Export/shared logical snapshot;
 - включение и restore semantics pending Outbox;
@@ -244,7 +245,7 @@ ADR-0011 уже задаёт высокоуровневое направлени
 - encryption algorithm/key management implementation после отдельного решения;
 - Sync transport, registration, acknowledgement и conflict engine.
 
-#### Точный blocker и варианты
+#### Исторический blocker и рассмотренные варианты
 
 Нужен новый ADR с вопросом: **каков начальный versioned Backup/Export artifact contract LifeOS и как он обращается с pending Outbox, installation `device_id`, compatibility и encryption при восстановлении на той же или новой installation?**
 
@@ -253,7 +254,23 @@ ADR-0011 уже задаёт высокоуровневое направлени
 3. **Versioned archive с manifest + logical Domain data; отдельный Export artifact.** Плюсы: соответствует ADR-0011, расширяется до files, checksums и encryption, не зависит от Drift schema. Минусы: больше initial contract и restore mapping. Для Sync наиболее безопасен, потому что Outbox/device sections можно сделать явными и policy-driven.
 4. **Archive с raw SQLite payload.** Плюсы: container metadata и быстрый same-version recovery. Минусы: сохраняет schema coupling и не решает identity semantics; для cross-version/new-device restore риск остаётся.
 
-Рекомендация: вариант 3; Export — отдельный open logical JSON contract; pending Outbox не включать в portable Export, а Backup включать только согласно явно принятой recovery policy; на новом компьютере создавать новый installation `device_id`, не меняя Entity UUID, но судьбу старых pending Changes зафиксировать ADR. Эта рекомендация не считается принятой.
+ADR-0028 принял вариант 3: versioned archive/container с manifest и logical Domain data для Backup; отдельный human-readable logical JSON для Export. Active Outbox полностью исключён из Backup/Export v1 и не восстанавливается; новая installation сохраняет собственный новый `device_id`, а существующая — свой текущий. Entity UUID и Domain metadata сохраняются. Restore v1 является replace-style, initial Backup v1 может быть локальным незашифрованным artifact, а future encryption остаётся обязательной точкой расширения формата.
+
+#### Закрытие architecture gate ADR-0028
+
+- Backup и Export закреплены как разные пользовательские scenarios и внешние contracts; общий внутренний logical snapshot/read pipeline разрешён без смешения artifacts.
+- Backup v1 — не raw SQLite copy, а versioned logical archive/container с manifest и logical data snapshot.
+- Export v1 — отдельный versioned human-readable logical JSON, не обязанный обеспечивать full Restore.
+- Database schema version, backup/export format versions, Entity version, Outbox payload schema version и application version разделены.
+- Entity UUID, timestamps, lifecycle, Entity version, source/provenance и typed Domain state сохраняются.
+- Operational `device_id` не включается в v1 artifacts и не заменяется при Restore.
+- Active Outbox полностью исключается из Backup/Export v1; Restore не replay старые Changes и не создаёт обычную Outbox mutation на каждую restored Entity.
+- Future Sync обязан выполнять отдельный reconciliation/bootstrap restored state.
+- Restore v1 выбран как replace-style; merge, selective Import и conflict-aware Restore отложены.
+- Reader v1 явно отклоняет malformed/unknown/unsupported versions до mutation.
+- Encryption/password protection не обязательны в local-only v1, но format не должен блокировать их будущее добавление.
+- Consistent logical snapshot, validation и crash-safe finalization закреплены; concrete I/O остаётся Infrastructure responsibility.
+- Нерешённых architecture questions, блокирующих BE-02, после ADR-0028 не осталось.
 
 #### Validation evidence
 
@@ -264,10 +281,20 @@ ADR-0011 уже задаёт высокоуровневое направлени
 - `dart pub deps --style=compact` и offline-вариант в текущей среде дважды зависли без вывода и были остановлены; файлов они не изменили. Результат не выдан и не заявляется как PASS.
 - Drift generation: not applicable — schema/API/generated files не менялись.
 - `git diff --check`: PASS; только информационные LF/CRLF warnings для существующего пользовательского `.obsidian/workspace.json` и изменённого README.
-- Итоговый Git ref BE-01: `HEAD` = `abceff3fdbe90ceb48d76ae753dc24d434078f55`, `main` синхронизирован с `origin/main`; commit/push не выполнялись.
+- Итоговый Git ref первоначального аудита BE-01: `HEAD` = `abceff3fdbe90ceb48d76ae753dc24d434078f55`, `main` синхронизирован с `origin/main`; commit/push не выполнялись.
 - Итоговый working tree: пользовательский `M .obsidian/workspace.json`; milestone changes — `M docs/exec-plans/README.md`, перенос `docs/exec-plans/active/local-search.md` в `docs/exec-plans/completed/local-search.md` с идентичным Git blob `a4a11083c72844acf33e8138d8e27558893dfe4f`, новый `docs/exec-plans/active/backup-export.md`. До staging Git показывает перенос как deleted + untracked.
 
-BE-01 не выполнен как `done`, потому что категория C блокирует безопасное начало BE-02.
+Docs-only closure после ADR-0028:
+
+- создан `docs/adr/ADR-0028-backup-export-restore-contract.md` со статусом `Принято`;
+- production code, tests, Drift schema, generated files и dependencies не изменялись;
+- Flutter validation не повторялась, поскольку изменение ограничено ADR и execution-plan bookkeeping;
+- `git diff --check`: PASS; только информационные LF/CRLF warnings для пользовательского `.obsidian/workspace.json` и этого execution plan;
+- Markdown/ADR reference scan: PASS — все ADR, указанные планом, существуют;
+- Git ref при снятии gate: `HEAD` = `bc21bd4aa5995b40d48b4d729973bce9871bb35d`, `main` синхронизирован с `origin/main`;
+- Working tree при снятии gate: пользовательский `M .obsidian/workspace.json`; milestone changes — `M docs/exec-plans/active/backup-export.md` и новый `docs/adr/ADR-0028-backup-export-restore-contract.md`;
+- BE-01 Definition of Done выполнен, checkpoint переведён в `done`;
+- BE-02 остаётся `pending` и в этом запуске не начинался.
 
 ---
 
@@ -285,7 +312,7 @@ BE-01 не выполнен как `done`, потому что категори�
 - ADR-0011;
 - ADR-0019;
 - ADR-0020;
-- новый принятый Backup/Export implementation ADR, если потребован BE-01.
+- ADR-0028.
 
 ### Scope
 
@@ -668,8 +695,8 @@ BE-01 не выполнен как `done`, потому что категори�
 
 # Точка возобновления
 
-Resume point: принять новый Backup/Export implementation ADR, закрывающий format, Outbox, device identity, compatibility и initial encryption policy. После принятия ADR перечитать его, перевести BE-01 из `blocked` в `done` только после подтверждения снятия всех blockers и затем начать BE-02. BE-02 сейчас не начинать.
+Resume point: BE-01 завершён, architecture gate снят принятым ADR-0028. BE-02 является следующим `pending` checkpoint; перед его началом перечитать ADR-0010, ADR-0011, ADR-0019, ADR-0020 и ADR-0028 и сверить Git/repository state.
 
 # Состояние выполнения плана
 
-Статус: blocked
+Статус: active
