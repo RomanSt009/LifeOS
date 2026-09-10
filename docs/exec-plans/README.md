@@ -8,7 +8,7 @@
 
 Текущий основной активный план:
 
-`docs/exec-plans/active/local-search.md`
+`docs/exec-plans/active/backup-export.md`
 
 Структура каталогов:
 
@@ -16,9 +16,10 @@
 docs/exec-plans/
 ├── README.md
 ├── active/
-│   └── local-search.md
+│   └── backup-export.md
 └── completed/
     ├── desktop-shell-navigation.md
+    ├── local-search.md
     └── lifeos-mvp.md
 ```
 
