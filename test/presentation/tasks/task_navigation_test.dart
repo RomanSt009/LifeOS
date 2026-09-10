@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
+import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/shell/lifeos_shell_page.dart';
+import 'package:lifeos/presentation/search/task_search_providers.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list_providers.dart';
 
@@ -35,6 +37,8 @@ void main() {
       expect(find.text('Persisted Task'), findsOneWidget);
 
       await navigate(tester, 'Home');
+      await navigate(tester, 'Tasks');
+      await navigate(tester, 'Search');
       await navigate(tester, 'Tasks');
       await navigate(tester, 'Home');
       await navigate(tester, 'Tasks');
@@ -78,6 +82,9 @@ Widget testApp(LifeOsTaskRepository repository, CreateLifeOsTask createTask) {
     overrides: [
       lifeOsTaskRepositoryProvider.overrideWithValue(repository),
       createLifeOsTaskProvider.overrideWithValue(createTask),
+      searchLifeOsTasksProvider.overrideWithValue(
+        SearchLifeOsTasks(repository),
+      ),
     ],
     child: const MaterialApp(
       locale: Locale('en'),

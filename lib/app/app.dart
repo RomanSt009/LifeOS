@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
 import '../presentation/shell/lifeos_shell_page.dart';
+import '../presentation/search/task_search_providers.dart';
 import '../presentation/tasks/task_completion_providers.dart';
 import '../presentation/tasks/task_list_providers.dart';
 import 'dependencies.dart';
@@ -49,6 +50,9 @@ class _LifeOSAppState extends State<LifeOSApp> {
         ),
         createLifeOsTaskProvider.overrideWithValue(
           widget.dependencies.createTask,
+        ),
+        searchLifeOsTasksProvider.overrideWithValue(
+          widget.dependencies.searchTasks,
         ),
       ],
       child: MaterialApp(

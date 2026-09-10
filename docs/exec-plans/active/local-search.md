@@ -440,7 +440,7 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 ## LS-05 — Интеграция Search в desktop shell
 
-Статус: pending
+Статус: done
 
 Зависит от: LS-04
 
@@ -490,7 +490,20 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 ### Результат / доказательства
 
-Ожидает выполнения.
+- Architecture gate: PASS. ADR-0002, ADR-0007, ADR-0012, ADR-0022, ADR-0024, ADR-0027 и завершённый Desktop Shell / Navigation plan допускают добавление третьего in-shell destination через существующие Flutter SDK navigation, `IndexedStack` и app-owned Riverpod composition; новый ADR или routing framework не требуются.
+- На старте checkpoint `HEAD` = `297861a` и совпадал с `origin/main`; LS-01 — LS-04 были `done`, LS-05 — первым pending checkpoint. Рабочее дерево содержало только исходное пользовательское изменение `.obsidian/workspace.json`, которое не затрагивалось.
+- В `LifeOsDestination` добавлен только `search`; `LifeosShellPage` получил локализованный Search destination и существующий `TaskSearchPage` третьим child текущего `IndexedStack`. Начальный destination остался `Tasks`, а shell-local `_selectedDestination` и navigation architecture не изменились.
+- `LifeOsAppDependencies` создаёт один `SearchLifeOsTasks` поверх уже принадлежащего composition экземпляра `LifeOsTaskRepository`; `LifeOSApp` передаёт этот use case через существующий root `ProviderScope`. Search Presentation не создаёт и не импортирует database/repository implementation, а production database/repository lifecycle не дублируется.
+- Добавлен семантический ARB key `navigationSearch` для English (`Search`) и Russian (`Поиск`); generated `app_localizations*.dart` обновлены только командой `flutter gen-l10n`.
+- Focused shell/Search/Tasks navigation, Search Presentation, localization и composition tests: PASS — 24 tests. Подтверждены точные destinations `Home / Tasks / Search`, переходы `Home -> Search -> Home -> Search` и `Tasks -> Search -> Tasks`, сохранение Search query/result без повторного query, сохранение Task draft/provider state, Task create/list/toggle behavior и English/Russian labels.
+- `flutter gen-l10n`: PASS.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 63 tests.
+- Import-boundary scan: PASS — Domain/Application не импортируют Flutter/Drift/Infrastructure/Presentation; Presentation не импортирует Drift/SQLite/Infrastructure; localization не вышла за Presentation/composition.
+- Routing dependency scan: PASS — `go_router`, `GoRouter`, `RouterConfig` и новый routing package отсутствуют; `pubspec.yaml` и lockfile не изменялись.
+- Scope audit: PASS — добавлены только Search destination, его localization/composition wiring и focused tests; Home/Tasks behavior, Domain, Infrastructure, persistence schema, Outbox и deferred Notes/Projects/AI/Settings не изменялись.
+- `git diff --check`: PASS; выведены только информационные предупреждения Git о преобразовании LF/CRLF.
+- Итоговый Git ref до пользовательского review: `HEAD` = `297861a`, `origin/main` = `297861a`, divergence `0/0`. Рабочее дерево содержит LS-05 files и отдельное исходное пользовательское изменение `.obsidian/workspace.json`.
 
 ### Blocker
 
@@ -620,20 +633,20 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 # Точка возобновления
 
-Текущий checkpoint: LS-05 — pending
+Текущий checkpoint: LS-06 — pending
 
-Resume checkpoint: LS-05, начать с повторной сверки Git/plan и отметить LS-05 `active` перед интеграцией Search в desktop shell.
+Resume checkpoint: LS-06, начать с повторной сверки Git/plan и отметить LS-06 `active` перед edge cases, persistence и UX audit.
 
-Не начинать LS-05 в текущем запуске.
+Не начинать LS-06 в текущем запуске.
 
 # Состояние выполнения плана
 
 Статус: active
 
-Завершённые checkpoints: LS-01, LS-02, LS-03, LS-04
+Завершённые checkpoints: LS-01, LS-02, LS-03, LS-04, LS-05
 
-Текущий checkpoint: LS-05 — pending
+Текущий checkpoint: LS-06 — pending
 
-Следующий pending checkpoint: LS-05
+Следующий pending checkpoint: LS-06
 
 Blockers: отсутствуют

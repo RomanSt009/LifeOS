@@ -22,6 +22,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navigationTasks => 'Задачи';
 
   @override
+  String get navigationSearch => 'Поиск';
+
+  @override
   String get searchTitle => 'Поиск';
 
   @override

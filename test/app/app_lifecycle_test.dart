@@ -5,8 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/app/app.dart';
 import 'package:lifeos/app/dependencies.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
+import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
 import 'package:lifeos/infrastructure/persistence/drift/lifeos_database.dart';
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_task_repository.dart';
+import 'package:lifeos/presentation/search/task_search_providers.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 
 void main() {
@@ -14,22 +16,20 @@ void main() {
     tester,
   ) async {
     final database = LifeOsDatabase(NativeDatabase.memory());
+    final repository = DriftLifeOsTaskRepository(
+      database,
+      () => 'change-test',
+      'device-test',
+    );
     final dependencies = LifeOsAppDependencies(
       database: database,
-      taskRepository: DriftLifeOsTaskRepository(
-        database,
-        () => 'change-test',
-        'device-test',
-      ),
+      taskRepository: repository,
       createTask: CreateLifeOsTask(
-        repository: DriftLifeOsTaskRepository(
-          database,
-          () => 'unused-change-test',
-          'device-test',
-        ),
+        repository: repository,
         entityIdGenerator: () => 'task-test',
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),
+      searchTasks: SearchLifeOsTasks(repository),
     );
 
     await tester.pumpWidget(LifeOSApp(dependencies: dependencies));
@@ -61,6 +61,7 @@ void main() {
         entityIdGenerator: () => 'task-test',
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),
+      searchTasks: SearchLifeOsTasks(repository),
     );
 
     await tester.pumpWidget(LifeOSApp(dependencies: dependencies));
@@ -69,6 +70,10 @@ void main() {
     );
 
     expect(container.read(lifeOsTaskRepositoryProvider), same(repository));
+    expect(
+      container.read(searchLifeOsTasksProvider),
+      same(dependencies.searchTasks),
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
     await dependencies.close();

@@ -1,4 +1,5 @@
 import '../application/use_cases/create_lifeos_task.dart';
+import '../application/use_cases/search_lifeos_tasks.dart';
 import '../domain/repositories/lifeos_task_repository.dart';
 import '../infrastructure/identity/file_device_identity_store.dart';
 import '../infrastructure/identity/uuid_v4_generator.dart';
@@ -11,11 +12,13 @@ class LifeOsAppDependencies {
     required this.database,
     required this.taskRepository,
     required this.createTask,
+    required this.searchTasks,
   });
 
   final LifeOsDatabase database;
   final LifeOsTaskRepository taskRepository;
   final CreateLifeOsTask createTask;
+  final SearchLifeOsTasks searchTasks;
 
   Future<void>? _closeFuture;
 
@@ -45,11 +48,13 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     entityIdGenerator: entityIdGenerator,
     utcClock: utcClock,
   );
+  final searchTasks = SearchLifeOsTasks(taskRepository);
 
   return LifeOsAppDependencies(
     database: database,
     taskRepository: taskRepository,
     createTask: createTask,
+    searchTasks: searchTasks,
   );
 }
 

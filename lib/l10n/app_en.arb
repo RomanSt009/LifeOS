@@ -4,6 +4,7 @@
   "appDescription": "Personal Operating System",
   "navigationHome": "Home",
   "navigationTasks": "Tasks",
+  "navigationSearch": "Search",
   "searchTitle": "Search",
   "searchQueryFieldLabel": "Task title",
   "searchAction": "Search",

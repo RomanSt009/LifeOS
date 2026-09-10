@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'Tasks'**
   String get navigationTasks;
 
+  /// No description provided for @navigationSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get navigationSearch;
+
   /// No description provided for @searchTitle.
   ///
   /// In en, this message translates to:

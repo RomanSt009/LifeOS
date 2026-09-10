@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../home/home_placeholder.dart';
 import '../navigation/lifeos_destination.dart';
+import '../search/task_search_page.dart';
 import '../tasks/task_page.dart';
 
 class LifeosShellPage extends StatefulWidget {
@@ -42,6 +43,11 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
                 selectedIcon: const Icon(Icons.task_alt),
                 label: Text(localizations.navigationTasks),
               ),
+              NavigationRailDestination(
+                icon: const Icon(Icons.search_outlined),
+                selectedIcon: const Icon(Icons.search),
+                label: Text(localizations.navigationSearch),
+              ),
             ],
           ),
           const VerticalDivider(width: 1),
@@ -54,6 +60,7 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
                   child: HomePlaceholder(),
                 ),
                 const TaskPage(),
+                const TaskSearchPage(),
               ],
             ),
           ),

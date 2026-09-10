@@ -12,6 +12,7 @@ void main() {
     expect(english.taskCreateAction, 'Add Task');
     expect(english.navigationHome, 'Home');
     expect(english.navigationTasks, 'Tasks');
+    expect(english.navigationSearch, 'Search');
     expect(english.searchTitle, 'Search');
     expect(english.searchQueryFieldLabel, 'Task title');
     expect(english.searchAction, 'Search');
@@ -22,6 +23,7 @@ void main() {
     expect(russian.taskCreateAction, 'Добавить задачу');
     expect(russian.navigationHome, 'Главная');
     expect(russian.navigationTasks, 'Задачи');
+    expect(russian.navigationSearch, 'Поиск');
     expect(russian.searchTitle, 'Поиск');
     expect(russian.searchQueryFieldLabel, 'Название задачи');
     expect(russian.searchAction, 'Найти');

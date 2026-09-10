@@ -4,6 +4,7 @@
   "appDescription": "Персональная операционная система",
   "navigationHome": "Главная",
   "navigationTasks": "Задачи",
+  "navigationSearch": "Поиск",
   "searchTitle": "Поиск",
   "searchQueryFieldLabel": "Название задачи",
   "searchAction": "Найти",

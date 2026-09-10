@@ -32,6 +32,7 @@ void main() {
           .getSingle();
 
       expect(await dependencies.taskRepository.getById(taskId), task);
+      expect(await dependencies.searchTasks('production'), [task]);
       expect(task.createdAt, DateTime.utc(2026, 9, 8, 12));
       expect(task.updatedAt, task.createdAt);
       expect(task.lifecycle, LifeOsEntityLifecycle.active);

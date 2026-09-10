@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/navigation/lifeos_destination.dart';
 import 'package:lifeos/presentation/shell/lifeos_shell_page.dart';
+import 'package:lifeos/presentation/search/task_search_page.dart';
+import 'package:lifeos/presentation/search/task_search_providers.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list.dart';
 
@@ -66,9 +69,10 @@ void main() {
     expect(LifeOsDestination.values, [
       LifeOsDestination.home,
       LifeOsDestination.tasks,
+      LifeOsDestination.search,
     ]);
-    expect(navigationRail.destinations, hasLength(2));
-    expect(destinationLabels(navigationRail), ['Home', 'Tasks']);
+    expect(navigationRail.destinations, hasLength(3));
+    expect(destinationLabels(navigationRail), ['Home', 'Tasks', 'Search']);
   });
 
   testWidgets('shows a persistent desktop frame with Tasks selected', (
@@ -83,8 +87,71 @@ void main() {
 
     expect(navigationRail.selectedIndex, LifeOsDestination.tasks.index);
     expect(navigationRail.labelType, NavigationRailLabelType.all);
-    expect(destinationLabels(navigationRail), ['Home', 'Tasks']);
+    expect(destinationLabels(navigationRail), ['Home', 'Tasks', 'Search']);
     expect(find.byType(TaskList), findsOneWidget);
+    expect(find.byKey(const Key('task-title-field')), findsOneWidget);
+  });
+
+  testWidgets('opens Search and preserves its state across navigation', (
+    tester,
+  ) async {
+    final repository = EmptyLifeOsTaskRepository(
+      searchResults: [
+        LifeOsTask.createUserTask(
+          id: const LifeOsEntityId(
+            value: 'task-search-result',
+            entityType: LifeOsEntityType.task,
+          ),
+          title: 'Search result',
+          timestamp: DateTime.utc(2026, 9, 10),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      testApp(const Locale('en'), repository: repository),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Search'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TaskSearchPage), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('search-query-field')),
+      'result',
+    );
+    await tester.tap(find.byKey(const Key('search-submit-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Search result'), findsOneWidget);
+    expect(repository.searchByTitleCallCount, 1);
+
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Search'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<TextField>(find.byKey(const Key('search-query-field')))
+          .controller
+          ?.text,
+      'result',
+    );
+    expect(find.text('Search result'), findsOneWidget);
+    expect(repository.searchByTitleCallCount, 1);
+  });
+
+  testWidgets('switches between Tasks, Search, and Tasks', (tester) async {
+    await tester.pumpWidget(testApp(const Locale('en')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('task-title-field')), findsOneWidget);
+    await tester.tap(find.text('Search'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('search-query-field')), findsOneWidget);
+    await tester.tap(find.text('Tasks'));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('task-title-field')), findsOneWidget);
   });
 
@@ -156,7 +223,7 @@ void main() {
       find.byType(NavigationRail),
     );
 
-    expect(destinationLabels(navigationRail), ['Главная', 'Задачи']);
+    expect(destinationLabels(navigationRail), ['Главная', 'Задачи', 'Поиск']);
   });
 }
 
@@ -171,7 +238,12 @@ Widget testApp(Locale locale, {EmptyLifeOsTaskRepository? repository}) {
   final taskRepository = repository ?? EmptyLifeOsTaskRepository();
 
   return ProviderScope(
-    overrides: [lifeOsTaskRepositoryProvider.overrideWithValue(taskRepository)],
+    overrides: [
+      lifeOsTaskRepositoryProvider.overrideWithValue(taskRepository),
+      searchLifeOsTasksProvider.overrideWithValue(
+        SearchLifeOsTasks(taskRepository),
+      ),
+    ],
     child: MaterialApp(
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -182,7 +254,11 @@ Widget testApp(Locale locale, {EmptyLifeOsTaskRepository? repository}) {
 }
 
 class EmptyLifeOsTaskRepository implements LifeOsTaskRepository {
+  EmptyLifeOsTaskRepository({this.searchResults = const []});
+
+  final List<LifeOsTask> searchResults;
   int getAllCallCount = 0;
+  int searchByTitleCallCount = 0;
 
   @override
   Future<List<LifeOsTask>> getAll() async {
@@ -194,7 +270,10 @@ class EmptyLifeOsTaskRepository implements LifeOsTaskRepository {
   Future<LifeOsTask?> getById(LifeOsEntityId id) async => null;
 
   @override
-  Future<List<LifeOsTask>> searchByTitle(String query) async => [];
+  Future<List<LifeOsTask>> searchByTitle(String query) async {
+    searchByTitleCallCount += 1;
+    return searchResults;
+  }
 
   @override
   Future<void> save(LifeOsTask task) async {}
