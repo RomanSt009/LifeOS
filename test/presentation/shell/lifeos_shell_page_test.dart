@@ -11,6 +11,24 @@ import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list.dart';
 
 void main() {
+  testWidgets('exposes only the justified initial destinations', (
+    tester,
+  ) async {
+    await tester.pumpWidget(testApp(const Locale('en')));
+    await tester.pumpAndSettle();
+
+    final navigationRail = tester.widget<NavigationRail>(
+      find.byType(NavigationRail),
+    );
+
+    expect(LifeOsDestination.values, [
+      LifeOsDestination.home,
+      LifeOsDestination.tasks,
+    ]);
+    expect(navigationRail.destinations, hasLength(2));
+    expect(destinationLabels(navigationRail), ['Home', 'Tasks']);
+  });
+
   testWidgets('shows a persistent desktop frame with Tasks selected', (
     tester,
   ) async {

@@ -375,7 +375,7 @@ Navigation state не должен проникать в Domain или Infrastru
 
 ## DS-04 — Начальная структура разделов LifeOS
 
-Статус: pending
+Статус: done
 
 Зависит от: DS-03
 
@@ -428,7 +428,22 @@ Placeholder destinations:
 
 ### Результат / доказательства
 
-Pending.
+- Architecture gate: PASS. Существующая shell уже предоставляет минимально достаточную информационную архитектуру; нового ADR или изменения принятой navigation architecture не требуется.
+- На старте DS-04 `HEAD` = `1af9d74` (`main`, на 6 commits впереди `origin/main`); единственным рабочим изменением был пользовательский `.obsidian/workspace.json`, который не затрагивался.
+- Итоговый начальный набор destinations зафиксирован как `Home` + `Tasks`:
+  - `Tasks` остаётся реальным feature destination с существующим Presentation/Application/Domain/persistence vertical slice;
+  - `Home` остаётся единственным минимальным Presentation-only placeholder, необходимым для устойчивой рамки shell и проверки переключения destinations.
+- `Notes`, `Projects`, `Search`, `AI` и `Settings` не добавлены: для них пока нет реализованных пользовательских сценариев или иного фактического требования, а дополнительные placeholders не усиливают уже проверенную архитектуру shell и создали бы спекулятивную поверхность продукта.
+- Production-код и localization resources не потребовали изменений: `LifeOsDestination`, `NavigationRail` и `IndexedStack` уже содержат ровно выбранные `Home`/`Tasks`, а все видимые строки имеют English/Russian ARB resources.
+- Граница placeholder остаётся явной: `HomePlaceholder` находится только в Presentation и не создаёт Domain/Application/Infrastructure, repositories, persistence или fake business logic.
+- Текущие extension points позволяют позднее добавить подтверждённый feature destination аддитивно через navigation identity, rail destination и content child, без изменения ownership shell state или переделки shell.
+- Добавлен focused widget test, который фиксирует точный набор enum/`NavigationRail` destinations и исключает преждевременное расширение начальной IA.
+- Focused navigation + Tasks navigation + localization tests: PASS — 10 tests; проверены точный состав destinations, переключение, сохранение Task subtree и English/Russian UI.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 44 tests.
+- Import-boundary scan: PASS — Domain/Application не получили framework/platform dependencies, Presentation не импортирует Infrastructure/Drift, localization не вышла за Presentation/composition, persistence construction не появилось вне composition.
+- Routing dependency scan: PASS — `go_router`, `auto_route` и `beamer` отсутствуют в dependencies/imports.
+- `git diff --check`: PASS; выведены только информационные предупреждения Git о преобразовании LF/CRLF.
 
 ---
 
@@ -618,13 +633,13 @@ Pending.
 
 # Точка возобновления
 
-Текущий checkpoint: DS-04
+Текущий checkpoint: DS-05
 
 Следующее действие:
 
-Перед изменениями повторно сверить Git и план, прочитать ADR и scope DS-04, затем отметить DS-04 как `active`. Оценить начальную информационную архитектуру против уже достаточного набора `Home` + `Tasks`; не добавлять placeholder destinations без отдельного фактического обоснования.
+Перед изменениями повторно сверить Git и план, прочитать ADR и scope DS-05, затем отметить DS-05 как `active`. Проверить shell и Task content на representative desktop widths без начала mobile shell или добавления responsive-layout dependency.
 
-DS-03 завершён и валидирован. DS-04 в этом запуске не начинался и остаётся `pending`.
+DS-04 завершён и валидирован. DS-05 в этом запуске не начинался и остаётся `pending`.
 
 ---
 
@@ -632,8 +647,8 @@ DS-03 завершён и валидирован. DS-04 в этом запуск
 
 Статус: active
 
-Завершённые checkpoints: DS-01, DS-02, DS-03
+Завершённые checkpoints: DS-01, DS-02, DS-03, DS-04
 
-Текущий checkpoint: DS-04
+Текущий checkpoint: DS-05
 
 Blockers: отсутствуют
