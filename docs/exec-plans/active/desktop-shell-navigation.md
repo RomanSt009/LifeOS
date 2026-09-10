@@ -254,7 +254,7 @@ test/presentation/
 
 ## DS-02 — Основа desktop shell
 
-Статус: pending
+Статус: done
 
 Зависит от: DS-01
 
@@ -301,7 +301,20 @@ Navigation state не должен проникать в Domain или Infrastru
 
 ### Результат / доказательства
 
-Pending.
+- Architecture gate повторно пройден против ADR-0002, ADR-0007, ADR-0022, ADR-0024 и ADR-0027; новое решение или ADR не потребовались.
+- `LifeosShellPage` преобразован в stateful Presentation shell; выбранный destination хранится только в `State<LifeosShellPage>` и по умолчанию равен `Tasks`.
+- Постоянная desktop-рамка содержит `NavigationRail`, визуально выбранный destination, разделитель и расширяемую content area на основе `IndexedStack`.
+- Добавлены только два согласованных destination: реальный `Tasks`, повторно использующий существующий `TaskList`, и минимальный Presentation-only `Home` placeholder.
+- `IndexedStack` сохраняет Task subtree при переключении destination; Task providers, use cases, repositories и database composition не дублировались и не изменялись.
+- Navigation identity изолирована в `lib/presentation/navigation/lifeos_destination.dart`; shell/layout остаются в Presentation.
+- В ARB добавлены семантические ключи `navigationHome` и `navigationTasks` для English/Russian; generated localization sources получены через `flutter gen-l10n` и не редактировались вручную.
+- Новая routing dependency не добавлена; shell использует только Flutter SDK.
+- Focused shell/localization/Task widget tests: PASS — 15 tests; проверены initial selection, localized English/Russian labels, визуальное переключение и сохранение Task subtree.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 42 tests.
+- Import-boundary scan: PASS — shell не ввёл Infrastructure/persistence dependencies, localization не вышла за Presentation/composition, Domain и Application остались framework-independent.
+- Routing dependency scan: PASS — сторонний router отсутствует.
+- `git diff --check`: PASS.
 
 ---
 
@@ -593,13 +606,13 @@ Pending.
 
 # Точка возобновления
 
-Текущий checkpoint: DS-02
+Текущий checkpoint: DS-03
 
 Следующее действие:
 
-Перед изменениями повторно сверить Git и план, отметить DS-02 как `active`, затем реализовать только основу Presentation-owned desktop shell по решению DS-01: Flutter SDK `NavigationRail`, shell-local destination state, `Tasks` как начальный destination, минимальный локализованный `Home` placeholder и focused shell/localization tests. Существующие Task providers, use cases и composition переиспользовать без дублирования.
+Перед изменениями повторно сверить Git и план, прочитать ADR и scope DS-03, затем отметить DS-03 как `active`. Проверить существующий `TaskList` как реальный navigation destination, переход `Tasks -> Home -> Tasks`, создание и completion через прежние Application/Domain boundaries, не меняя persistence composition.
 
-DS-01 завершён. DS-02 в этом запуске не начинался и остаётся `pending`.
+DS-02 завершён и валидирован. DS-03 в этом запуске не начинался и остаётся `pending`.
 
 ---
 
@@ -607,8 +620,8 @@ DS-01 завершён. DS-02 в этом запуске не начинался
 
 Статус: active
 
-Завершённые checkpoints: DS-01
+Завершённые checkpoints: DS-01, DS-02
 
-Текущий checkpoint: DS-02
+Текущий checkpoint: DS-03
 
 Blockers: отсутствуют

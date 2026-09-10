@@ -10,8 +10,12 @@ void main() {
 
     expect(english.taskListTitle, 'Tasks');
     expect(english.taskCreateAction, 'Add Task');
+    expect(english.navigationHome, 'Home');
+    expect(english.navigationTasks, 'Tasks');
     expect(russian.taskListTitle, 'Задачи');
     expect(russian.taskCreateAction, 'Добавить задачу');
+    expect(russian.navigationHome, 'Главная');
+    expect(russian.navigationTasks, 'Задачи');
   });
 
   test('configures English and Russian as the supported locales', () {

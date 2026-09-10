@@ -2,6 +2,8 @@
   "@@locale": "en",
   "appTitle": "LifeOS",
   "appDescription": "Personal Operating System",
+  "navigationHome": "Home",
+  "navigationTasks": "Tasks",
   "taskListTitle": "Tasks",
   "taskListEmpty": "No Tasks yet",
   "taskLoadError": "Unable to load Tasks",

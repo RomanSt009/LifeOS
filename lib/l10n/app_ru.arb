@@ -2,6 +2,8 @@
   "@@locale": "ru",
   "appTitle": "LifeOS",
   "appDescription": "Персональная операционная система",
+  "navigationHome": "Главная",
+  "navigationTasks": "Задачи",
   "taskListTitle": "Задачи",
   "taskListEmpty": "Задач пока нет",
   "taskLoadError": "Не удалось загрузить задачи",

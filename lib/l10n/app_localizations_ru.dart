@@ -16,6 +16,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appDescription => 'Персональная операционная система';
 
   @override
+  String get navigationHome => 'Главная';
+
+  @override
+  String get navigationTasks => 'Задачи';
+
+  @override
   String get taskListTitle => 'Задачи';
 
   @override

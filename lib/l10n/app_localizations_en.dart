@@ -16,6 +16,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appDescription => 'Personal Operating System';
 
   @override
+  String get navigationHome => 'Home';
+
+  @override
+  String get navigationTasks => 'Tasks';
+
+  @override
   String get taskListTitle => 'Tasks';
 
   @override

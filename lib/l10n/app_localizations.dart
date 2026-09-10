@@ -110,6 +110,18 @@ abstract class AppLocalizations {
   /// **'Personal Operating System'**
   String get appDescription;
 
+  /// No description provided for @navigationHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navigationHome;
+
+  /// No description provided for @navigationTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get navigationTasks;
+
   /// No description provided for @taskListTitle.
   ///
   /// In en, this message translates to:
