@@ -1,6 +1,6 @@
 # LifeOS Desktop Shell / Navigation — план выполнения
 
-Статус: active
+Статус: completed
 
 ## Цель
 
@@ -572,7 +572,7 @@ Placeholder destinations:
 
 ## DS-07 — Финальный аудит desktop shell
 
-Статус: pending
+Статус: done
 
 Зависит от: DS-06
 
@@ -630,7 +630,26 @@ Placeholder destinations:
 
 ### Результат / доказательства
 
-Pending.
+- Architecture gate: PASS. Нерешённых архитектурных вопросов и необходимости нового ADR не обнаружено; production-код не потребовал исправлений.
+- Перед DS-07 отдельный DS-06 commit `037faa1` (`test: verify shell navigation lifecycle`) содержал только execution plan и focused shell lifecycle test. На старте DS-07 единственным незакоммиченным пользовательским файлом был `.obsidian/workspace.json`, который не затрагивался.
+- End-to-end audit подтверждает production bootstrap через `main()` и `createProductionDependencies()`, запуск `LifeOSApp` с desktop shell, локализованный `NavigationRail`, переключение `Home <-> Tasks`, отображение persisted Tasks, создание Task и completion toggle через Application/Domain boundaries.
+- File-backed persistence tests подтверждают закрытие/reopen `lifeos.db` без потери Task state; repository tests подтверждают атомарную запись Entity/Task state и Outbox change.
+- `IndexedStack` сохраняет Task Presentation subtree: несохранённый draft и provider state переживают переключение destinations, а repository load не повторяется.
+- Architecture audit: PASS — Presentation владеет shell/navigation и локальным destination state; Application координирует use cases; Domain не зависит от Flutter, Drift, UUID, localization или platform APIs; Infrastructure реализует Domain repository abstraction; composition root единолично создаёт и закрывает production database/repository lifecycle.
+- Navigation не создаёт repositories/database; localization не проникла в Domain/Application/Infrastructure; `Home` остаётся минимальным Presentation-only placeholder; destinations ограничены `Home` и `Tasks`.
+- `Notes`, `Projects`, `Search`, `AI` и `Settings` не создавались; routing/responsive dependencies не добавлялись; dependency manifests не изменены.
+- Focused shell/navigation/Task/Application/composition/persistence/localization tests: PASS — 38 tests.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 47 tests.
+- Import-boundary scan: PASS — все проверенные dependency boundaries соблюдены, persistence construction отсутствует в Presentation/Application.
+- Routing dependency scan: PASS — `go_router`, `auto_route` и `beamer` отсутствуют в dependencies/imports.
+- `flutter gen-l10n`: PASS; повторная генерация не изменила ARB/generated localization files.
+- Drift generation: not applicable — schema и Drift source/generated files не затрагивались; generated Drift diff отсутствует, repository и file-backed tests проходят.
+- Dependency hygiene: PASS — `dart pub deps --style=compact` успешно разрешил текущий dependency graph; `pubspec.yaml`/`pubspec.lock` не изменены. Попытка эквивалентной проверки через `flutter pub deps` зависла без вывода и была остановлена без изменения файлов.
+- Generated-file check: PASS — diff в localization и `*.g.dart` отсутствует; generated files вручную не редактировались.
+- Scope audit: PASS — production sources не изменены, преждевременные feature directories отсутствуют, явно отложенный scope ниже остаётся без изменений.
+- `git diff --check`: PASS; выведены только информационные предупреждения Git о преобразовании LF/CRLF.
+- Итоговый Git ref на момент завершения validation: `HEAD` = `037faa1`, `origin/main` = `037faa1`, divergence `0/0`. После DS-07 изменён только этот execution plan; пользовательский `.obsidian/workspace.json` остаётся отдельным незакоммиченным изменением.
 
 ---
 
@@ -658,22 +677,22 @@ Pending.
 
 # Точка возобновления
 
-Текущий checkpoint: DS-07
+Текущий checkpoint: отсутствует — execution plan completed
 
 Следующее действие:
 
-Перед изменениями повторно сверить Git и план, прочитать ADR и scope DS-07, затем отметить DS-07 как `active`. Выполнить финальный end-to-end и архитектурный аудит desktop shell без начала нового execution plan.
+Остановиться для пользовательского review. Не начинать новый execution plan автоматически.
 
-DS-06 завершён и валидирован. DS-07 в этом запуске не начинался и остаётся `pending`.
+DS-07 завершён и валидирован. Desktop Shell / Navigation execution plan завершён.
 
 ---
 
 # Состояние выполнения плана
 
-Статус: active
+Статус: completed
 
-Завершённые checkpoints: DS-01, DS-02, DS-03, DS-04, DS-05, DS-06
+Завершённые checkpoints: DS-01, DS-02, DS-03, DS-04, DS-05, DS-06, DS-07
 
-Текущий checkpoint: DS-07
+Текущий checkpoint: отсутствует
 
 Blockers: отсутствуют
