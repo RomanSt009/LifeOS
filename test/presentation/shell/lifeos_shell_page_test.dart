@@ -11,6 +11,48 @@ import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list.dart';
 
 void main() {
+  for (final scenario in [
+    (
+      name: 'wide desktop window',
+      size: const Size(1280, 800),
+      locale: const Locale('en'),
+      taskAction: 'Add Task',
+    ),
+    (
+      name: 'moderately narrow desktop window',
+      size: const Size(640, 600),
+      locale: const Locale('ru'),
+      taskAction: 'Добавить задачу',
+    ),
+  ]) {
+    testWidgets('keeps shell and Task UI usable in a ${scenario.name}', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(scenario.size);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(testApp(scenario.locale));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(NavigationRail).hitTestable(), findsOneWidget);
+      expect(
+        find.byKey(const Key('task-title-field')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(find.text(scenario.taskAction).hitTestable(), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('task-title-field')),
+        'Layout check',
+      );
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Layout check'), findsOneWidget);
+    });
+  }
+
   testWidgets('exposes only the justified initial destinations', (
     tester,
   ) async {

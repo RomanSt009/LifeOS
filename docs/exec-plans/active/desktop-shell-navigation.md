@@ -449,7 +449,7 @@ Placeholder destinations:
 
 ## DS-05 — Устойчивость desktop layout
 
-Статус: pending
+Статус: done
 
 Зависит от: DS-04
 
@@ -486,7 +486,17 @@ Placeholder destinations:
 
 ### Результат / доказательства
 
-Pending.
+- Architecture gate: PASS. ADR-0022 оставляет layout в Presentation, Flutter SDK покрывает текущие требования, а изменение navigation architecture или новый ADR не требуются.
+- На старте DS-05 `HEAD` = `664696e` (`main` синхронизирован с `origin/main`); единственным рабочим изменением был пользовательский `.obsidian/workspace.json`, который не затрагивался.
+- Существующая production-компоновка `Row` + `NavigationRail` + `Expanded` + `IndexedStack`, а также ограниченный `TaskPage` с прокручиваемым `TaskList` удовлетворяют Definition of Done без изменений production-кода.
+- Добавлены focused widget scenarios для logical window sizes `1280x800` (достаточно широкое desktop-окно, English) и `640x600` (умеренно узкое desktop-окно, Russian).
+- В обоих сценариях подтверждены отсутствие Flutter layout exceptions, доступность и hit-testability `NavigationRail`, Task title field и локализованной Task action; ввод в Task field остаётся рабочим.
+- Проверка двух representative размеров подтверждает, что shell не зависит от одного фиксированного разрешения и сохраняет desktop-oriented navigation при сужении окна.
+- Mobile/tablet shell, новые destinations, сторонняя responsive-layout dependency и изменения navigation state не добавлялись; `pubspec.yaml` и production sources не изменялись.
+- Focused shell layout/widget tests: PASS — 6 tests, включая 2 новых size scenarios.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 46 tests.
+- `git diff --check`: PASS; выведены только информационные предупреждения Git о преобразовании LF/CRLF.
 
 ---
 
@@ -633,13 +643,13 @@ Pending.
 
 # Точка возобновления
 
-Текущий checkpoint: DS-05
+Текущий checkpoint: DS-06
 
 Следующее действие:
 
-Перед изменениями повторно сверить Git и план, прочитать ADR и scope DS-05, затем отметить DS-05 как `active`. Проверить shell и Task content на representative desktop widths без начала mobile shell или добавления responsive-layout dependency.
+Перед изменениями повторно сверить Git и план, прочитать ADR и scope DS-06, затем отметить DS-06 как `active`. Выполнить аудит navigation state, Task Presentation/provider lifecycle и ownership production composition; при фактической необходимости сложной routing capability остановиться на architecture gate.
 
-DS-04 завершён и валидирован. DS-05 в этом запуске не начинался и остаётся `pending`.
+DS-05 завершён и валидирован. DS-06 в этом запуске не начинался и остаётся `pending`.
 
 ---
 
@@ -647,8 +657,8 @@ DS-04 завершён и валидирован. DS-05 в этом запуск
 
 Статус: active
 
-Завершённые checkpoints: DS-01, DS-02, DS-03, DS-04
+Завершённые checkpoints: DS-01, DS-02, DS-03, DS-04, DS-05
 
-Текущий checkpoint: DS-05
+Текущий checkpoint: DS-06
 
 Blockers: отсутствуют
