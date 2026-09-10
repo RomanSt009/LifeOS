@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifeos/application/use_cases/toggle_stored_task_completion.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/infrastructure/persistence/drift/lifeos_database.dart';
@@ -26,6 +27,7 @@ void main() {
     required bool isCompleted,
     required DateTime updatedAt,
     required int version,
+    LifeOsEntityLifecycle lifecycle = LifeOsEntityLifecycle.active,
   }) {
     return LifeOsTask(
       id: id,
@@ -33,7 +35,7 @@ void main() {
       isCompleted: isCompleted,
       createdAt: createdAt,
       updatedAt: updatedAt,
-      lifecycle: LifeOsEntityLifecycle.active,
+      lifecycle: lifecycle,
       version: version,
       source: LifeOsEntitySource.user,
     );
@@ -41,7 +43,7 @@ void main() {
 
   setUp(() {
     database = LifeOsDatabase(NativeDatabase.memory());
-    changeIds = ['change-1', 'change-2'];
+    changeIds = List.generate(10, (index) => 'change-${index + 1}');
     repository = DriftLifeOsTaskRepository(
       database,
       () => changeIds.removeAt(0),
@@ -176,6 +178,135 @@ void main() {
 
     expect(await repository.getAll(), unorderedEquals([firstTask, secondTask]));
   });
+
+  test(
+    'searches active title substrings case-insensitively in deterministic order',
+    () async {
+      final olderMatch = createTask(
+        id: const LifeOsEntityId(
+          value: 'task-c',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Plan Flutter desktop',
+        isCompleted: false,
+        updatedAt: DateTime.utc(2026, 9, 6, 12),
+        version: 1,
+      );
+      final tiedMatchB = createTask(
+        id: const LifeOsEntityId(
+          value: 'task-b',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'FLUTTER persistence',
+        isCompleted: true,
+        updatedAt: DateTime.utc(2026, 9, 6, 13),
+        version: 2,
+      );
+      final tiedMatchA = createTask(
+        id: const LifeOsEntityId(
+          value: 'task-a',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Test flutter search',
+        isCompleted: false,
+        updatedAt: DateTime.utc(2026, 9, 6, 13),
+        version: 3,
+      );
+      final nonMatch = createTask(
+        id: const LifeOsEntityId(
+          value: 'task-d',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Write persistence tests',
+        isCompleted: false,
+        updatedAt: DateTime.utc(2026, 9, 6, 14),
+        version: 1,
+      );
+      final archivedMatch = createTask(
+        id: const LifeOsEntityId(
+          value: 'task-archived',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Archived Flutter Task',
+        isCompleted: false,
+        updatedAt: DateTime.utc(2026, 9, 6, 15),
+        version: 1,
+        lifecycle: LifeOsEntityLifecycle.archived,
+      );
+      for (final task in [
+        olderMatch,
+        tiedMatchB,
+        tiedMatchA,
+        nonMatch,
+        archivedMatch,
+      ]) {
+        await repository.save(task);
+      }
+      final outboxBeforeSearch = await database
+          .select(database.outboxEntries)
+          .get();
+
+      final results = await repository.searchByTitle('fLuTtEr');
+      final outboxAfterSearch = await database
+          .select(database.outboxEntries)
+          .get();
+
+      expect(results, [tiedMatchA, tiedMatchB, olderMatch]);
+      expect(results.map((task) => task.id).toSet(), hasLength(results.length));
+      expect(results.first.id, tiedMatchA.id);
+      expect(results.first.createdAt, tiedMatchA.createdAt);
+      expect(results.first.updatedAt, tiedMatchA.updatedAt);
+      expect(results.first.lifecycle, tiedMatchA.lifecycle);
+      expect(results.first.version, tiedMatchA.version);
+      expect(results.first.source, tiedMatchA.source);
+      expect(outboxAfterSearch, outboxBeforeSearch);
+    },
+  );
+
+  test(
+    'matches Cyrillic case variants and literal wildcard characters',
+    () async {
+      final cyrillicTask = createTask(
+        title: r'Проверить 100% _ путь\поиска',
+        isCompleted: false,
+        updatedAt: firstUpdatedAt,
+        version: 1,
+      );
+      await repository.save(cyrillicTask);
+
+      expect(await repository.searchByTitle('ПРОВЕРИТЬ'), [cyrillicTask]);
+      expect(await repository.searchByTitle(r'100% _ путь\'), [cyrillicTask]);
+    },
+  );
+
+  test(
+    'keeps a completed Task searchable without adding an Outbox entry',
+    () async {
+      final original = createTask(
+        title: 'Keep searchable after completion',
+        isCompleted: false,
+        updatedAt: firstUpdatedAt,
+        version: 1,
+      );
+      await repository.save(original);
+      final completed = await ToggleStoredTaskCompletion(
+        repository: repository,
+      )(taskId, updatedAt: secondUpdatedAt);
+      expect(completed, isNotNull);
+      final completedTask = completed!;
+      final outboxCountBeforeSearch = await database
+          .select(database.outboxEntries)
+          .get()
+          .then((entries) => entries.length);
+
+      final results = await repository.searchByTitle('searchable');
+
+      expect(results, [completedTask]);
+      expect(results.single.isCompleted, isTrue);
+      expect(await database.select(database.outboxEntries).get(), hasLength(2));
+      expect(outboxCountBeforeSearch, 2);
+    },
+  );
 
   test('rolls back Domain State when the outbox write fails', () async {
     final original = createTask(

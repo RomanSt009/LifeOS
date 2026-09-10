@@ -147,4 +147,50 @@ void main() {
       ]),
     );
   });
+
+  test('searches persisted Task titles after database reopen', () async {
+    final supportDirectory = await Directory.systemTemp.createTemp(
+      'lifeos-search-restart-',
+    );
+    addTearDown(() => supportDirectory.delete(recursive: true));
+    final task = LifeOsTask(
+      id: const LifeOsEntityId(
+        value: 'task-search-restart',
+        entityType: LifeOsEntityType.task,
+      ),
+      title: 'Найти после перезапуска',
+      isCompleted: true,
+      createdAt: DateTime.utc(2026, 9, 10, 10),
+      updatedAt: DateTime.utc(2026, 9, 10, 11),
+      lifecycle: LifeOsEntityLifecycle.active,
+      version: 2,
+      source: LifeOsEntitySource.user,
+    );
+    final firstDatabase = await openProductionDatabase(
+      applicationSupportDirectoryProvider: () async => supportDirectory,
+    );
+    final firstRepository = DriftLifeOsTaskRepository(
+      firstDatabase,
+      () => 'change-search-restart',
+      'device-test',
+    );
+    await firstRepository.save(task);
+    await firstDatabase.close();
+
+    final reopenedDatabase = await openProductionDatabase(
+      applicationSupportDirectoryProvider: () async => supportDirectory,
+    );
+    addTearDown(reopenedDatabase.close);
+    final reopenedRepository = DriftLifeOsTaskRepository(
+      reopenedDatabase,
+      () => 'unused-change-id',
+      'device-test',
+    );
+
+    expect(await reopenedRepository.searchByTitle('ПЕРЕЗАПУСКА'), [task]);
+    expect(
+      await reopenedDatabase.select(reopenedDatabase.outboxEntries).get(),
+      hasLength(1),
+    );
+  });
 }

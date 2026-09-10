@@ -32,14 +32,7 @@ class DriftLifeOsTaskRepository implements LifeOsTaskRepository {
     ])..where(_database.entities.entityType.equals(LifeOsEntityType.task.name));
 
     final rows = await query.get();
-    return rows
-        .map(
-          (row) => LifeOsTaskMapper.toDomain(
-            row.readTable(_database.entities),
-            row.readTable(_database.taskRecords),
-          ),
-        )
-        .toList(growable: false);
+    return rows.map(_mapTask).toList(growable: false);
   }
 
   @override
@@ -60,18 +53,45 @@ class DriftLifeOsTaskRepository implements LifeOsTaskRepository {
       return null;
     }
 
-    return LifeOsTaskMapper.toDomain(
-      row.readTable(_database.entities),
-      row.readTable(_database.taskRecords),
-    );
+    return _mapTask(row);
   }
 
   @override
-  Future<List<LifeOsTask>> searchByTitle(String query) {
-    throw UnimplementedError(
-      'Task search persistence is implemented in LS-03.',
+  Future<List<LifeOsTask>> searchByTitle(String query) async {
+    final taskQuery = _database.select(_database.entities).join([
+      innerJoin(
+        _database.taskRecords,
+        _database.taskRecords.entityId.equalsExp(_database.entities.id),
+      ),
+    ])..where(
+      _database.entities.entityType.equals(LifeOsEntityType.task.name) &
+          _database.entities.lifecycle.equals(
+            LifeOsEntityLifecycle.active.name,
+          ),
     );
+
+    final normalizedQuery = query.toLowerCase();
+    final matchingTasks = (await taskQuery.get())
+        .map(_mapTask)
+        .where(
+          (task) => task.title.toLowerCase().contains(normalizedQuery),
+        )
+        .toList();
+    matchingTasks.sort((first, second) {
+      final updatedAtComparison = second.updatedAt.compareTo(first.updatedAt);
+      if (updatedAtComparison != 0) {
+        return updatedAtComparison;
+      }
+      return first.id.value.compareTo(second.id.value);
+    });
+
+    return matchingTasks;
   }
+
+  LifeOsTask _mapTask(TypedResult row) => LifeOsTaskMapper.toDomain(
+    row.readTable(_database.entities),
+    row.readTable(_database.taskRecords),
+  );
 
   @override
   Future<void> save(LifeOsTask task) async {

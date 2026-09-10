@@ -284,7 +284,7 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 ## LS-03 — Локальный поиск в Drift repository
 
-Статус: pending
+Статус: done
 
 Зависит от: LS-02
 
@@ -338,7 +338,25 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 ### Результат / доказательства
 
-Ожидает выполнения.
+- Architecture gate: PASS. Реализация укладывается в решения LS-01 и существующую schema; migration, FTS5, search index, dependency или новый ADR не требуются.
+- На старте checkpoint `HEAD` = `be33200` (`main`, на 1 commit впереди `origin/main`); LS-01/LS-02 были `done`, LS-03 — первым pending checkpoint. Единственным исходным незакоммиченным файлом был пользовательский `.obsidian/workspace.json`, который не затрагивался.
+- `DriftLifeOsTaskRepository.searchByTitle` теперь выполняет controlled read через существующий join `entities` + `tasks`, ограничивая строки `entityType == task` и `lifecycle == active`.
+- Existing `LifeOsTaskMapper.toDomain` переиспользуется через приватный `_mapTask`; отдельный Persistence/Domain mapping для Search не создан.
+- После Drift read Infrastructure применяет принятую LS-01 literal substring semantics: `query.toLowerCase()` сравнивается с `task.title.toLowerCase()`. `%`, `_` и `\\` остаются обычными символами, а не SQL wildcards.
+- Такая locale-independent simple lowercase обработка подтверждена для обычных English и Cyrillic case variants. Она намеренно не обещает SQLite ICU collation, locale-specific case folding или Unicode normalization; новые dependencies и собственная Unicode subsystem не добавлялись.
+- Результаты сортируются детерминированно: `updatedAt` descending, затем `id.value` ascending. Join по primary/foreign keys возвращает каждую Task один раз; отсутствие duplicates закреплено focused test.
+- Возвращаются существующие `LifeOsTask` Domain entities со всеми mapped metadata (`id`, timestamps, lifecycle, version, source) и Task state.
+- Completed Task остаётся searchable, пока lifecycle равен `active`; completion проверен через существующий `ToggleStoredTaskCompletion` path.
+- Search является read-only: focused tests сравнивают Outbox до/после поиска и подтверждают отсутствие новых Outbox rows. Create/list/get/toggle/save code paths не изменялись.
+- File-backed test подтверждает поиск сохранённой Cyrillic Task после закрытия и повторного открытия production-shaped database; Outbox остаётся с единственной исходной write entry.
+- Focused Drift repository + file-backed persistence tests: PASS — 12 tests, включая 4 новых search scenarios.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 55 tests.
+- Import-boundary scan: PASS — изменение ограничено Infrastructure и использует существующие Domain abstractions/mapping; Domain/Application/Presentation imports не изменялись.
+- Drift generation/check: not applicable — `lifeos_database.dart`, schema version и `lifeos_database.g.dart` не изменялись; generated-file diff отсутствует.
+- Dependency validation: not applicable — `pubspec.yaml`, lockfile и packages не изменялись.
+- `git diff --check`: PASS; выведены только информационные предупреждения Git о преобразовании LF/CRLF.
+- Итоговый Git ref: `HEAD` = `be33200`, `origin/main` = `adcf4b0`, divergence `1/0`. Рабочее дерево содержит четыре LS-03 files и отдельное исходное пользовательское изменение `.obsidian/workspace.json`.
 
 ### Blocker
 
@@ -585,20 +603,20 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 # Точка возобновления
 
-Текущий checkpoint: LS-03 — pending
+Текущий checkpoint: LS-04 — pending
 
-Resume checkpoint: LS-03, начать с повторной сверки Git/plan и отметить LS-03 `active` перед реализацией Drift query.
+Resume checkpoint: LS-04, начать с повторной сверки Git/plan и отметить LS-04 `active` перед реализацией Search Presentation.
 
-Не начинать LS-03 в текущем запуске.
+Не начинать LS-04 в текущем запуске.
 
 # Состояние выполнения плана
 
 Статус: active
 
-Завершённые checkpoints: LS-01, LS-02
+Завершённые checkpoints: LS-01, LS-02, LS-03
 
-Текущий checkpoint: LS-03 — pending
+Текущий checkpoint: LS-04 — pending
 
-Следующий pending checkpoint: LS-03
+Следующий pending checkpoint: LS-04
 
 Blockers: отсутствуют
