@@ -79,6 +79,7 @@ Relevant ADRs include, but are not limited to:
 - ADR-0021 — Flutter Persistence Stack
 - ADR-0022 — Flutter Project Architecture
 - ADR-0023 — Initial Entity Persistence and Outbox Decisions
+- ADR-0027 — Localization Strategy
 
 Later explicit precedence decisions govern earlier conflicting recommendations.
 
@@ -90,9 +91,9 @@ Milestone: Local persistent Task vertical slice
 
 Status: active
 
-Current checkpoint: CP-07
+Current checkpoint: CP-06A
 
-Next ready checkpoint: CP-07
+Next ready checkpoint: CP-06A
 
 Blockers: none.
 
@@ -537,11 +538,68 @@ Validation:
 
 ---
 
-## CP-07 — Restart persistence verification
+## CP-06A — Localization foundation
 
 Status: pending
 
 Depends on: CP-06
+
+### Goal
+
+Establish Flutter localization for the existing Presentation surface without changing the completed Task behavior.
+
+### Relevant ADRs
+
+- ADR-0022
+- ADR-0027
+
+### Allowed scope
+
+- Flutter localization infrastructure using `flutter_localizations`, `gen_l10n`, and ARB resources;
+- English and Russian localization resources under `lib/l10n/`;
+- migration of existing user-visible static Presentation strings;
+- supported-locale and fallback configuration;
+- focused localization and Presentation tests.
+
+### Non-goals
+
+- manual language settings UI;
+- per-user language synchronization;
+- translation management platform;
+- AI translation;
+- locale-specific date/time preferences;
+- RTL-specific UI redesign;
+- changes to completed Task behavior.
+
+### Definition of Done
+
+- English and Russian resources load;
+- supported locales are configured;
+- the platform locale selects English or Russian when supported;
+- unsupported locales fall back to English without breaking startup;
+- existing user-visible static Presentation strings use localization resources;
+- Domain, Application, and Infrastructure do not depend on Flutter localization APIs;
+- generated localization code is not edited manually.
+
+### Validation
+
+- focused localization and Presentation tests
+- flutter analyze
+- flutter test
+- import-boundary scan
+- git diff --check
+
+### Result / evidence
+
+Pending.
+
+---
+
+## CP-07 — Restart persistence verification
+
+Status: pending
+
+Depends on: CP-06A
 
 ### Goal
 
@@ -646,9 +704,9 @@ Do not implement as part of this plan unless an accepted architecture decision e
 
 This section is maintained by Codex.
 
-Last checkpoint update: 2026-09-09 — CP-06 completed; stopped before CP-07
+Last checkpoint update: 2026-09-10 — ADR-0027 accepted; CP-06A added before CP-07
 
-Current checkpoint: CP-07
+Current checkpoint: CP-06A
 
 Current checkpoint status: pending
 
@@ -692,10 +750,11 @@ Work completed in current checkpoint:
 
 - CP-01 through CP-06 completed and validated;
 - CP-06 persistent completion, UI state, Outbox, and restart behavior are complete.
+- ADR-0027 is accepted and establishes the localization architecture.
 
 Work remaining in current checkpoint:
 
-- begin CP-07 restart persistence verification after its architecture gate.
+- implement and validate CP-06A localization without changing completed Task behavior.
 
 Known blockers:
 
@@ -723,6 +782,7 @@ Working-tree notes:
 - `.obsidian/workspace.json` and ADR-0026 were not modified by the agent;
 - CP-05 production code, tests, and this plan were changed by the agent;
 - CP-06 production code, tests, and this plan were changed by the agent;
+- CP-06A has not started;
 - CP-07 has not started;
 - never assume this section is newer than repository evidence.
 
@@ -732,7 +792,7 @@ Working-tree notes:
 
 This execution plan is complete only when:
 
-- CP-01 through CP-08 are done;
+- CP-01 through CP-06, CP-06A, CP-07, and CP-08 are done;
 - LifeOS uses a real production SQLite lifecycle;
 - user can create a Task;
 - persisted Tasks can be displayed;

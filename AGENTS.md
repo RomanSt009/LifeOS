@@ -738,3 +738,19 @@ When all checkpoints in an active execution plan are complete:
 4. stop for user review.
 
 Do not automatically begin a new execution plan.
+
+---
+
+## 29. Localization
+
+LifeOS user-visible Presentation strings must come from localization resources.
+
+Presentation must not introduce new hardcoded user-facing strings when an appropriate localized resource can be used.
+
+Internal identifiers, debug messages, log messages, test descriptions, database values, and Domain enum values are not automatically localized.
+
+Domain, Application, and Infrastructure layers must not depend on Flutter localization APIs.
+
+Localization remains a Presentation concern.
+
+When adding a new user-visible string, update every supported locale resource in the same change.
