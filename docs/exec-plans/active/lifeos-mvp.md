@@ -91,9 +91,9 @@ Milestone: Local persistent Task vertical slice
 
 Status: active
 
-Current checkpoint: CP-07
+Current checkpoint: CP-08
 
-Next ready checkpoint: CP-07
+Next ready checkpoint: CP-08
 
 Blockers: none.
 
@@ -615,7 +615,7 @@ Validation:
 
 ## CP-07 — Restart persistence verification
 
-Status: pending
+Status: done
 
 Depends on: CP-06A
 
@@ -643,7 +643,25 @@ Completion state and mandatory Entity metadata survive the reopen.
 
 ### Result / evidence
 
-Pending.
+Completed on 2026-09-10.
+
+Evidence:
+
+- the architecture gate confirmed that the existing focused file-backed tests are the smallest reliable equivalent required by this checkpoint;
+- `openProductionDatabase` uses the production filename and production-equivalent application-support directory boundary;
+- a complete Task is written, the database is closed, the same file is reopened, and the mapped Domain Task is loaded unchanged;
+- typed identity, title, completion state, `createdAt`, `updatedAt`, lifecycle, version, and source survive reopen;
+- a second restart path verifies complete and incomplete transitions across repeated closes and reopens, including final version and timestamp metadata;
+- the required Outbox records remain persisted across the same restart sequence;
+- no production or test code change was required for CP-07.
+
+Validation:
+
+- focused restart persistence tests: PASS — 2 tests;
+- flutter analyze: PASS — no issues;
+- flutter test: PASS — 39 tests;
+- import-boundary scan: PASS;
+- git diff --check: PASS.
 
 ---
 
@@ -722,9 +740,9 @@ Do not implement as part of this plan unless an accepted architecture decision e
 
 This section is maintained by Codex.
 
-Last checkpoint update: 2026-09-10 — CP-06A completed; stopped before CP-07
+Last checkpoint update: 2026-09-10 — CP-07 completed; stopped before CP-08
 
-Current checkpoint: CP-07
+Current checkpoint: CP-08
 
 Current checkpoint status: pending
 
@@ -768,6 +786,11 @@ Last successful validation:
 - CP-06A flutter test: PASS — 39 tests
 - CP-06A import-boundary scan: PASS
 - CP-06A git diff --check: PASS
+- CP-07 focused restart persistence tests: PASS — 2 tests
+- CP-07 flutter analyze: PASS — no issues
+- CP-07 flutter test: PASS — 39 tests
+- CP-07 import-boundary scan: PASS
+- CP-07 git diff --check: PASS
 
 Work completed in current checkpoint:
 
@@ -776,10 +799,12 @@ Work completed in current checkpoint:
 - ADR-0027 is accepted and establishes the localization architecture.
 - CP-06A architecture gate passed against ADR-0022 and ADR-0027.
 - CP-06A localization resources, production configuration, Presentation migration, and focused tests are complete.
+- CP-07 architecture gate confirmed that the existing file-backed restart tests satisfy the accepted production lifecycle and persistence decisions.
+- CP-07 restart persistence verification is complete without additional production or test code changes.
 
 Work remaining in current checkpoint:
 
-- begin CP-07 restart persistence verification after its architecture gate.
+- begin CP-08 MVP vertical slice final audit after its architecture gate.
 
 Known blockers:
 
@@ -808,7 +833,8 @@ Working-tree notes:
 - CP-05 production code, tests, and this plan were changed by the agent;
 - CP-06 production code, tests, and this plan were changed by the agent;
 - CP-06A production localization, tests, generated sources, and this plan were changed by the agent;
-- CP-07 has not started;
+- CP-07 required only this execution plan bookkeeping because its Definition of Done was already covered by repository tests;
+- CP-08 has not started;
 - never assume this section is newer than repository evidence.
 
 ---
