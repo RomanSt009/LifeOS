@@ -1,146 +1,145 @@
-# ADR-0027: Localization Strategy
+# ADR-0027: Стратегия локализации
 
-Status: Accepted
+Статус: Принято
 
-## Context
+## Контекст
 
-LifeOS is intended to support multiple user interface languages.
+LifeOS должна поддерживать несколько языков пользовательского интерфейса.
 
-The initial UI already contains user-visible English strings.
+Начальный UI уже содержит видимые пользователю строки на английском языке.
 
-If localization is deferred until later, Presentation code may accumulate hardcoded strings that will require broad cleanup.
+Если отложить локализацию, в коде Presentation могут накопиться жёстко заданные строки, для устранения которых потребуется масштабная переработка.
 
-The project should therefore establish localization infrastructure before the UI surface grows significantly.
+Поэтому проект должен создать инфраструктуру локализации до значительного расширения UI.
 
-## Decision
+## Решение
 
-### Initial supported locales
+### Начальные поддерживаемые locale
 
-LifeOS initially supports:
+LifeOS изначально поддерживает:
 
-- English — `en`
-- Russian — `ru`
+- английский — `en`
+- русский — `ru`
 
-English is the fallback locale.
+Английский является fallback locale.
 
-Additional locales may be added later without changing the overall localization architecture.
+Дополнительные locale можно добавить позднее без изменения общей архитектуры локализации.
 
-### Flutter localization mechanism
+### Механизм локализации Flutter
 
-LifeOS uses Flutter's standard localization infrastructure based on:
+LifeOS использует стандартную инфраструктуру локализации Flutter на основе:
 
 - `flutter_localizations`
 - `gen_l10n`
-- ARB localization resources
+- ресурсы локализации ARB
 
-Generated localization code must be treated as generated code and must not be edited manually.
+Сгенерированный код локализации должен считаться generated code и не должен редактироваться вручную.
 
-No third-party localization framework is introduced for the initial implementation.
+В начальной реализации не добавляется сторонний framework локализации.
 
-### Resource location
+### Расположение ресурсов
 
-Localization resources live under:
+Ресурсы локализации находятся в:
 
 `lib/l10n/`
 
-Initial files:
+Начальные файлы:
 
 - `app_en.arb`
 - `app_ru.arb`
 
-A project-level `l10n.yaml` may be used to configure Flutter localization generation.
+Для настройки генерации локализации Flutter можно использовать проектный `l10n.yaml`.
 
-### Presentation responsibility
+### Ответственность Presentation
 
-All user-visible static UI strings must come from localization resources.
+Все видимые пользователю статические строки UI должны браться из ресурсов локализации.
 
-Presentation must not introduce new hardcoded user-facing strings when an appropriate localized resource can be used.
+Presentation не должен добавлять новые жёстко заданные пользовательские строки, если можно использовать подходящий локализованный ресурс.
 
-Internal identifiers, debug messages, log messages, test descriptions, database values, and Domain enum values are not automatically localized.
+Внутренние идентификаторы, debug messages, log messages, описания тестов, значения database и значения Domain enum не локализуются автоматически.
 
-Domain, Application, and Infrastructure layers must not depend on Flutter localization APIs.
+Слои Domain, Application и Infrastructure не должны зависеть от Flutter localization APIs.
 
-Localization remains a Presentation concern.
+Локализация остаётся ответственностью Presentation.
 
-### Locale selection
+### Выбор locale
 
-Initial locale selection follows the operating system / Flutter platform locale when it matches a supported locale.
+Начальный выбор locale следует системному / платформенному locale Flutter, если он соответствует поддерживаемому locale.
 
-Supported locales are:
+Поддерживаемые locale:
 
-- English
-- Russian
+- английский
+- русский
 
-If the platform locale is unsupported, LifeOS falls back to English.
+Если платформенный locale не поддерживается, LifeOS использует английский язык.
 
-Manual in-app language selection is deferred unless explicitly added by a later checkpoint or ADR.
+Ручной выбор языка в приложении отложен, пока не будет явно добавлен последующим checkpoint или ADR.
 
-### Localization keys
+### Ключи локализации
 
-Localization keys should describe semantic meaning rather than visual position.
+Ключи локализации должны описывать семантическое значение, а не визуальное положение.
 
-Preferred:
+Предпочтительно:
 
 - `taskListTitle`
 - `taskListEmpty`
 - `taskCreateAction`
 - `taskCompletionToggle`
 
-Avoid:
+Не использовать:
 
 - `text1`
 - `labelLeft`
 - `button2`
 
-Keys should remain stable when wording changes.
+Ключи должны оставаться стабильными при изменении формулировок.
 
-### Interpolation and pluralization
+### Интерполяция и формы множественного числа
 
-Dynamic user-visible text must use ARB placeholders.
+Динамический видимый пользователю текст должен использовать placeholders ARB.
 
-Pluralizable content must use Flutter localization pluralization rather than manual string concatenation.
+Текст с формами множественного числа должен использовать механизм pluralization Flutter, а не ручную конкатенацию строк.
 
-Do not build localized sentences by concatenating separately translated fragments.
+Не составлять локализованные предложения конкатенацией отдельно переведённых фрагментов.
 
-### Tests
+### Тесты
 
-Presentation tests should not depend unnecessarily on one hardcoded language.
+Тесты Presentation не должны без необходимости зависеть от одного жёстко заданного языка.
 
-Where text itself is the behavior under test, tests may run with an explicit locale.
+Когда проверяемым поведением является сам текст, тесты могут запускаться с явно заданным locale.
 
-At minimum, localization tests should verify:
+Как минимум тесты локализации должны проверять:
 
-- English resources load;
-- Russian resources load;
-- supported locales are configured;
-- fallback behavior does not break application startup.
+- загрузку английских ресурсов;
+- загрузку русских ресурсов;
+- настройку поддерживаемых locale;
+- отсутствие ошибок запуска приложения при fallback-поведении.
 
-### Scope
+### Область решения
 
-This ADR defines:
+Этот ADR определяет:
 
-- localization architecture;
-- initial supported languages;
-- localization resource format;
-- ownership boundaries;
-- initial locale resolution.
+- архитектуру локализации;
+- начальные поддерживаемые языки;
+- формат ресурсов локализации;
+- границы владения;
+- начальное разрешение locale.
 
-It does not define:
+Он не определяет:
 
-- manual language settings UI;
-- per-user language synchronization;
-- translation management platform;
-- AI translation;
-- locale-specific date/time preferences;
-- RTL-specific UI design.
+- UI ручного выбора языка;
+- синхронизацию языка пользователя;
+- платформу управления переводами;
+- перевод с помощью AI;
+- настройки даты/времени для конкретного locale;
+- дизайн UI для RTL.
 
-These remain deferred.
+Эти вопросы отложены.
 
-## Consequences
+## Последствия
 
-User-facing Presentation strings become translatable from the beginning.
+Пользовательские строки Presentation становятся переводимыми с самого начала.
 
-Russian and English resources can evolve independently.
+Русские и английские ресурсы могут развиваться независимо.
 
-Additional locales may be added later without changing the overall localization architecture.
-
+Дополнительные locale можно добавлять позднее без изменения общей архитектуры локализации.

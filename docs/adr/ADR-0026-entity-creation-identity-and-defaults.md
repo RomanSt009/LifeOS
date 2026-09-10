@@ -1,155 +1,155 @@
-# ADR-0026: Entity Creation Identity, Clock, and Initial Metadata
+# ADR-0026: Identity, часы и начальные metadata при создании Entity
 
-Status: Accepted
+Статус: Принято
 
-## Context
+## Контекст
 
-LifeOS Entity creation requires mandatory metadata defined by the Domain Entity contract, including:
+Создание LifeOS Entity требует обязательных metadata, определённых контрактом Domain Entity, включая:
 
-- stable typed identity;
+- стабильную типизированную identity;
 - createdAt;
 - updatedAt;
-- lifecycle;
-- version;
-- creation source.
+- жизненный цикл;
+- версию;
+- источник создания.
 
-The initial Task vertical slice now requires a production creation path.
+Начальному Task vertical slice теперь требуется production-путь создания.
 
-Existing ADRs define Entity metadata requirements but do not yet define:
+Существующие ADR определяют требования к metadata Entity, но пока не определяют:
 
-- production Entity ID format and generation ownership;
-- ownership and injection of the current UTC time;
-- initial metadata values for a newly user-created Task.
+- формат production Entity ID и владельца генерации;
+- владение и внедрение текущего времени UTC;
+- начальные значения metadata для новой Task, созданной пользователем.
 
-ADR-0025 governs `change_id` and `device_id` only and must not be implicitly extended to Entity identity.
+ADR-0025 регулирует только `change_id` и `device_id` и не должен неявно распространяться на Entity identity.
 
-## Decision
+## Решение
 
 ### Entity ID
 
-Every newly created LifeOS Entity receives a globally unique opaque identifier.
+Каждая вновь созданная LifeOS Entity получает глобально уникальный непрозрачный идентификатор.
 
-For the initial production implementation, Entity IDs use UUID version 4.
+В начальной production-реализации Entity ID используют UUID версии 4.
 
-Entity ID generation belongs to the Application composition boundary through an injectable abstraction or function.
+Генерация Entity ID относится к границе Application composition и выполняется через внедряемую abstraction или функцию.
 
-Domain entities receive the already-created typed `LifeOsEntityId`.
+Domain Entity получают уже созданный типизированный `LifeOsEntityId`.
 
-The Domain layer must not depend on UUID libraries or randomness.
+Слой Domain не должен зависеть от библиотек UUID или случайности.
 
-The Infrastructure persistence layer must not invent Entity IDs during save.
+Persistence layer в Infrastructure не должен создавать Entity ID во время сохранения.
 
-Tests may inject deterministic Entity IDs.
+Тесты могут внедрять детерминированные Entity ID.
 
-### Clock
+### Часы
 
-The current time used for Entity creation is supplied through an injectable UTC clock abstraction or function.
+Текущее время для создания Entity передаётся через внедряемую abstraction или функцию UTC clock.
 
-Application use cases coordinate acquisition of the current UTC timestamp for creation.
+Application use cases координируют получение текущей временной метки UTC для создания.
 
-Domain entities receive explicit timestamps and must not call the system clock directly.
+Domain Entity получают явные временные метки и не должны напрямую обращаться к системным часам.
 
-Production composition supplies the real UTC clock.
+Production composition предоставляет реальные UTC clock.
 
-Tests may inject deterministic timestamps.
+Тесты могут внедрять детерминированные временные метки.
 
-All persisted Entity timestamps are represented in UTC.
+Все сохранённые временные метки Entity представлены в UTC.
 
-### Initial lifecycle
+### Начальный lifecycle
 
-A newly user-created Task starts with:
+Новая Task, созданная пользователем, получает:
 
 `LifeOsEntityLifecycle.active`
 
-A Task is not created directly in deleted, archived, or other non-active lifecycle state.
+Task не создаётся сразу в удалённом, архивном или другом неактивном состоянии lifecycle.
 
-### Initial version
+### Начальная версия
 
-A newly created Entity starts with:
+Новая Entity получает:
 
 `version = 1`
 
-Every later persisted Domain mutation that participates in Entity versioning must advance the version according to the governing mutation rules.
+Каждая последующая сохраняемая мутация Domain, участвующая в версионировании Entity, должна увеличивать версию согласно применимым правилам мутации.
 
-This ADR does not define remote version reconciliation.
+Этот ADR не определяет согласование удалённых версий.
 
-### Initial source
+### Начальный источник
 
-A Task created directly by the user starts with:
+Task, созданная непосредственно пользователем, получает:
 
 `LifeOsEntitySource.user`
 
-Detailed provenance beyond the shared source value is not required for the initial user-created Task.
+Для начальной Task, созданной пользователем, не требуется подробный provenance сверх общего значения source.
 
-### Timestamp defaults
+### Начальные значения временных меток
 
-For a newly created Task:
+Для новой Task:
 
-- `createdAt` = current injected UTC time;
-- `updatedAt` = the same current injected UTC time.
+- `createdAt` = текущее внедрённое время UTC;
+- `updatedAt` = то же текущее внедрённое время UTC.
 
-The creation operation obtains one timestamp and uses that same value for both fields.
+Операция создания получает одну временную метку и использует это значение для обоих полей.
 
-### Creation responsibility
+### Ответственность за создание
 
-The Application layer coordinates creation by obtaining:
+Слой Application координирует создание, получая:
 
-- a new Entity ID;
-- the current UTC time;
-- user input;
-- initial shared metadata defined by this ADR.
+- новый Entity ID;
+- текущее время UTC;
+- пользовательский ввод;
+- начальные общие metadata, определённые этим ADR.
 
-Domain code remains responsible for Entity validity and creation invariants.
+Код Domain сохраняет ответственность за валидность Entity и инварианты создания.
 
-Persistence remains responsible only for storing the resulting Domain Entity and producing the required atomic Outbox change.
+Persistence отвечает только за сохранение полученной Domain Entity и создание требуемого атомарного изменения Outbox.
 
-### Testing
+### Тестирование
 
-Tests must be able to inject:
+Тесты должны позволять внедрять:
 
-- deterministic Entity IDs;
-- deterministic UTC timestamps.
+- детерминированные Entity ID;
+- детерминированные временные метки UTC.
 
-Creation tests should verify:
+Тесты создания должны проверять:
 
-- generated typed ID is used;
-- `createdAt == updatedAt` at creation;
-- timestamps are UTC;
-- lifecycle is active;
-- version is 1;
-- source is user;
-- repository save receives the complete valid Domain Entity.
+- использование сгенерированного типизированного ID;
+- `createdAt == updatedAt` при создании;
+- временные метки представлены в UTC;
+- lifecycle имеет значение active;
+- version равна 1;
+- source имеет значение user;
+- repository save получает полную валидную Domain Entity.
 
-## Scope
+## Область решения
 
-This ADR defines only initial metadata for direct user-created Entities needed by the current Task vertical slice.
+Этот ADR определяет только начальные metadata для непосредственно создаваемых пользователем Entity, необходимых текущему Task vertical slice.
 
-It does not define:
+Он не определяет:
 
-- imported Entity identity;
-- AI-created Entity provenance;
-- deterministic content-derived IDs;
-- server-issued Entity IDs;
-- Entity cloning;
-- remote version reconciliation;
-- deletion lifecycle semantics;
-- archival;
-- account/user identity.
+- identity импортированных Entity;
+- provenance Entity, созданных AI;
+- детерминированные ID, производные от содержимого;
+- Entity ID, выдаваемые сервером;
+- клонирование Entity;
+- согласование удалённых версий;
+- семантику lifecycle удаления;
+- архивирование;
+- identity учётной записи/пользователя.
 
-These remain deferred.
+Эти вопросы отложены.
 
-## Consequences
+## Последствия
 
-The create-Task path becomes deterministic and testable.
+Путь создания Task становится детерминированным и тестируемым.
 
-Domain code remains independent of clocks, randomness, UUID packages, and platform APIs.
+Код Domain остаётся независимым от часов, случайности, UUID packages и platform APIs.
 
-Application coordinates creation without taking persistence ownership.
+Application координирует создание, не принимая на себя владение persistence.
 
-Infrastructure persists complete Entity identity rather than generating it implicitly.
+Infrastructure сохраняет полную Entity identity вместо её неявной генерации.
 
-## Precedence
+## Приоритет
 
-This ADR supplements ADR-0016, ADR-0022, ADR-0023, and ADR-0025.
+Этот ADR дополняет ADR-0016, ADR-0022, ADR-0023 и ADR-0025.
 
-Where earlier ADRs define mandatory Entity metadata but leave production creation values or ownership unspecified, this ADR governs those decisions.
+Там, где более ранние ADR определяют обязательные metadata Entity, но не задают production-значения создания или владение, применяются решения этого ADR.

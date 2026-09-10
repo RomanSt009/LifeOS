@@ -1,23 +1,23 @@
-# LifeOS MVP — Active Execution Plan
+# LifeOS MVP — активный план выполнения
 
-Status: completed
+Статус: завершён
 
-Last reviewed: 2026-09-10
+Последняя проверка: 2026-09-10
 
-## 1. Objective
+## 1. Цель
 
-Deliver the first genuinely usable local-first LifeOS vertical slice on Windows.
+Реализовать первый действительно пригодный для использования local-first vertical slice LifeOS для Windows.
 
-The milestone is complete when a user can:
+Milestone завершён, когда пользователь может:
 
-1. launch LifeOS;
-2. create a Task;
-3. see the Task in the UI;
-4. toggle its completion state;
-5. close LifeOS;
-6. reopen LifeOS;
-7. see the persisted Task and its state;
-8. perform these operations through the accepted architecture:
+1. запустить LifeOS;
+2. создать Task;
+3. увидеть Task в UI;
+4. переключить её состояние completion;
+5. закрыть LifeOS;
+6. повторно открыть LifeOS;
+7. увидеть сохранённую Task и её состояние;
+8. выполнить эти операции через принятую архитектуру:
 
 Presentation
 → Application
@@ -26,92 +26,92 @@ Presentation
 → Drift
 → SQLite
 
-Every local syncable Entity mutation must continue to produce the required Outbox change atomically with Domain State.
+Каждая локальная синхронизируемая мутация Entity должна продолжать создавать требуемое изменение Outbox атомарно с Domain State.
 
-Remote Sync is not part of this milestone.
+Remote Sync не входит в этот milestone.
 
 ---
 
-## 2. Existing foundation
+## 2. Существующая основа
 
-Already established before this plan:
+До начала этого плана уже были созданы:
 
-- Flutter Windows application skeleton;
-- accepted ADR set through ADR-0023;
-- Domain Entity contract;
-- typed Entity identity;
-- LifeOsTask Domain entity;
-- Task completion Domain behavior;
+- каркас Flutter Windows application;
+- набор принятых ADR по ADR-0023 включительно;
+- контракт Domain Entity;
+- типизированная Entity identity;
+- Domain Entity `LifeOsTask`;
+- Domain-поведение Task completion;
 - Application use cases;
-- Domain-owned LifeOsTaskRepository;
-- Drift Infrastructure implementation;
-- entities + tasks + outbox schema;
-- explicit Domain/Persistence mapping;
-- atomic Domain State + Outbox transaction;
-- deterministic persistence tests;
-- Riverpod Presentation binding;
-- thin Task completion UI;
-- ProviderScope and provider overrides;
-- architecture boundary tests/scans;
-- Flutter analyze/test passing at foundation checkpoint.
+- принадлежащий Domain `LifeOsTaskRepository`;
+- реализация Drift в Infrastructure;
+- schema entities + tasks + outbox;
+- явный mapping Domain/Persistence;
+- атомарная transaction Domain State + Outbox;
+- детерминированные persistence tests;
+- привязка Riverpod в Presentation;
+- минимальный UI Task completion;
+- `ProviderScope` и provider overrides;
+- тесты/scans архитектурных границ;
+- успешно проходящие `flutter analyze`/`flutter test` на foundation checkpoint.
 
-Do not rebuild these components merely because this plan starts after them.
+Не пересоздавать эти компоненты только потому, что план начинается после их реализации.
 
-Verify repository reality before relying on this summary.
+Перед использованием этого описания сверяться с фактическим состоянием репозитория.
 
 ---
 
-## 3. Governing documents
+## 3. Руководящие документы
 
-Always read AGENTS.md first.
+Всегда сначала читать `AGENTS.md`.
 
-Relevant ADRs include, but are not limited to:
+К относящимся к плану ADR относятся, помимо прочих:
 
-- ADR-0002 — Application Stack
-- ADR-0003 — Project Structure
+- ADR-0002 — стек приложения
+- ADR-0003 — структура проекта
 - ADR-0005 — Local-First Data Architecture
-- ADR-0006 — Database Schema, where not superseded
-- ADR-0007 — Dependency Injection Strategy
-- ADR-0016 — Domain Model and Entity Architecture
-- ADR-0017 — Database and Persistence Architecture
-- ADR-0019 — Change Tracking and Sync Data Model
-- ADR-0020 — SQLite Persistence Schema
+- ADR-0006 — Database Schema, если решение не заменено более поздним
+- ADR-0007 — стратегия Dependency Injection
+- ADR-0016 — Domain Model и архитектура Entity
+- ADR-0017 — архитектура database и persistence
+- ADR-0019 — модель отслеживания изменений и Sync data
+- ADR-0020 — persistence schema SQLite
 - ADR-0021 — Flutter Persistence Stack
-- ADR-0022 — Flutter Project Architecture
-- ADR-0023 — Initial Entity Persistence and Outbox Decisions
-- ADR-0027 — Localization Strategy
+- ADR-0022 — архитектура Flutter-проекта
+- ADR-0023 — начальные решения по persistence Entity и Outbox
+- ADR-0027 — стратегия локализации
 
-Later explicit precedence decisions govern earlier conflicting recommendations.
-
----
-
-# 4. Current milestone
-
-Milestone: Local persistent Task vertical slice
-
-Status: completed
-
-Current checkpoint: CP-08
-
-Next ready checkpoint: none — plan complete
-
-Blockers: none.
+Более поздние явные решения с приоритетом имеют преимущество перед более ранними противоречащими рекомендациями.
 
 ---
 
-# 5. Checkpoints
+# 4. Текущий milestone
 
-## CP-01 — Production database lifecycle decision
+Milestone: локальный сохраняемый Task vertical slice
 
-Status: done
+Статус: завершён
 
-### Goal
+Текущий checkpoint: CP-08
 
-Resolve the production SQLite database location, opening, ownership, and disposal lifecycle required for the Windows application.
+Следующий готовый checkpoint: отсутствует — план завершён
 
-### Relevant ADRs
+Blockers: отсутствуют.
 
-Read all persistence/composition ADRs, especially:
+---
+
+# 5. Контрольные точки
+
+## CP-01 — Решение о жизненном цикле production database
+
+Статус: выполнен
+
+### Цель
+
+Определить необходимые Windows-приложению расположение, открытие, владение и жизненный цикл закрытия production SQLite database.
+
+### Относящиеся ADR
+
+Прочитать все ADR по persistence/composition, особенно:
 
 - ADR-0005
 - ADR-0007
@@ -122,83 +122,83 @@ Read all persistence/composition ADRs, especially:
 - ADR-0023
 - ADR-0024
 
-### Allowed scope
+### Разрешённая область
 
-- audit existing ADRs;
-- determine whether they already specify the lifecycle sufficiently;
-- if sufficiently specified, implement the smallest compliant database bootstrap;
-- if not sufficiently specified, stop and request the smallest architecture decision.
+- провести аудит существующих ADR;
+- определить, достаточно ли в них описан жизненный цикл;
+- если он описан достаточно, реализовать минимальный соответствующий требованиям bootstrap database;
+- если описания недостаточно, остановиться и запросить минимально необходимое архитектурное решение.
 
-### Non-goals
+### Не входит в цель
 
-Do not implement:
+Не реализовывать:
 
 - Sync;
-- device registration;
+- регистрацию устройств;
 - backup;
-- migrations beyond what current schema requires;
-- generic database framework;
-- multiple database profiles.
+- migrations сверх требований текущей schema;
+- универсальный database framework;
+- несколько профилей database.
 
-### Definition of Done
+### Критерии завершения
 
-One of:
+Один из вариантов:
 
-A. Production database lifecycle is already architecturally specified and is implemented/tested.
+A. Жизненный цикл production database уже архитектурно определён, реализован и протестирован.
 
-OR
+ИЛИ
 
-B. The checkpoint is marked blocked with the exact unresolved architecture decision documented.
+B. Checkpoint отмечен как blocked с точным описанием нерешённого архитектурного решения.
 
-Do not invent an arbitrary filesystem path.
+Не придумывать произвольный путь файловой системы.
 
-### Validation
+### Проверка
 
-When implementation occurs:
+При выполнении реализации:
 
 - flutter analyze
 - flutter test
-- relevant database lifecycle tests
+- относящиеся к задаче database lifecycle tests
 - git diff --check
 
-### Result / evidence
+### Результат / доказательства
 
-Completed on 2026-09-08.
+Завершено 2026-09-08.
 
-Evidence:
+Доказательства:
 
-- ADR-0007 specifies one database instance for the application lifetime, created and disposed through the composition root;
-- ADR-0024 is accepted and resolves the production database location and lifecycle architecture gate;
-- the production database uses the OS application-support directory with the filename `lifeos.db`;
-- the application-support directory is resolved through an appropriate Flutter platform abstraction rather than a hardcoded OS path;
-- the composition root owns one production database instance per application process and closes it when the persistence lifecycle ends;
-- `openProductionDatabase` resolves the application-support directory through `path_provider`, appends `lifeos.db` with `path`, and opens Drift on a background native executor;
-- `LifeOsAppDependencies` owns the database and provides idempotent asynchronous disposal;
-- `LifeOSApp` closes the owned dependencies for an exit request and when the root widget is disposed;
-- the focused file-backed test saves a Task and Outbox change, closes the database, reopens the same file, and verifies persisted state;
-- the app lifecycle test verifies that removing the root app closes the owned database.
+- ADR-0007 определяет один экземпляр database на время жизни приложения, создаваемый и закрываемый через composition root;
+- ADR-0024 принят и закрывает architecture gate по расположению и жизненному циклу production database;
+- production database использует каталог application-support операционной системы и имя файла `lifeos.db`;
+- каталог application-support определяется через подходящую платформенную абстракцию Flutter, а не жёстко заданный путь ОС;
+- composition root владеет одним экземпляром production database на процесс приложения и закрывает его при завершении жизненного цикла persistence;
+- `openProductionDatabase` получает каталог application-support через `path_provider`, добавляет `lifeos.db` с помощью `path` и открывает Drift в фоновом native executor;
+- `LifeOsAppDependencies` владеет database и обеспечивает идемпотентное асинхронное закрытие;
+- `LifeOSApp` закрывает принадлежащие ему зависимости по запросу выхода и при удалении root widget;
+- focused file-backed test сохраняет Task и изменение Outbox, закрывает database, повторно открывает тот же файл и проверяет сохранённое состояние;
+- app lifecycle test проверяет, что удаление root app закрывает принадлежащую ему database.
 
-Validation:
+Проверка:
 
-- focused database/app lifecycle tests: PASS — 2 tests;
-- flutter analyze: PASS — no issues;
-- flutter test: PASS — 18 tests;
+- focused database/app lifecycle tests: PASS — 2 теста;
+- `flutter analyze`: PASS — замечаний нет;
+- `flutter test`: PASS — 18 тестов;
 - import-boundary scan: PASS;
-- git diff --check: PASS.
+- `git diff --check`: PASS.
 
 ---
 
-## CP-02 — Production repository composition
+## CP-02 — Сборка production repository
 
-Status: done
+Статус: выполнен
 
-Depends on: CP-01
+Зависит от: CP-01
 
-### Goal
+### Цель
 
-Wire the production LifeOsTaskRepository implementation through the app composition root without exposing Infrastructure to Presentation or Application.
+Подключить production-реализацию `LifeOsTaskRepository` через composition root приложения, не раскрывая Infrastructure слоям Presentation или Application.
 
-### Relevant ADRs
+### Относящиеся ADR
 
 - ADR-0007
 - ADR-0021
@@ -206,163 +206,163 @@ Wire the production LifeOsTaskRepository implementation through the app composit
 - ADR-0023
 - ADR-0025
 
-### Allowed scope
+### Разрешённая область
 
-- app composition;
-- Riverpod dependency providers;
-- concrete Infrastructure construction at composition boundary;
-- lifecycle-safe dependency disposal.
+- composition приложения;
+- providers зависимостей Riverpod;
+- создание конкретной Infrastructure на границе composition;
+- безопасное для lifecycle закрытие зависимостей.
 
-### Non-goals
+### Не входит в цель
 
 - service locator;
 - GetIt;
-- global mutable singleton;
-- new repository abstraction;
-- UI redesign.
+- глобальный изменяемый singleton;
+- новая abstraction repository;
+- переработка UI.
 
-### Definition of Done
+### Критерии завершения
 
-- production composition can provide the Domain repository-backed Application behavior;
-- Presentation does not import Infrastructure;
-- Application does not import Infrastructure;
-- provider override testing remains possible.
+- production composition может предоставить Application behavior на основе Domain repository;
+- Presentation не импортирует Infrastructure;
+- Application не импортирует Infrastructure;
+- сохраняется возможность тестирования через provider override.
 
-### Validation
+### Проверка
 
 - flutter analyze
 - flutter test
 - import-boundary scan
 - git diff --check
 
-### Result / evidence
+### Результат / доказательства
 
-Completed on 2026-09-08.
+Завершено 2026-09-08.
 
-Evidence:
+Доказательства:
 
-- ADR-0025 resolved the production identity composition gate;
-- Infrastructure now provides an injectable UUID v4 generator;
-- the file-backed device identity store creates one identifier in application-support storage and reuses it across reopen;
-- the composition root resolves the stable device ID, opens the owned database, and constructs `DriftLifeOsTaskRepository` with the UUID generator;
-- `LifeOsAppDependencies` exposes the repository through its Domain interface and retains ownership of database disposal;
-- `LifeOSApp` overrides the Domain repository provider at the app boundary;
-- the Application-derived toggle use case is available without Infrastructure imports in Presentation or Application;
-- direct provider overrides used by existing widget tests remain supported.
+- ADR-0025 закрыл composition gate для production identity;
+- Infrastructure теперь предоставляет внедряемый генератор UUID v4;
+- file-backed хранилище device identity создаёт один идентификатор в application-support storage и повторно использует его после открытия;
+- composition root получает стабильный device ID, открывает принадлежащую ему database и создаёт `DriftLifeOsTaskRepository` с генератором UUID;
+- `LifeOsAppDependencies` предоставляет repository через Domain interface и сохраняет владение закрытием database;
+- `LifeOSApp` переопределяет provider Domain repository на границе приложения;
+- производный от Application toggle use case доступен без импортов Infrastructure в Presentation или Application;
+- сохраняется поддержка прямых provider overrides, используемых существующими widget tests.
 
-Validation:
+Проверка:
 
-- focused identity/composition/app tests: PASS — 5 tests;
-- flutter analyze: PASS — no issues;
-- flutter test: PASS — 22 tests;
+- focused identity/composition/app tests: PASS — 5 тестов;
+- `flutter analyze`: PASS — замечаний нет;
+- `flutter test`: PASS — 22 теста;
 - import-boundary scan: PASS;
-- git diff --check: PASS.
+- `git diff --check`: PASS.
 
 ---
 
-## CP-03 — Read Task collection
+## CP-03 — Чтение коллекции Task
 
-Status: done
+Статус: выполнен
 
-Depends on: CP-02
+Зависит от: CP-02
 
-### Goal
+### Цель
 
-Add the minimum Domain/Application/Infrastructure capability required to load the Task collection for the UI.
+Добавить минимальные возможности Domain/Application/Infrastructure, необходимые для загрузки коллекции Task в UI.
 
-### Architecture gate
+### Архитектурная проверка
 
-Before editing, determine the smallest repository/query contract consistent with current ADRs.
+До редактирования определить минимальный контракт repository/query, соответствующий текущим ADR.
 
-Do not add a generic Repository<T>.
+Не добавлять универсальный `Repository<T>`.
 
-### Allowed scope
+### Разрешённая область
 
-- Domain repository contract if genuinely required;
+- контракт Domain repository, если он действительно необходим;
 - Application query/use case;
-- Infrastructure query implementation;
-- tests.
+- реализация query в Infrastructure;
+- тесты.
 
-### Non-goals
+### Не входит в цель
 
-- pagination unless required now;
-- filters;
-- sorting framework;
-- search;
-- projects/tags.
+- pagination, если она не требуется сейчас;
+- фильтры;
+- framework сортировки;
+- поиск;
+- проекты/теги.
 
-### Definition of Done
+### Критерии завершения
 
-- Application can request persisted Tasks through a Domain-owned abstraction;
-- Drift implementation returns mapped Domain Tasks;
-- empty database behavior is defined and tested;
-- layer boundaries remain valid.
+- Application может запрашивать сохранённые Task через принадлежащую Domain abstraction;
+- реализация Drift возвращает преобразованные Domain Task;
+- поведение пустой database определено и протестировано;
+- границы слоёв остаются корректными.
 
-### Validation
+### Проверка
 
-- Domain/Application tests as applicable;
-- Infrastructure tests;
+- тесты Domain/Application, где применимо;
+- тесты Infrastructure;
 - flutter analyze
 - flutter test
 - git diff --check
 
-### Result / evidence
+### Результат / доказательства
 
-Completed on 2026-09-08.
+Завершено 2026-09-08.
 
-Evidence:
+Доказательства:
 
-- the architecture gate selected one focused `getAll` operation on the existing Domain-owned `LifeOsTaskRepository`;
-- no generic repository, pagination, filtering, search, or sorting framework was introduced;
-- `GetLifeOsTasks` exposes the collection query through Application;
-- `DriftLifeOsTaskRepository` loads Task Entity metadata and typed Task fields through a joined Drift query and maps them to Domain entities;
-- an empty database returns an empty collection;
-- Application and Infrastructure collection behavior is covered by focused tests.
+- architecture gate выбрал одну focused-операцию `getAll` в существующем принадлежащем Domain `LifeOsTaskRepository`;
+- универсальный repository, pagination, filtering, search и framework сортировки не добавлялись;
+- `GetLifeOsTasks` предоставляет query коллекции через Application;
+- `DriftLifeOsTaskRepository` загружает metadata Task Entity и типизированные поля Task через объединённый Drift query и преобразует их в Domain Entity;
+- пустая database возвращает пустую коллекцию;
+- поведение коллекции в Application и Infrastructure покрыто focused tests.
 
-Validation:
+Проверка:
 
-- focused Application/Infrastructure tests: PASS — 7 tests;
-- flutter analyze: PASS — no issues after resolving two local style findings;
-- flutter test: PASS — 25 tests;
+- focused Application/Infrastructure tests: PASS — 7 тестов;
+- `flutter analyze`: PASS — замечаний нет после устранения двух локальных style findings;
+- `flutter test`: PASS — 25 тестов;
 - import-boundary scan: PASS;
-- git diff --check: PASS.
+- `git diff --check`: PASS.
 
 ---
 
-## CP-04 — Task list Presentation
+## CP-04 — Presentation списка Task
 
-Status: done
+Статус: выполнен
 
-Depends on: CP-03
+Зависит от: CP-03
 
-### Goal
+### Цель
 
-Display persisted Tasks through Riverpod and Application behavior.
+Отображать сохранённые Task через Riverpod и Application behavior.
 
-### Allowed scope
+### Разрешённая область
 
-- minimal Task list UI;
-- loading state;
-- empty state;
-- bounded error state;
-- Presentation controller/provider.
+- минимальный UI списка Task;
+- состояние загрузки;
+- пустое состояние;
+- ограниченное состояние ошибки;
+- controller/provider Presentation.
 
-### Non-goals
+### Не входит в цель
 
-- final visual design;
-- complex navigation;
-- filtering;
-- search;
-- animations.
+- окончательный визуальный дизайн;
+- сложная navigation;
+- фильтрация;
+- поиск;
+- анимации.
 
-### Definition of Done
+### Критерии завершения
 
-- UI renders an empty Task state;
-- UI renders persisted Tasks;
-- Presentation imports neither Infrastructure nor Drift;
-- widget tests use provider overrides where appropriate.
+- UI отображает пустое состояние Task;
+- UI отображает сохранённые Task;
+- Presentation не импортирует ни Infrastructure, ни Drift;
+- widget tests используют provider overrides там, где это уместно.
 
-### Validation
+### Проверка
 
 - widget tests
 - flutter analyze
@@ -370,76 +370,76 @@ Display persisted Tasks through Riverpod and Application behavior.
 - import-boundary scan
 - git diff --check
 
-### Result / evidence
+### Результат / доказательства
 
-Completed on 2026-09-09.
+Завершено 2026-09-09.
 
-Evidence:
+Доказательства:
 
-- `TaskListController` loads persisted Tasks through the Application `GetLifeOsTasks` use case;
-- production app composition supplies the existing Domain repository provider;
-- the shell renders the Task list without importing Infrastructure or Drift;
-- the UI has explicit loading, empty, populated, and bounded error states;
-- populated rows display Task titles and completion state without implementing CP-06 mutation behavior;
-- widget tests use a provider override and cover every required state.
+- `TaskListController` загружает сохранённые Task через Application use case `GetLifeOsTasks`;
+- production composition приложения предоставляет существующий provider Domain repository;
+- shell отображает список Task без импорта Infrastructure или Drift;
+- UI имеет явные состояния загрузки, пустого и заполненного списка, а также ограниченной ошибки;
+- заполненные строки отображают названия Task и состояние completion без реализации mutation behavior CP-06;
+- widget tests используют provider override и покрывают все требуемые состояния.
 
-Validation:
+Проверка:
 
-- focused widget tests: PASS — 4 tests;
-- flutter analyze: PASS — no issues;
-- flutter test: PASS — 28 tests;
+- focused widget tests: PASS — 4 теста;
+- `flutter analyze`: PASS — замечаний нет;
+- `flutter test`: PASS — 28 тестов;
 - import-boundary scan: PASS;
-- git diff --check: PASS.
+- `git diff --check`: PASS.
 
 ---
 
-## CP-05 — Create Task vertical path
+## CP-05 — Вертикальный путь создания Task
 
-Status: done
+Статус: выполнен
 
-Depends on: CP-04
+Зависит от: CP-04
 
-### Goal
+### Цель
 
-Allow creation of a minimal Task from the UI and persist it through the accepted architecture.
+Обеспечить создание минимальной Task из UI и её сохранение через принятую архитектуру.
 
-### Architecture gate
+### Архитектурная проверка
 
-Before implementation, verify how Entity ID, timestamps, version, lifecycle, source, change_id, and device_id are produced.
+До реализации проверить, как создаются Entity ID, timestamps, version, lifecycle, source, `change_id` и `device_id`.
 
-If production identity generation is not resolved by accepted ADRs, do not invent a package or lifecycle.
+Если генерация production identity не определена принятыми ADR, не придумывать package или lifecycle.
 
-Mark blocked and request the smallest required decision.
+Отметить checkpoint как blocked и запросить минимально необходимое решение.
 
-### Allowed scope
+### Разрешённая область
 
-- minimal creation UI;
-- Domain creation behavior/factory if architecturally appropriate;
+- минимальный UI создания;
+- Domain creation behavior/factory, если это архитектурно уместно;
 - Application use case;
-- repository use;
-- Infrastructure persistence;
-- Outbox behavior;
-- tests.
+- использование repository;
+- persistence в Infrastructure;
+- поведение Outbox;
+- тесты.
 
-### Non-goals
+### Не входит в цель
 
-- due dates;
-- priority;
-- tags;
-- projects;
-- recurrence;
-- rich editor.
+- сроки выполнения;
+- приоритет;
+- теги;
+- проекты;
+- повторение;
+- расширенный редактор.
 
-### Definition of Done
+### Критерии завершения
 
-- user can enter a Task title;
-- valid Task is created;
-- Task persists;
-- required Entity metadata is valid;
-- Outbox entry is created atomically;
-- UI reflects the created Task.
+- пользователь может ввести название Task;
+- создаётся валидная Task;
+- Task сохраняется;
+- обязательные metadata Entity валидны;
+- запись Outbox создаётся атомарно;
+- UI отображает созданную Task.
 
-### Validation
+### Проверка
 
 - Domain/Application tests
 - persistence tests
@@ -448,66 +448,66 @@ Mark blocked and request the smallest required decision.
 - flutter test
 - git diff --check
 
-### Result / evidence
+### Результат / доказательства
 
-Completed on 2026-09-09.
+Завершено 2026-09-09.
 
-Evidence:
+Доказательства:
 
-- ADR-0026 is accepted and resolves the Entity creation architecture gate;
-- production Entity IDs use UUID v4 through an injectable generator at the Application composition boundary;
-- production UTC time is supplied through an injectable clock;
-- a new user Task starts active at version 1 with source `user`;
-- creation obtains one UTC timestamp and uses it for both `createdAt` and `updatedAt`;
-- `LifeOsTask.createUserTask` owns title, typed-ID, UTC, and initial metadata invariants;
-- `CreateLifeOsTask` obtains one injected ID and UTC timestamp, saves through the Domain repository, and returns the persisted Task;
-- production composition supplies UUID v4 Entity IDs and the production UTC clock;
-- the Task list UI accepts a title and displays the saved Task immediately;
-- focused Domain, Application, composition, persistence, and widget tests cover the vertical path.
+- ADR-0026 принят и закрывает architecture gate создания Entity;
+- production Entity ID используют UUID v4 через внедряемый generator на границе Application composition;
+- production-время UTC предоставляется через внедряемые clock;
+- новая пользовательская Task создаётся с lifecycle `active`, version 1 и source `user`;
+- создание получает одну временную метку UTC и использует её для `createdAt` и `updatedAt`;
+- `LifeOsTask.createUserTask` владеет инвариантами title, typed ID, UTC и начальных metadata;
+- `CreateLifeOsTask` получает один внедрённый ID и временную метку UTC, сохраняет через Domain repository и возвращает сохранённую Task;
+- production composition предоставляет Entity ID UUID v4 и production UTC clock;
+- UI списка Task принимает название и сразу отображает сохранённую Task;
+- focused tests Domain, Application, composition, persistence и widgets покрывают vertical path.
 
-Validation:
+Проверка:
 
-- focused CP-05 tests: PASS — 19 tests;
-- flutter analyze: PASS — no issues;
-- flutter test: PASS — 33 tests;
+- focused tests CP-05: PASS — 19 тестов;
+- `flutter analyze`: PASS — замечаний нет;
+- `flutter test`: PASS — 33 теста;
 - import-boundary scan: PASS;
-- git diff --check: PASS.
+- `git diff --check`: PASS.
 
 ---
 
-## CP-06 — Persistent completion toggle
+## CP-06 — Сохраняемое переключение completion
 
-Status: done
+Статус: выполнен
 
-Depends on: CP-05
+Зависит от: CP-05
 
-### Goal
+### Цель
 
-Connect the existing Task completion behavior to the real persisted Task list.
+Подключить существующее поведение Task completion к реальному сохраняемому списку Task.
 
-### Allowed scope
+### Разрешённая область
 
-- existing Domain toggle behavior;
-- existing Application stored toggle use case;
-- Presentation refresh/state update;
-- tests.
+- существующее Domain toggle behavior;
+- существующий Application use case сохраняемого переключения;
+- обновление Presentation refresh/state;
+- тесты.
 
-### Non-goals
+### Не входит в цель
 
-- batch completion;
-- undo framework;
+- пакетное завершение;
+- framework отмены действий;
 - event sourcing;
 - Sync.
 
-### Definition of Done
+### Критерии завершения
 
-- incomplete → complete persists;
-- complete → incomplete persists;
-- UI updates correctly;
-- restart preserves state;
-- each mutation creates the required Outbox change.
+- переход incomplete → complete сохраняется;
+- переход complete → incomplete сохраняется;
+- UI обновляется корректно;
+- состояние сохраняется после перезапуска;
+- каждая мутация создаёт требуемое изменение Outbox.
 
-### Validation
+### Проверка
 
 - Application tests
 - persistence tests
@@ -516,72 +516,72 @@ Connect the existing Task completion behavior to the real persisted Task list.
 - flutter test
 - git diff --check
 
-### Result / evidence
+### Результат / доказательства
 
-Completed on 2026-09-09.
+Завершено 2026-09-09.
 
-Evidence:
+Доказательства:
 
-- the persisted Task list invokes the existing Application toggle use case through Riverpod;
-- incomplete-to-complete and complete-to-incomplete transitions update the UI and persistence;
-- Domain completion behavior remains immutable and advances Entity version metadata;
-- each completion mutation produces its own atomic `UPDATE` Outbox change;
-- a focused file-backed test verifies both transitions, three total Outbox changes including creation, and the final state after database reopen.
+- сохраняемый список Task вызывает существующий Application toggle use case через Riverpod;
+- переходы incomplete-to-complete и complete-to-incomplete обновляют UI и persistence;
+- Domain completion behavior остаётся immutable и увеличивает metadata версии Entity;
+- каждая мутация completion создаёт собственное атомарное изменение Outbox `UPDATE`;
+- focused file-backed test проверяет оба перехода, три изменения Outbox с учётом создания и итоговое состояние после повторного открытия database.
 
-Validation:
+Проверка:
 
-- focused CP-06 tests: PASS — 16 tests;
-- flutter analyze: PASS — no issues;
-- flutter test: PASS — 34 tests;
+- focused tests CP-06: PASS — 16 тестов;
+- `flutter analyze`: PASS — замечаний нет;
+- `flutter test`: PASS — 34 теста;
 - import-boundary scan: PASS;
-- git diff --check: PASS.
+- `git diff --check`: PASS.
 
 ---
 
-## CP-06A — Localization foundation
+## CP-06A — Основа локализации
 
-Status: done
+Статус: выполнен
 
-Depends on: CP-06
+Зависит от: CP-06
 
-### Goal
+### Цель
 
-Establish Flutter localization for the existing Presentation surface without changing the completed Task behavior.
+Создать локализацию Flutter для существующей поверхности Presentation без изменения завершённого поведения Task.
 
-### Relevant ADRs
+### Относящиеся ADR
 
 - ADR-0022
 - ADR-0027
 
-### Allowed scope
+### Разрешённая область
 
-- Flutter localization infrastructure using `flutter_localizations`, `gen_l10n`, and ARB resources;
-- English and Russian localization resources under `lib/l10n/`;
-- migration of existing user-visible static Presentation strings;
-- supported-locale and fallback configuration;
-- focused localization and Presentation tests.
+- инфраструктура локализации Flutter с использованием `flutter_localizations`, `gen_l10n` и ресурсов ARB;
+- ресурсы локализации на английском и русском в `lib/l10n/`;
+- перенос существующих видимых пользователю статических строк Presentation;
+- настройка поддерживаемых locale и fallback;
+- focused tests локализации и Presentation.
 
-### Non-goals
+### Не входит в цель
 
-- manual language settings UI;
-- per-user language synchronization;
-- translation management platform;
-- AI translation;
-- locale-specific date/time preferences;
-- RTL-specific UI redesign;
-- changes to completed Task behavior.
+- UI ручного выбора языка;
+- синхронизация языка пользователя;
+- платформа управления переводами;
+- перевод с помощью AI;
+- настройки даты/времени для конкретного locale;
+- redesign UI для RTL;
+- изменения завершённого поведения Task.
 
-### Definition of Done
+### Критерии завершения
 
-- English and Russian resources load;
-- supported locales are configured;
-- the platform locale selects English or Russian when supported;
-- unsupported locales fall back to English without breaking startup;
-- existing user-visible static Presentation strings use localization resources;
-- Domain, Application, and Infrastructure do not depend on Flutter localization APIs;
-- generated localization code is not edited manually.
+- загружаются английские и русские ресурсы;
+- поддерживаемые locale настроены;
+- платформенный locale выбирает английский или русский язык, если он поддерживается;
+- неподдерживаемые locale используют английский язык без нарушения запуска;
+- существующие видимые пользователю статические строки Presentation используют ресурсы локализации;
+- Domain, Application и Infrastructure не зависят от Flutter localization APIs;
+- generated code локализации не редактируется вручную.
 
-### Validation
+### Проверка
 
 - focused localization and Presentation tests
 - flutter analyze
@@ -589,297 +589,297 @@ Establish Flutter localization for the existing Presentation surface without cha
 - import-boundary scan
 - git diff --check
 
-### Result / evidence
+### Результат / доказательства
 
-Completed on 2026-09-10.
+Завершено 2026-09-10.
 
-Evidence:
+Доказательства:
 
-- Flutter's standard `flutter_localizations` and `gen_l10n` mechanism is enabled with ARB resources under `lib/l10n/`;
-- English and Russian resources define every currently visible static Presentation string;
-- generated localization sources were produced by `flutter gen-l10n` and were not edited manually;
-- production `MaterialApp` uses the generated delegates and supported locale list;
-- platform English and Russian locales resolve to their matching resources, while unsupported locales explicitly fall back to English;
-- the shell, Task list states, completion actions, form labels, validation feedback, and bounded errors use localization resources;
-- localization dependencies remain outside Domain, Application, and Infrastructure.
+- стандартный механизм Flutter `flutter_localizations` и `gen_l10n` включён с ресурсами ARB в `lib/l10n/`;
+- английские и русские ресурсы определяют каждую текущую видимую статическую строку Presentation;
+- generated sources локализации созданы командой `flutter gen-l10n` и не редактировались вручную;
+- production `MaterialApp` использует сгенерированные delegates и список поддерживаемых locale;
+- платформенные английский и русский locale разрешаются в соответствующие ресурсы, а неподдерживаемые locale явно используют английский язык;
+- shell, состояния списка Task, действия completion, labels формы, feedback валидации и ограниченные ошибки используют ресурсы локализации;
+- зависимости локализации остаются за пределами Domain, Application и Infrastructure.
 
-Validation:
+Проверка:
 
-- focused localization/Presentation tests: PASS — 14 tests;
-- flutter analyze: PASS — no issues;
-- flutter test: PASS — 39 tests;
+- focused localization/Presentation tests: PASS — 14 тестов;
+- `flutter analyze`: PASS — замечаний нет;
+- `flutter test`: PASS — 39 тестов;
 - import-boundary scan: PASS;
-- git diff --check: PASS.
+- `git diff --check`: PASS.
 
 ---
 
-## CP-07 — Restart persistence verification
+## CP-07 — Проверка persistence после перезапуска
 
-Status: done
+Статус: выполнен
 
-Depends on: CP-06A
+Зависит от: CP-06A
 
-### Goal
+### Цель
 
-Verify the MVP's core local-first promise across application/database restart.
+Проверить основную local-first гарантию MVP при перезапуске приложения/database.
 
-### Allowed scope
+### Разрешённая область
 
-- integration test or the smallest reliable equivalent;
-- lifecycle corrections directly required by the test.
+- integration test или минимальный надёжный эквивалент;
+- исправления lifecycle, непосредственно необходимые тесту.
 
-### Definition of Done
+### Критерии завершения
 
-A Task written using production-equivalent database lifecycle can be loaded after closing and reopening the database/application persistence boundary.
+Task, записанная с использованием эквивалентного production жизненного цикла database, загружается после закрытия и повторного открытия границы persistence database/application.
 
-Completion state and mandatory Entity metadata survive the reopen.
+Состояние completion и обязательные metadata Entity сохраняются после повторного открытия.
 
-### Validation
+### Проверка
 
 - focused restart persistence test
-- complete flutter test
+- полный `flutter test`
 - flutter analyze
 - git diff --check
 
-### Result / evidence
+### Результат / доказательства
 
-Completed on 2026-09-10.
+Завершено 2026-09-10.
 
-Evidence:
+Доказательства:
 
-- the architecture gate confirmed that the existing focused file-backed tests are the smallest reliable equivalent required by this checkpoint;
-- `openProductionDatabase` uses the production filename and production-equivalent application-support directory boundary;
-- a complete Task is written, the database is closed, the same file is reopened, and the mapped Domain Task is loaded unchanged;
-- typed identity, title, completion state, `createdAt`, `updatedAt`, lifecycle, version, and source survive reopen;
-- a second restart path verifies complete and incomplete transitions across repeated closes and reopens, including final version and timestamp metadata;
-- the required Outbox records remain persisted across the same restart sequence;
-- no production or test code change was required for CP-07.
+- architecture gate подтвердил, что существующие focused file-backed tests являются минимальным надёжным эквивалентом, необходимым этому checkpoint;
+- `openProductionDatabase` использует production filename и эквивалентную production границу каталога application-support;
+- завершённая Task записывается, database закрывается, тот же файл открывается повторно, а преобразованная Domain Task загружается без изменений;
+- typed identity, title, состояние completion, `createdAt`, `updatedAt`, lifecycle, version и source сохраняются после повторного открытия;
+- второй путь перезапуска проверяет переходы complete и incomplete через повторные закрытия и открытия, включая итоговые metadata version и timestamp;
+- требуемые записи Outbox сохраняются на протяжении той же последовательности перезапусков;
+- для CP-07 не потребовалось изменять production-код или тесты.
 
-Validation:
+Проверка:
 
-- focused restart persistence tests: PASS — 2 tests;
-- flutter analyze: PASS — no issues;
-- flutter test: PASS — 39 tests;
+- focused restart persistence tests: PASS — 2 теста;
+- `flutter analyze`: PASS — замечаний нет;
+- `flutter test`: PASS — 39 тестов;
 - import-boundary scan: PASS;
-- git diff --check: PASS.
-
----
-
-## CP-08 — MVP vertical slice final audit
-
-Status: done
-
-Depends on: CP-07
-
-### Goal
-
-Audit the complete local persistent Task vertical slice.
-
-### Verify
-
-- architecture boundaries;
-- ADR compliance;
-- production DB lifecycle;
-- repository composition;
-- Task read;
-- Task create;
-- Task completion;
-- persistence across reopen;
-- Outbox atomicity;
-- generated Drift consistency;
-- dependency hygiene;
-- tests.
-
-### Non-goals
-
-Do not add the next feature during the audit.
-
-### Definition of Done
-
-- flutter analyze passes;
-- flutter test passes;
-- git diff --check passes;
-- no unresolved defect exists in the implemented vertical slice;
-- deferred architecture is documented;
-- plan status becomes completed.
-
-### Result / evidence
-
-- Architecture gate passed against the governing Task, persistence, composition, identity, and localization ADRs; no unresolved decision was found.
-- Production composition resolves the OS application-support directory, opens one file-backed `lifeos.db`, supplies the Drift repository and Application create use case, and owns idempotent database close behavior.
-- Existing focused tests verify Task creation with mandatory Entity metadata, repository reads, Presentation display, completion toggles through Application and Domain, atomic Domain State + Outbox writes and rollback, stable device identity, and state retention across file-backed database reopen.
-- English and Russian ARB resources, generated delegates, platform locale resolution, and safe English fallback remain covered by focused localization/widget tests.
-- Import-boundary scan passed: Domain has no Flutter, Drift, UUID, localization, or platform imports; Application has no Infrastructure/framework/platform imports; Presentation has no Infrastructure/Drift imports or persistence construction; localization does not appear in Domain, Application, or Infrastructure; Infrastructure implements the Domain repository abstraction.
-- `flutter gen-l10n`: PASS; no tracked generated localization diff.
-- `dart run build_runner build`: PASS; no tracked generated Drift diff.
-- dependency hygiene: PASS — resolved dependency graph contains only the accepted runtime and generation stack; no additional dependency was introduced by the audit.
-- focused vertical-slice tests: PASS — 37 tests.
-- `flutter analyze`: PASS — no issues.
-- `flutter test`: PASS — 39 tests.
 - `git diff --check`: PASS.
-- No production or test code fix was required; no unresolved defect was found.
 
 ---
 
-# 6. Explicitly deferred beyond this milestone
+## CP-08 — Финальный аудит MVP vertical slice
 
-Do not implement as part of this plan unless an accepted architecture decision explicitly moves it into scope:
+Статус: выполнен
 
-- Task editing;
-- Task deletion/lifecycle UI;
-- advanced Task fields;
-- navigation architecture beyond what is required;
-- local search;
+Зависит от: CP-07
+
+### Цель
+
+Провести аудит полного локального сохраняемого Task vertical slice.
+
+### Проверить
+
+- архитектурные границы;
+- соответствие ADR;
+- жизненный цикл production DB;
+- сборку repository;
+- чтение Task;
+- создание Task;
+- completion Task;
+- persistence после повторного открытия;
+- атомарность Outbox;
+- согласованность generated Drift;
+- чистоту зависимостей;
+- тесты.
+
+### Не входит в цель
+
+Не добавлять следующую feature во время аудита.
+
+### Критерии завершения
+
+- `flutter analyze` проходит;
+- `flutter test` проходит;
+- `git diff --check` проходит;
+- в реализованном vertical slice нет нерешённых дефектов;
+- отложенная архитектура задокументирована;
+- статус плана изменён на completed.
+
+### Результат / доказательства
+
+- Architecture gate пройден с учётом регулирующих Task, persistence, composition, identity и localization ADR; нерешённых решений не обнаружено.
+- Production composition получает каталог application-support ОС, открывает одну file-backed `lifeos.db`, предоставляет Drift repository и Application create use case и владеет идемпотентным закрытием database.
+- Существующие focused tests проверяют создание Task с обязательными metadata Entity, чтение repository, отображение в Presentation, переключение completion через Application и Domain, атомарную запись и rollback Domain State + Outbox, стабильную device identity и сохранение состояния после повторного открытия file-backed database.
+- Английские и русские ресурсы ARB, generated delegates, разрешение платформенного locale и безопасный fallback на английский остаются покрытыми focused localization/widget tests.
+- Import-boundary scan пройден: Domain не содержит импортов Flutter, Drift, UUID, localization или platform; Application не содержит импортов Infrastructure/framework/platform; Presentation не содержит импортов Infrastructure/Drift или создания persistence; localization отсутствует в Domain, Application и Infrastructure; Infrastructure реализует abstraction Domain repository.
+- `flutter gen-l10n`: PASS; отслеживаемый diff generated localization отсутствует.
+- `dart run build_runner build`: PASS; отслеживаемый diff generated Drift отсутствует.
+- чистота зависимостей: PASS — разрешённый граф зависимостей содержит только принятый runtime и generation stack; аудит не добавил зависимостей.
+- focused vertical-slice tests: PASS — 37 тестов.
+- `flutter analyze`: PASS — замечаний нет.
+- `flutter test`: PASS — 39 тестов.
+- `git diff --check`: PASS.
+- Исправления production-кода или тестов не потребовались; нерешённых дефектов не обнаружено.
+
+---
+
+# 6. Явно отложено за пределы этого milestone
+
+Не реализовывать в рамках этого плана, пока принятое архитектурное решение явно не включит это в scope:
+
+- редактирование Task;
+- UI удаления/lifecycle Task;
+- расширенные поля Task;
+- navigation architecture сверх необходимой;
+- локальный поиск;
 - backup/export;
-- additional Entity types;
-- AI provider integration;
+- дополнительные типы Entity;
+- интеграция AI provider;
 - AI context engine;
 - tool calling;
 - embeddings;
-- semantic search;
+- семантический поиск;
 - production Sync;
 - Sync Worker;
-- network transport;
+- сетевой transport;
 - server/API;
-- conflict resolution;
-- production device registration;
-- Outbox acknowledgement/cleanup;
-- network retry policy.
+- разрешение конфликтов;
+- production-регистрация устройств;
+- подтверждение/очистка Outbox;
+- политика повторных сетевых запросов.
 
 ---
 
-# 7. Resume checkpoint
+# 7. Точка возобновления
 
-This section is maintained by Codex.
+Этот раздел поддерживается Codex.
 
-Last checkpoint update: 2026-09-10 — CP-08 completed; execution plan completed
+Последнее обновление checkpoint: 2026-09-10 — CP-08 выполнен; execution plan завершён
 
-Current checkpoint: CP-08
+Текущий checkpoint: CP-08
 
-Current checkpoint status: done
+Статус текущего checkpoint: выполнен
 
-Last successful validation:
+Последняя успешная проверка:
 
-- Foundation flutter analyze: PASS
-- Foundation flutter test: PASS — 16 tests
-- Foundation git diff --check: PASS
-- CP-01 focused lifecycle tests: PASS — 2 tests
-- CP-01 flutter analyze: PASS — no issues
-- CP-01 flutter test: PASS — 18 tests
+- Foundation `flutter analyze`: PASS
+- Foundation `flutter test`: PASS — 16 тестов
+- Foundation `git diff --check`: PASS
+- CP-01 focused lifecycle tests: PASS — 2 теста
+- CP-01 `flutter analyze`: PASS — замечаний нет
+- CP-01 `flutter test`: PASS — 18 тестов
 - CP-01 import-boundary scan: PASS
-- CP-01 git diff --check: PASS
-- CP-02 focused identity/composition/app tests: PASS — 5 tests
-- CP-02 flutter analyze: PASS — no issues
-- CP-02 flutter test: PASS — 22 tests
+- CP-01 `git diff --check`: PASS
+- CP-02 focused identity/composition/app tests: PASS — 5 тестов
+- CP-02 `flutter analyze`: PASS — замечаний нет
+- CP-02 `flutter test`: PASS — 22 теста
 - CP-02 import-boundary scan: PASS
-- CP-02 git diff --check: PASS
-- CP-03 focused Application/Infrastructure tests: PASS — 7 tests
-- CP-03 flutter analyze: PASS — no issues
-- CP-03 flutter test: PASS — 25 tests
+- CP-02 `git diff --check`: PASS
+- CP-03 focused Application/Infrastructure tests: PASS — 7 тестов
+- CP-03 `flutter analyze`: PASS — замечаний нет
+- CP-03 `flutter test`: PASS — 25 тестов
 - CP-03 import-boundary scan: PASS
-- CP-03 git diff --check: PASS
-- CP-04 focused widget tests: PASS — 4 tests
-- CP-04 flutter analyze: PASS — no issues
-- CP-04 flutter test: PASS — 28 tests
+- CP-03 `git diff --check`: PASS
+- CP-04 focused widget tests: PASS — 4 теста
+- CP-04 `flutter analyze`: PASS — замечаний нет
+- CP-04 `flutter test`: PASS — 28 тестов
 - CP-04 import-boundary scan: PASS
-- CP-04 git diff --check: PASS
-- CP-05 focused tests: PASS — 19 tests
-- CP-05 flutter analyze: PASS — no issues
-- CP-05 flutter test: PASS — 33 tests
+- CP-04 `git diff --check`: PASS
+- CP-05 focused tests: PASS — 19 тестов
+- CP-05 `flutter analyze`: PASS — замечаний нет
+- CP-05 `flutter test`: PASS — 33 теста
 - CP-05 import-boundary scan: PASS
-- CP-05 git diff --check: PASS
-- CP-06 focused tests: PASS — 16 tests
-- CP-06 flutter analyze: PASS — no issues
-- CP-06 flutter test: PASS — 34 tests
+- CP-05 `git diff --check`: PASS
+- CP-06 focused tests: PASS — 16 тестов
+- CP-06 `flutter analyze`: PASS — замечаний нет
+- CP-06 `flutter test`: PASS — 34 теста
 - CP-06 import-boundary scan: PASS
-- CP-06 git diff --check: PASS
-- CP-06A focused localization/Presentation tests: PASS — 14 tests
-- CP-06A flutter analyze: PASS — no issues
-- CP-06A flutter test: PASS — 39 tests
+- CP-06 `git diff --check`: PASS
+- CP-06A focused localization/Presentation tests: PASS — 14 тестов
+- CP-06A `flutter analyze`: PASS — замечаний нет
+- CP-06A `flutter test`: PASS — 39 тестов
 - CP-06A import-boundary scan: PASS
-- CP-06A git diff --check: PASS
-- CP-07 focused restart persistence tests: PASS — 2 tests
-- CP-07 flutter analyze: PASS — no issues
-- CP-07 flutter test: PASS — 39 tests
+- CP-06A `git diff --check`: PASS
+- CP-07 focused restart persistence tests: PASS — 2 теста
+- CP-07 `flutter analyze`: PASS — замечаний нет
+- CP-07 `flutter test`: PASS — 39 тестов
 - CP-07 import-boundary scan: PASS
-- CP-07 git diff --check: PASS
-- CP-08 focused vertical-slice tests: PASS — 37 tests
-- CP-08 flutter gen-l10n consistency check: PASS — no tracked generated localization diff
-- CP-08 Drift build_runner consistency check: PASS — no tracked generated Drift diff
-- CP-08 dependency hygiene check: PASS
-- CP-08 flutter analyze: PASS — no issues
-- CP-08 flutter test: PASS — 39 tests
+- CP-07 `git diff --check`: PASS
+- CP-08 focused vertical-slice tests: PASS — 37 тестов
+- CP-08 проверка согласованности `flutter gen-l10n`: PASS — отслеживаемый diff generated localization отсутствует
+- CP-08 проверка согласованности Drift `build_runner`: PASS — отслеживаемый diff generated Drift отсутствует
+- CP-08 проверка чистоты зависимостей: PASS
+- CP-08 `flutter analyze`: PASS — замечаний нет
+- CP-08 `flutter test`: PASS — 39 тестов
 - CP-08 import-boundary scan: PASS
-- CP-08 git diff --check: PASS
+- CP-08 `git diff --check`: PASS
 
-Work completed in current checkpoint:
+Работа, выполненная в текущем checkpoint:
 
-- CP-01 through CP-06 completed and validated;
-- CP-06 persistent completion, UI state, Outbox, and restart behavior are complete.
-- ADR-0027 is accepted and establishes the localization architecture.
-- CP-06A architecture gate passed against ADR-0022 and ADR-0027.
-- CP-06A localization resources, production configuration, Presentation migration, and focused tests are complete.
-- CP-07 architecture gate confirmed that the existing file-backed restart tests satisfy the accepted production lifecycle and persistence decisions.
-- CP-07 restart persistence verification is complete without additional production or test code changes.
-- CP-08 audited the complete local persistent Task vertical slice against repository state and the governing ADRs.
-- CP-08 found no unresolved architecture decision or implementation defect and required no production or test code changes.
-- All checkpoint and plan-level completion criteria pass; this execution plan is complete.
+- CP-01 — CP-06 выполнены и проверены;
+- в CP-06 завершены сохраняемое completion, состояние UI, Outbox и поведение при перезапуске.
+- ADR-0027 принят и определяет архитектуру локализации.
+- Architecture gate CP-06A пройден с учётом ADR-0022 и ADR-0027.
+- В CP-06A завершены ресурсы локализации, production configuration, миграция Presentation и focused tests.
+- Architecture gate CP-07 подтвердил, что существующие file-backed restart tests соответствуют принятым решениям по production lifecycle и persistence.
+- Проверка restart persistence CP-07 завершена без дополнительных изменений production-кода или тестов.
+- CP-08 провёл аудит полного локального сохраняемого Task vertical slice относительно состояния репозитория и регулирующих ADR.
+- CP-08 не обнаружил нерешённых архитектурных решений или дефектов реализации и не потребовал изменений production-кода или тестов.
+- Все критерии завершения checkpoint и плана выполнены; этот execution plan завершён.
 
-Work remaining in current checkpoint:
+Оставшаяся работа в текущем checkpoint:
 
-- none; stop for user review and do not start another execution plan.
+- отсутствует; остановиться для пользовательской проверки и не начинать другой execution plan.
 
-Known blockers:
+Известные blockers:
 
-- none.
+- отсутствуют.
 
-Architecture decision:
+Архитектурные решения:
 
-- ADR-0024 accepted: production DB uses OS application-support directory / `lifeos.db`; composition root owns one production database instance and closes it at lifecycle end.
-- ADR-0025 accepted.
-- Production `change_id` = UUID v4 generated in Infrastructure through an injectable generator.
-- Production `device_id` = UUID v4 generated once, persisted in application-support storage, reused across launches.
-- ADR-0026 accepted.
-- Production Entity ID = UUID v4 through an injectable generator at the Application composition boundary.
-- Production UTC time = injectable clock supplied by composition.
-- New user Task defaults:
+- ADR-0024 принят: production DB использует каталог application-support ОС / `lifeos.db`; composition root владеет одним экземпляром production database и закрывает его в конце lifecycle.
+- ADR-0025 принят.
+- Production `change_id` = UUID v4, генерируемый в Infrastructure через внедряемый generator.
+- Production `device_id` = UUID v4, однократно генерируемый, сохраняемый в application-support storage и повторно используемый между запусками.
+- ADR-0026 принят.
+- Production Entity ID = UUID v4 через внедряемый generator на границе Application composition.
+- Production UTC time = внедряемые clock, предоставляемые composition.
+- Начальные значения новой пользовательской Task:
   - lifecycle = active
   - version = 1
   - source = user
-  - createdAt = updatedAt = one injected UTC timestamp
+  - createdAt = updatedAt = одна внедрённая временная метка UTC
 
-Working-tree notes:
+Примечания о working tree:
 
-- before this bookkeeping update, `.obsidian/workspace.json` was modified and ADR-0026 was untracked user-owned work;
-- agent change: only this execution plan bookkeeping;
-- `.obsidian/workspace.json` and ADR-0026 were not modified by the agent;
-- CP-05 production code, tests, and this plan were changed by the agent;
-- CP-06 production code, tests, and this plan were changed by the agent;
-- CP-06A production localization, tests, generated sources, and this plan were changed by the agent;
-- CP-07 required only this execution plan bookkeeping because its Definition of Done was already covered by repository tests;
-- at CP-08 start, HEAD was `23a4a46` on `main`, one commit ahead of `origin/main`, with only user-owned `.obsidian/workspace.json` modified;
-- CP-08 changed only this execution-plan bookkeeping; generator runs produced no tracked source changes, and `.obsidian/workspace.json` was not modified by the agent;
-- CP-08 is complete;
-- never assume this section is newer than repository evidence.
+- до этого bookkeeping update файл `.obsidian/workspace.json` был изменён, а ADR-0026 был неотслеживаемой пользовательской работой;
+- изменение агента: только bookkeeping этого execution plan;
+- `.obsidian/workspace.json` и ADR-0026 не изменялись агентом;
+- в CP-05 агент изменял production-код, тесты и этот план;
+- в CP-06 агент изменял production-код, тесты и этот план;
+- в CP-06A агент изменял production localization, тесты, generated sources и этот план;
+- CP-07 потребовал только bookkeeping этого execution plan, поскольку его Definition of Done уже был покрыт тестами репозитория;
+- в начале CP-08 `HEAD` был `23a4a46` в `main`, на один commit впереди `origin/main`, и был изменён только пользовательский `.obsidian/workspace.json`;
+- CP-08 изменил только bookkeeping этого execution plan; запуски generator не создали отслеживаемых изменений source, а `.obsidian/workspace.json` не изменялся агентом;
+- CP-08 завершён;
+- никогда не считать этот раздел более актуальным, чем фактическое состояние репозитория.
 
 ---
 
-# 8. Plan-level completion criteria
+# 8. Критерии завершения плана
 
-This execution plan is complete only when:
+Этот execution plan завершён только тогда, когда:
 
-- CP-01 through CP-06, CP-06A, CP-07, and CP-08 are done;
-- LifeOS uses a real production SQLite lifecycle;
-- user can create a Task;
-- persisted Tasks can be displayed;
-- completion can be toggled and persisted;
-- state survives persistence restart;
-- mandatory Outbox behavior remains atomic;
-- architecture boundaries remain compliant;
-- flutter analyze passes;
-- flutter test passes;
-- git diff --check passes.
+- CP-01 — CP-06, CP-06A, CP-07 и CP-08 выполнены;
+- LifeOS использует реальный production lifecycle SQLite;
+- пользователь может создать Task;
+- сохранённые Task отображаются;
+- completion можно переключать и сохранять;
+- состояние сохраняется после перезапуска persistence;
+- обязательное поведение Outbox остаётся атомарным;
+- архитектурные границы соблюдены;
+- `flutter analyze` проходит;
+- `flutter test` проходит;
+- `git diff --check` проходит.
 
-After completion, stop for user review.
+После завершения остановиться для пользовательской проверки.
 
-Do not automatically begin the next milestone.
+Не начинать следующий milestone автоматически.

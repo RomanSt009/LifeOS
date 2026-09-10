@@ -1,76 +1,76 @@
-# LifeOS Roadmap
+# Дорожная карта LifeOS
 
-**Status:** Draft  
-**Version:** 0.1  
-**Last updated:** 2026-08-09
+**Статус:** Черновик
+**Версия:** 0.1
+**Последнее обновление:** 2026-08-09
 
-## Phase 0 — Foundation
+## Этап 0 — Основа
 
-**Status:** In progress
+**Статус:** В работе
 
-Goals:
+Цели:
 
-- establish repository;
-- establish documentation structure;
-- define product vision;
-- define architecture principles;
-- establish development workflow.
+- создать репозиторий;
+- сформировать структуру документации;
+- определить видение продукта;
+- определить архитектурные принципы;
+- настроить процесс разработки.
 
-## Phase 1 — Product & Architecture
+## Этап 1 — Продукт и архитектура
 
-Goals:
+Цели:
 
-- define domain model;
-- define entities;
-- define relationships;
-- define Workspace concept;
-- define module boundaries;
-- define application architecture;
-- define database architecture;
-- define AI architecture;
-- define security principles;
-- define UI/UX structure.
+- определить Domain Model;
+- определить Entity;
+- определить Relationship;
+- определить концепцию Workspace;
+- определить границы модулей;
+- определить архитектуру приложения;
+- определить архитектуру базы данных;
+- определить AI-архитектуру;
+- определить принципы безопасности;
+- определить структуру UI/UX.
 
-## Phase 2 — Core
+## Этап 2 — Ядро
 
-Goals:
+Цели:
 
-- application shell;
-- local database;
-- entity system;
-- relationship system;
-- file storage;
-- indexing;
-- search;
-- settings;
-- backup.
+- оболочка приложения;
+- локальная база данных;
+- система Entity;
+- система Relationship;
+- файловое хранилище;
+- индексирование;
+- поиск;
+- настройки;
+- резервное копирование.
 
-## Phase 3 — MVP
+## Этап 3 — MVP
 
-Goals:
+Цели:
 
 - Dashboard;
 - Notes;
 - Tasks;
 - Documents;
-- Unified search;
-- basic relationships.
+- единый поиск;
+- базовые Relationship.
 
-## Phase 4 — Intelligence
+## Этап 4 — Интеллектуальные возможности
 
-Goals:
+Цели:
 
-- semantic search;
-- AI assistant;
-- automatic tagging;
-- document summarization;
-- entity suggestions;
+- семантический поиск;
+- AI-ассистент;
+- автоматическая разметка тегами;
+- суммаризация документов;
+- рекомендации Entity;
 - OCR;
-- contextual recommendations.
+- контекстные рекомендации.
 
-## Phase 5 — Life Management
+## Этап 5 — Управление жизнью
 
-Potential modules:
+Возможные модули:
 
 - Calendar;
 - Finance;
@@ -81,39 +81,39 @@ Potential modules:
 - Health;
 - Projects.
 
-## Phase 6 — Automation
+## Этап 6 — Автоматизация
 
-Goals:
+Цели:
 
-- workflow engine;
-- triggers;
-- actions;
-- conditions;
-- scheduled automation;
-- AI-assisted automation.
+- движок workflow;
+- триггеры;
+- действия;
+- условия;
+- автоматизация по расписанию;
+- автоматизация с помощью AI.
 
-## Phase 7 — Synchronization
+## Этап 7 — Синхронизация
 
-Goals:
+Цели:
 
-- desktop synchronization;
-- mobile applications;
-- web application;
-- conflict resolution;
-- encrypted synchronization.
+- синхронизация desktop-приложений;
+- мобильные приложения;
+- web-приложение;
+- разрешение конфликтов;
+- зашифрованная синхронизация.
 
-## Phase 8 — Ecosystem
+## Этап 8 — Экосистема
 
-Goals:
+Цели:
 
 - plugin API;
 - SDK;
-- integrations;
-- extension marketplace;
-- developer documentation.
+- интеграции;
+- marketplace расширений;
+- документация для разработчиков.
 
-## Current Priority
+## Текущий приоритет
 
-The immediate priority is not adding features.
+Ближайший приоритет — не добавление новых функций.
 
-The immediate priority is creating a stable architecture and domain model that can support future features without requiring major rewrites.
+Ближайший приоритет — создание стабильной архитектуры и Domain Model, способных поддерживать будущие функции без значительной переработки.

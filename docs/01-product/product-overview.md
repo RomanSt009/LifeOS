@@ -1,66 +1,66 @@
-# Product Overview
+# Обзор продукта
 
-**Status:** Draft  
-**Version:** 0.1  
-**Last updated:** 2026-08-09
+**Статус:** Черновик
+**Версия:** 0.1
+**Последнее обновление:** 2026-08-09
 
-## What is LifeOS?
+## Что такое LifeOS?
 
-LifeOS is a personal digital operating system that connects information, tasks, projects, files, knowledge and AI assistance.
+LifeOS — это персональная цифровая операционная система, которая объединяет информацию, задачи, проекты, файлы, знания и AI-помощь.
 
-## Problem
+## Проблема
 
-Modern digital life is fragmented.
+Современная цифровая жизнь фрагментирована.
 
-Users commonly keep:
+Пользователи обычно хранят:
 
-- notes in one application;
-- files in another location;
-- tasks in a task manager;
-- events in a calendar;
-- photos on their phone;
-- documents in cloud storage;
-- conversations in messaging applications.
+- заметки в одном приложении;
+- файлы в другом месте;
+- задачи в менеджере задач;
+- события в календаре;
+- фотографии на телефоне;
+- документы в облачном хранилище;
+- переписку в мессенджерах.
 
-These systems usually do not understand each other's context.
+Обычно эти системы не понимают контекст друг друга.
 
-As a result, users spend time searching, copying information and manually maintaining relationships between data.
+В результате пользователи тратят время на поиск, копирование информации и ручное поддержание связей между данными.
 
-## Proposed Solution
+## Предлагаемое решение
 
-LifeOS provides a unified environment where different types of information can exist as connected entities.
+LifeOS предоставляет единую среду, в которой разные типы информации существуют как связанные Entity.
 
-Instead of thinking:
+Вместо вопроса:
 
-> "Which application contains this information?"
+> «В каком приложении находится эта информация?»
 
-the user should be able to think:
+пользователь должен иметь возможность спросить:
 
-> "What information is related to this context?"
+> «Какая информация связана с этим контекстом?»
 
-## Core Product Concepts
+## Основные концепции продукта
 
 ### Entity
 
-An entity is a piece of information managed by LifeOS.
+Entity — это единица информации, которой управляет LifeOS.
 
-Examples:
+Примеры:
 
-- note;
-- task;
-- document;
-- project;
-- person;
-- event;
-- expense;
-- image;
-- bookmark.
+- заметка;
+- задача;
+- документ;
+- проект;
+- человек;
+- событие;
+- расход;
+- изображение;
+- закладка.
 
 ### Relationship
 
-Entities can be connected.
+Entity могут быть связаны между собой.
 
-Example:
+Пример:
 
 ```text
 Project

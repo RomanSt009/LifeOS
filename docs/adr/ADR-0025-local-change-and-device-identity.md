@@ -1,135 +1,135 @@
-# ADR-0025: Local Change Identity and Device Identity
+# ADR-0025: Идентификаторы локальных изменений и устройств
 
-Status: Accepted
+Статус: Принято
 
-## Context
+## Контекст
 
-LifeOS requires every local syncable Entity mutation to create an Outbox record atomically with Domain State.
+LifeOS требует, чтобы каждая локальная синхронизируемая мутация Entity создавала запись Outbox атомарно с Domain State.
 
-ADR-0023 requires:
+ADR-0023 требует:
 
-- `change_id` to be supplied at the Infrastructure boundary;
-- deterministic `change_id` values in tests;
-- `device_id` to be supplied through Infrastructure composition;
-- deterministic fixed `device_id` values in tests.
+- передавать `change_id` на границе Infrastructure;
+- использовать детерминированные значения `change_id` в тестах;
+- передавать `device_id` через composition Infrastructure;
+- использовать детерминированные фиксированные значения `device_id` в тестах.
 
-However, the production generation and lifecycle of these identifiers were intentionally deferred.
+Однако production-генерация и жизненный цикл этих идентификаторов были намеренно отложены.
 
-The production `DriftLifeOsTaskRepository` now needs concrete implementations for both values before it can be composed safely.
+Для безопасной сборки production `DriftLifeOsTaskRepository` теперь требуются конкретные реализации обоих значений.
 
-## Decision
+## Решение
 
 ### Change ID
 
-Every Outbox change receives a globally unique opaque identifier.
+Каждое изменение Outbox получает глобально уникальный непрозрачный идентификатор.
 
-For production, LifeOS will use UUID version 4 for `change_id`.
+В production LifeOS использует UUID версии 4 для `change_id`.
 
-Generation responsibility belongs to Infrastructure.
+Ответственность за генерацию принадлежит Infrastructure.
 
-The repository must depend on an injectable change-id generator abstraction or function.
+Repository должен зависеть от внедряемой abstraction или функции генерации change ID.
 
-Tests may inject deterministic values.
+Тесты могут внедрять детерминированные значения.
 
-Domain and Application layers must not depend on UUID libraries or generation details.
+Слои Domain и Application не должны зависеть от библиотек UUID или деталей генерации.
 
 ### Device ID
 
-Each local LifeOS installation has one stable opaque device identifier.
+Каждая локальная установка LifeOS имеет один стабильный непрозрачный идентификатор устройства.
 
-The initial production implementation will use UUID version 4.
+Начальная production-реализация использует UUID версии 4.
 
-The device identifier is generated once on first application initialization and then persisted locally.
+Идентификатор устройства генерируется один раз при первой инициализации приложения, а затем сохраняется локально.
 
-Subsequent launches reuse the stored identifier.
+Последующие запуски повторно используют сохранённый идентификатор.
 
-The device identifier is not regenerated on every process start.
+Идентификатор устройства не генерируется заново при каждом запуске процесса.
 
-### Device ID storage
+### Хранение Device ID
 
-The initial device identifier is stored in local application-support storage associated with the LifeOS installation.
+Начальный идентификатор устройства хранится в локальном application-support storage, связанном с установкой LifeOS.
 
-The storage mechanism belongs to Infrastructure / composition concerns.
+Механизм хранения относится к ответственности Infrastructure / composition.
 
-The identifier must survive normal application restarts.
+Идентификатор должен сохраняться при обычных перезапусках приложения.
 
-The identifier does not need to survive:
+Идентификатор не обязан сохраняться после:
 
-- application data deletion;
-- uninstall procedures that remove application-support data;
-- deliberate profile reset.
+- удаления данных приложения;
+- удаления приложения с очисткой application-support data;
+- намеренного сброса профиля.
 
-A future Sync architecture may refine device registration or server-issued identity without changing Domain Entity identity.
+Будущая архитектура Sync может уточнить регистрацию устройств или выдаваемую сервером identity без изменения identity Domain Entity.
 
 ### Composition
 
-The composition root resolves the stable production `device_id` before constructing syncable repository implementations that require it.
+Composition root получает стабильный production `device_id` до создания требующих его синхронизируемых реализаций repository.
 
-The concrete `DriftLifeOsTaskRepository` receives:
+Конкретный `DriftLifeOsTaskRepository` получает:
 
-- the owned production database;
-- a change-id generator;
-- the resolved stable device ID.
+- принадлежащую composition production database;
+- генератор change ID;
+- полученный стабильный device ID.
 
-Presentation and Application must not generate or store these identifiers.
+Presentation и Application не должны генерировать или хранить эти идентификаторы.
 
-### Testing
+### Тестирование
 
-Tests must be able to inject:
+Тесты должны позволять внедрять:
 
-- deterministic `change_id` values;
-- deterministic fixed `device_id` values.
+- детерминированные значения `change_id`;
+- детерминированные фиксированные значения `device_id`.
 
-Tests must not depend on random UUID output unless specifically testing the production generator.
+Тесты не должны зависеть от случайного результата UUID, кроме случаев специального тестирования production generator.
 
-A focused production device-identity test should verify:
+Focused-тест production device identity должен проверять:
 
-1. first resolution creates an ID;
-2. subsequent resolution returns the same ID;
-3. the value survives reopening the underlying storage.
+1. первое получение создаёт ID;
+2. последующее получение возвращает тот же ID;
+3. значение сохраняется после повторного открытия underlying storage.
 
-### Dependency
+### Зависимость
 
-A focused UUID package may be introduced for production UUID v4 generation.
+Для production-генерации UUID v4 разрешено добавить узкоспециализированный UUID package.
 
-The dependency must remain confined to Infrastructure/composition implementation.
+Зависимость должна оставаться внутри реализации Infrastructure/composition.
 
-Do not add ULID or multiple ID strategies unless a future accepted ADR requires them.
+Не добавлять ULID или несколько стратегий ID, пока этого не потребует будущий принятый ADR.
 
-## Scope
+## Область решения
 
-This ADR defines only:
+Этот ADR определяет только:
 
-- production `change_id` generation;
-- production local `device_id` generation;
-- local persistence and reuse of `device_id`;
-- composition responsibility.
+- production-генерацию `change_id`;
+- production-генерацию локального `device_id`;
+- локальное сохранение и повторное использование `device_id`;
+- ответственность composition.
 
-It does not define:
+Он не определяет:
 
-- remote device registration;
-- server-issued device identity;
-- account identity;
-- multi-device trust;
-- Sync authentication;
-- device revocation;
-- conflict resolution;
-- Outbox acknowledgement.
+- удалённую регистрацию устройств;
+- выдаваемую сервером device identity;
+- identity учётной записи;
+- доверие между несколькими устройствами;
+- аутентификацию Sync;
+- отзыв устройства;
+- разрешение конфликтов;
+- подтверждение Outbox.
 
-These remain deferred.
+Эти вопросы отложены.
 
-## Consequences
+## Последствия
 
-Production repository composition can now satisfy ADR-0023 without hardcoded identifiers.
+Теперь production repository composition может соответствовать ADR-0023 без жёстко заданных идентификаторов.
 
-Tests remain deterministic.
+Тесты остаются детерминированными.
 
-Device identity is stable across normal application restarts.
+Device identity остаётся стабильной при обычных перезапусках приложения.
 
-Sync-specific semantics remain deferred until the Sync milestone.
+Специфичная для Sync семантика остаётся отложенной до milestone Sync.
 
-## Precedence
+## Приоритет
 
-This ADR supplements ADR-0023.
+Этот ADR дополняет ADR-0023.
 
-Where ADR-0023 intentionally deferred production `change_id` and `device_id` lifecycle, this ADR provides the governing production decision.
+Там, где ADR-0023 намеренно откладывал production-жизненный цикл `change_id` и `device_id`, применяются решения этого ADR.

@@ -1,101 +1,101 @@
-# ADR-0024: Production Database Location and Lifecycle
+# ADR-0024: Расположение и жизненный цикл production database
 
-Status: Accepted
+Статус: Принято
 
-## Context
+## Контекст
 
-LifeOS uses SQLite through Drift as its local-first persistence layer.
+LifeOS использует SQLite через Drift в качестве local-first persistence layer.
 
-The existing architecture defines the persistence technology, schema, repository boundaries, and atomic Domain State + Outbox behavior, but does not yet define the production database file location or lifecycle ownership.
+Существующая архитектура определяет технологию persistence, schema, границы repository и атомарное поведение Domain State + Outbox, но пока не определяет расположение файла production database и владельца её жизненного цикла.
 
-The Windows application now requires a production database bootstrap so the real Task vertical slice can persist data across application restarts.
+Windows-приложению теперь требуется bootstrap production database, чтобы реальный Task vertical slice мог сохранять данные между перезапусками приложения.
 
-The application must not hardcode machine-specific filesystem paths.
+Приложение не должно содержать жёстко заданные пути файловой системы, зависящие от конкретного компьютера.
 
-The database lifecycle must remain isolated from Domain, Application, and Presentation layers.
+Жизненный цикл database должен оставаться изолированным от слоёв Domain, Application и Presentation.
 
-## Decision
+## Решение
 
-### Database location
+### Расположение database
 
-The production SQLite database is stored in the operating system's application-support directory.
+Production SQLite database хранится в каталоге поддержки приложений операционной системы.
 
-The database filename is:
+Имя файла database:
 
 `lifeos.db`
 
-The final filesystem path is therefore:
+Таким образом, итоговый путь файловой системы:
 
 `<platform application-support directory>/lifeos.db`
 
-The application must obtain the application-support directory through an appropriate Flutter platform abstraction rather than through hardcoded operating-system paths.
+Приложение должно получать каталог поддержки приложений через подходящую платформенную абстракцию Flutter, а не через жёстко заданные пути операционной системы.
 
-For the initial Flutter implementation, a focused platform-path dependency such as `path_provider` may be used.
+Для начальной реализации Flutter разрешено использовать узкоспециализированную зависимость для платформенных путей, например `path_provider`.
 
-A path utility dependency may be used when required to construct the final database path safely.
+При необходимости безопасного построения итогового пути database разрешено использовать вспомогательную зависимость для работы с путями.
 
-### Ownership
+### Владение
 
-The production database instance is created at the application composition boundary.
+Экземпляр production database создаётся на границе composition приложения.
 
-The composition root owns the database lifecycle.
+Composition root владеет жизненным циклом database.
 
-Infrastructure repositories receive or otherwise use the owned database instance through composition.
+Infrastructure repositories получают или иным образом используют принадлежащий composition экземпляр database.
 
-Presentation and Application must not construct or import the concrete Drift database.
+Presentation и Application не должны создавать или импортировать конкретную Drift database.
 
-### Lifetime
+### Время жизни
 
-The production application uses one logical database instance per application process unless a future accepted ADR defines otherwise.
+Production-приложение использует один логический экземпляр database на процесс приложения, если будущий принятый ADR не определит иное.
 
-The database remains open while the application requires persistence access.
+Database остаётся открытой, пока приложению требуется доступ к persistence.
 
-The owning composition layer is responsible for closing the database when the application persistence lifecycle ends.
+Владеющий слой composition отвечает за закрытие database при завершении жизненного цикла persistence приложения.
 
-### Testing
+### Тестирование
 
-Tests must not depend on the production filesystem path unless specifically testing production path behavior.
+Тесты не должны зависеть от production-пути файловой системы, кроме случаев, когда специально проверяется поведение production path.
 
-Persistence tests may continue to use in-memory or explicitly temporary databases where appropriate.
+Persistence tests могут продолжать использовать in-memory или явно временные database там, где это уместно.
 
-Lifecycle tests should verify that a file-backed database can be closed, reopened, and retain persisted data.
+Lifecycle tests должны проверять, что file-backed database можно закрыть, повторно открыть и получить сохранённые данные.
 
-### Scope
+### Область решения
 
-This ADR decides only:
+Этот ADR определяет только:
 
-- production SQLite location;
-- mechanism category for resolving the platform-safe path;
-- database ownership;
-- database lifecycle responsibility.
+- расположение production SQLite;
+- категорию механизма получения безопасного платформенного пути;
+- владение database;
+- ответственность за жизненный цикл database.
 
-It does not define:
+Он не определяет:
 
-- backup location;
-- export location;
-- multiple database profiles;
+- расположение backup;
+- расположение export;
+- несколько профилей database;
 - portable mode;
-- user-selectable database paths;
-- cloud storage;
+- выбираемые пользователем пути database;
+- облачное хранилище;
 - Sync transport;
-- device identity lifecycle.
+- жизненный цикл device identity.
 
-These remain deferred.
+Эти вопросы отложены.
 
-## Consequences
+## Последствия
 
-Production persistence can now be composed without hardcoded machine-specific paths.
+Теперь production persistence можно собрать без жёстко заданных путей, зависящих от конкретного компьютера.
 
-Infrastructure remains responsible for SQLite/Drift concerns.
+Infrastructure сохраняет ответственность за SQLite/Drift.
 
-The composition root becomes the explicit owner of the database lifecycle.
+Composition root становится явным владельцем жизненного цикла database.
 
-A small Flutter platform-path dependency is allowed for production bootstrap.
+Для production bootstrap разрешена небольшая Flutter-зависимость для платформенных путей.
 
-Future backup/export decisions must not assume that the application-support directory is itself a backup mechanism.
+Будущие решения о backup/export не должны считать каталог поддержки приложений самостоятельным механизмом резервного копирования.
 
-## Precedence
+## Приоритет
 
-This ADR supplements the accepted persistence and composition ADRs.
+Этот ADR дополняет принятые ADR по persistence и composition.
 
-If earlier documentation leaves the production SQLite file location or lifecycle ownership unspecified, this ADR governs those decisions.
+Если более ранняя документация не определяет расположение файла production SQLite или владельца жизненного цикла, применяются решения этого ADR.
