@@ -67,6 +67,13 @@ class DriftLifeOsTaskRepository implements LifeOsTaskRepository {
   }
 
   @override
+  Future<List<LifeOsTask>> searchByTitle(String query) {
+    throw UnimplementedError(
+      'Task search persistence is implemented in LS-03.',
+    );
+  }
+
+  @override
   Future<void> save(LifeOsTask task) async {
     await _database.transaction(() async {
       final existing = await (_database.select(

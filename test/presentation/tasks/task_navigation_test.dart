@@ -107,6 +107,9 @@ class FakeLifeOsTaskRepository implements LifeOsTaskRepository {
   }
 
   @override
+  Future<List<LifeOsTask>> searchByTitle(String query) async => [];
+
+  @override
   Future<void> save(LifeOsTask task) async {
     final index = tasks.indexWhere((storedTask) => storedTask.id == task.id);
     if (index == -1) {

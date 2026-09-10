@@ -212,7 +212,7 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 ## LS-02 — Task search contract и Application use case
 
-Статус: pending
+Статус: done
 
 Зависит от: LS-01
 
@@ -258,7 +258,23 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 ### Результат / доказательства
 
-Ожидает выполнения.
+- Architecture gate: PASS. `searchByTitle(String query)` однозначно выражает Task-specific semantics LS-01; новый ADR или generic Search abstraction не потребовались.
+- На старте checkpoint `HEAD` = `adcf4b0`; LS-01 был `done`, LS-02 — первым pending checkpoint. Единственным исходным рабочим изменением был пользовательский `.obsidian/workspace.json`, который не затрагивался.
+- `LifeOsTaskRepository` расширен одной read operation `searchByTitle`, возвращающей `Future<List<LifeOsTask>>`. Contract не содержит UI state и не импортирует Flutter, Drift или SQLite.
+- Добавлен Application use case `SearchLifeOsTasks`, зависящий только от `LifeOsTaskRepository`.
+- Application является единственным владельцем входной нормализации: выполняет `trim`, не вызывает repository для empty/whitespace-only query и возвращает пустой typed `List<LifeOsTask>`.
+- Непустой нормализованный query передаётся repository без дополнительного преобразования; returned Domain Task collection возвращается вызывающей стороне без Presentation/Infrastructure model.
+- Все существующие deterministic fake repositories обновлены новым contract method. Реальная SQLite database в Application tests не поднималась.
+- Для сохранения компилируемого repository implementation в `DriftLifeOsTaskRepository` добавлена только явная временная сигнатура, бросающая `UnimplementedError`; Drift/SQLite query отсутствует и остаётся первой задачей LS-03. Schema, indexes, generated files, dependencies, composition и providers не изменялись.
+- Focused Domain/Application Task/search tests: PASS — 16 tests, включая 4 новых search scenarios.
+- Existing relevant Task/persistence/shell/composition tests: PASS — 25 tests.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 51 tests.
+- Import-boundary scan: PASS — Application search импортирует только Domain; Domain не получил framework/persistence imports; Presentation не импортирует Infrastructure.
+- Dependency validation: not applicable — manifests и packages не изменялись; зависающий dependency command из LS-01 не запускался повторно.
+- `dart format` не выдал результата за 60 секунд и был остановлен без файловых изменений; итоговое форматирование проверено `flutter analyze` и diff review.
+- `git diff --check`: PASS; выведены только информационные предупреждения Git о преобразовании LF/CRLF.
+- Итоговый Git ref: `HEAD` = `adcf4b0`, `origin/main` = `adcf4b0`, divergence `0/0`. Рабочее дерево содержит только LS-02 files и отдельное исходное пользовательское изменение `.obsidian/workspace.json`.
 
 ### Blocker
 
@@ -569,20 +585,20 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 # Точка возобновления
 
-Текущий checkpoint: LS-02 — pending
+Текущий checkpoint: LS-03 — pending
 
-Resume checkpoint: LS-02, начать с повторной сверки Git/plan и отметить LS-02 `active` перед изменением contract.
+Resume checkpoint: LS-03, начать с повторной сверки Git/plan и отметить LS-03 `active` перед реализацией Drift query.
 
-Не начинать LS-02 в текущем запуске.
+Не начинать LS-03 в текущем запуске.
 
 # Состояние выполнения плана
 
 Статус: active
 
-Завершённые checkpoints: LS-01
+Завершённые checkpoints: LS-01, LS-02
 
-Текущий checkpoint: LS-02 — pending
+Текущий checkpoint: LS-03 — pending
 
-Следующий pending checkpoint: LS-02
+Следующий pending checkpoint: LS-03
 
 Blockers: отсутствуют
