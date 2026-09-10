@@ -502,7 +502,7 @@ Placeholder destinations:
 
 ## DS-06 — Аудит navigation state и lifecycle
 
-Статус: pending
+Статус: done
 
 Зависит от: DS-05
 
@@ -551,7 +551,22 @@ Placeholder destinations:
 
 ### Результат / доказательства
 
-Pending.
+- Architecture gate: PASS. Фактической необходимости в persistent navigation history, deep links, URL routing, независимых route stacks или отдельном router package не обнаружено; новое navigation-решение и ADR не требуются.
+- На старте DS-06 `HEAD` = `ffa0c85` (`main`, на 1 commit впереди `origin/main`); единственным рабочим изменением был пользовательский `.obsidian/workspace.json`, который не затрагивался.
+- Выбранный destination остаётся приватным ephemeral state в `State<LifeosShellPage>`, по умолчанию равным `Tasks`; navigation state не вынесен в Riverpod, Application, Domain или Infrastructure.
+- `NavigationRail` изменяет только shell-local enum state, а `IndexedStack` сохраняет смонтированные `Home` и `Tasks` subtrees при переключении.
+- Добавлен focused lifecycle test: несохранённый текст Task creation form сохраняется после `Tasks -> Home -> Tasks`, а `taskListControllerProvider` загружает repository ровно один раз. Это подтверждает сохранение необходимого Task Presentation/provider state без зависимости от случайного состояния между тестами.
+- Task providers создаются внутри app-owned `ProviderScope`: production composition передаёт один и тот же `LifeOsTaskRepository` в provider override и `CreateLifeOsTask`; shell/navigation не создают providers, repositories или persistence.
+- `main()` вызывает `createProductionDependencies()` один раз до `runApp`; composition создаёт один `LifeOsDatabase`, один `DriftLifeOsTaskRepository` и связанные use cases. Повторное переключение destinations не проходит через composition и не может открыть новую production database.
+- `LifeOsAppDependencies` является единственным владельцем production database и идемпотентно кэширует `close()` future; `LifeOSApp` закрывает owned dependencies при exit request/dispose. Существующие composition/lifecycle tests подтверждают закрытие database и передачу того же repository instance в Presentation.
+- English/Russian shell destination labels и locale behavior продолжают покрываться localization/widget tests; localization не вышла за Presentation/composition.
+- Production sources и dependencies не изменялись; изменение ограничено focused test и execution-plan evidence.
+- Focused lifecycle/navigation/composition/localization tests: PASS — 16 tests.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 47 tests.
+- Import-boundary scan: PASS — Domain/Application не получили framework/platform dependencies, Presentation не импортирует Infrastructure/Drift, localization не проникла в Domain/Application/Infrastructure, persistence construction отсутствует в Presentation/Application.
+- Routing dependency scan: PASS — `go_router`, `auto_route` и `beamer` отсутствуют в dependencies/imports.
+- `git diff --check`: PASS; выведены только информационные предупреждения Git о преобразовании LF/CRLF.
 
 ---
 
@@ -643,13 +658,13 @@ Pending.
 
 # Точка возобновления
 
-Текущий checkpoint: DS-06
+Текущий checkpoint: DS-07
 
 Следующее действие:
 
-Перед изменениями повторно сверить Git и план, прочитать ADR и scope DS-06, затем отметить DS-06 как `active`. Выполнить аудит navigation state, Task Presentation/provider lifecycle и ownership production composition; при фактической необходимости сложной routing capability остановиться на architecture gate.
+Перед изменениями повторно сверить Git и план, прочитать ADR и scope DS-07, затем отметить DS-07 как `active`. Выполнить финальный end-to-end и архитектурный аудит desktop shell без начала нового execution plan.
 
-DS-05 завершён и валидирован. DS-06 в этом запуске не начинался и остаётся `pending`.
+DS-06 завершён и валидирован. DS-07 в этом запуске не начинался и остаётся `pending`.
 
 ---
 
@@ -657,8 +672,8 @@ DS-05 завершён и валидирован. DS-06 в этом запуск
 
 Статус: active
 
-Завершённые checkpoints: DS-01, DS-02, DS-03, DS-04, DS-05
+Завершённые checkpoints: DS-01, DS-02, DS-03, DS-04, DS-05, DS-06
 
-Текущий checkpoint: DS-06
+Текущий checkpoint: DS-07
 
 Blockers: отсутствуют

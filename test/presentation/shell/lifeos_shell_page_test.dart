@@ -115,6 +115,39 @@ void main() {
     expect(find.byKey(const Key('task-title-field')), findsOneWidget);
   });
 
+  testWidgets('preserves Task draft and provider state across navigation', (
+    tester,
+  ) async {
+    final repository = EmptyLifeOsTaskRepository();
+
+    await tester.pumpWidget(
+      testApp(const Locale('en'), repository: repository),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('task-title-field')),
+      'Unsubmitted draft',
+    );
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+
+    expect(repository.getAllCallCount, 1);
+    expect(
+      find.byKey(const Key('task-title-field'), skipOffstage: false),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Tasks'));
+    await tester.pumpAndSettle();
+
+    final titleField = tester.widget<TextField>(
+      find.byKey(const Key('task-title-field')),
+    );
+    expect(titleField.controller?.text, 'Unsubmitted draft');
+    expect(repository.getAllCallCount, 1);
+  });
+
   testWidgets('localizes shell navigation labels in Russian', (tester) async {
     await tester.pumpWidget(testApp(const Locale('ru')));
     await tester.pumpAndSettle();
@@ -134,13 +167,11 @@ List<String> destinationLabels(NavigationRail navigationRail) {
   ];
 }
 
-Widget testApp(Locale locale) {
+Widget testApp(Locale locale, {EmptyLifeOsTaskRepository? repository}) {
+  final taskRepository = repository ?? EmptyLifeOsTaskRepository();
+
   return ProviderScope(
-    overrides: [
-      lifeOsTaskRepositoryProvider.overrideWithValue(
-        EmptyLifeOsTaskRepository(),
-      ),
-    ],
+    overrides: [lifeOsTaskRepositoryProvider.overrideWithValue(taskRepository)],
     child: MaterialApp(
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -151,8 +182,13 @@ Widget testApp(Locale locale) {
 }
 
 class EmptyLifeOsTaskRepository implements LifeOsTaskRepository {
+  int getAllCallCount = 0;
+
   @override
-  Future<List<LifeOsTask>> getAll() async => [];
+  Future<List<LifeOsTask>> getAll() async {
+    getAllCallCount += 1;
+    return [];
+  }
 
   @override
   Future<LifeOsTask?> getById(LifeOsEntityId id) async => null;
