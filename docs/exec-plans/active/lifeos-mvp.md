@@ -1,8 +1,8 @@
 # LifeOS MVP — Active Execution Plan
 
-Status: active
+Status: completed
 
-Last reviewed: 2026-09-09
+Last reviewed: 2026-09-10
 
 ## 1. Objective
 
@@ -89,11 +89,11 @@ Later explicit precedence decisions govern earlier conflicting recommendations.
 
 Milestone: Local persistent Task vertical slice
 
-Status: active
+Status: completed
 
 Current checkpoint: CP-08
 
-Next ready checkpoint: CP-08
+Next ready checkpoint: none — plan complete
 
 Blockers: none.
 
@@ -667,7 +667,7 @@ Validation:
 
 ## CP-08 — MVP vertical slice final audit
 
-Status: pending
+Status: done
 
 Depends on: CP-07
 
@@ -705,7 +705,19 @@ Do not add the next feature during the audit.
 
 ### Result / evidence
 
-Pending.
+- Architecture gate passed against the governing Task, persistence, composition, identity, and localization ADRs; no unresolved decision was found.
+- Production composition resolves the OS application-support directory, opens one file-backed `lifeos.db`, supplies the Drift repository and Application create use case, and owns idempotent database close behavior.
+- Existing focused tests verify Task creation with mandatory Entity metadata, repository reads, Presentation display, completion toggles through Application and Domain, atomic Domain State + Outbox writes and rollback, stable device identity, and state retention across file-backed database reopen.
+- English and Russian ARB resources, generated delegates, platform locale resolution, and safe English fallback remain covered by focused localization/widget tests.
+- Import-boundary scan passed: Domain has no Flutter, Drift, UUID, localization, or platform imports; Application has no Infrastructure/framework/platform imports; Presentation has no Infrastructure/Drift imports or persistence construction; localization does not appear in Domain, Application, or Infrastructure; Infrastructure implements the Domain repository abstraction.
+- `flutter gen-l10n`: PASS; no tracked generated localization diff.
+- `dart run build_runner build`: PASS; no tracked generated Drift diff.
+- dependency hygiene: PASS — resolved dependency graph contains only the accepted runtime and generation stack; no additional dependency was introduced by the audit.
+- focused vertical-slice tests: PASS — 37 tests.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 39 tests.
+- `git diff --check`: PASS.
+- No production or test code fix was required; no unresolved defect was found.
 
 ---
 
@@ -740,11 +752,11 @@ Do not implement as part of this plan unless an accepted architecture decision e
 
 This section is maintained by Codex.
 
-Last checkpoint update: 2026-09-10 — CP-07 completed; stopped before CP-08
+Last checkpoint update: 2026-09-10 — CP-08 completed; execution plan completed
 
 Current checkpoint: CP-08
 
-Current checkpoint status: pending
+Current checkpoint status: done
 
 Last successful validation:
 
@@ -791,6 +803,14 @@ Last successful validation:
 - CP-07 flutter test: PASS — 39 tests
 - CP-07 import-boundary scan: PASS
 - CP-07 git diff --check: PASS
+- CP-08 focused vertical-slice tests: PASS — 37 tests
+- CP-08 flutter gen-l10n consistency check: PASS — no tracked generated localization diff
+- CP-08 Drift build_runner consistency check: PASS — no tracked generated Drift diff
+- CP-08 dependency hygiene check: PASS
+- CP-08 flutter analyze: PASS — no issues
+- CP-08 flutter test: PASS — 39 tests
+- CP-08 import-boundary scan: PASS
+- CP-08 git diff --check: PASS
 
 Work completed in current checkpoint:
 
@@ -801,10 +821,13 @@ Work completed in current checkpoint:
 - CP-06A localization resources, production configuration, Presentation migration, and focused tests are complete.
 - CP-07 architecture gate confirmed that the existing file-backed restart tests satisfy the accepted production lifecycle and persistence decisions.
 - CP-07 restart persistence verification is complete without additional production or test code changes.
+- CP-08 audited the complete local persistent Task vertical slice against repository state and the governing ADRs.
+- CP-08 found no unresolved architecture decision or implementation defect and required no production or test code changes.
+- All checkpoint and plan-level completion criteria pass; this execution plan is complete.
 
 Work remaining in current checkpoint:
 
-- begin CP-08 MVP vertical slice final audit after its architecture gate.
+- none; stop for user review and do not start another execution plan.
 
 Known blockers:
 
@@ -834,7 +857,9 @@ Working-tree notes:
 - CP-06 production code, tests, and this plan were changed by the agent;
 - CP-06A production localization, tests, generated sources, and this plan were changed by the agent;
 - CP-07 required only this execution plan bookkeeping because its Definition of Done was already covered by repository tests;
-- CP-08 has not started;
+- at CP-08 start, HEAD was `23a4a46` on `main`, one commit ahead of `origin/main`, with only user-owned `.obsidian/workspace.json` modified;
+- CP-08 changed only this execution-plan bookkeeping; generator runs produced no tracked source changes, and `.obsidian/workspace.json` was not modified by the agent;
+- CP-08 is complete;
 - never assume this section is newer than repository evidence.
 
 ---
