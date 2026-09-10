@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../home/home_placeholder.dart';
 import '../navigation/lifeos_destination.dart';
-import '../tasks/task_list.dart';
+import '../tasks/task_page.dart';
 
 class LifeosShellPage extends StatefulWidget {
   const LifeosShellPage({super.key});
@@ -53,30 +53,7 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
                   padding: EdgeInsets.all(24),
                   child: HomePlaceholder(),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        localizations.appTitle,
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(localizations.appDescription),
-                      const SizedBox(height: 24),
-                      Text(
-                        localizations.taskListTitle,
-                        style: const TextStyle(fontSize: 20),
-                      ),
-                      const SizedBox(height: 8),
-                      const Expanded(child: TaskList()),
-                    ],
-                  ),
-                ),
+                const TaskPage(),
               ],
             ),
           ),

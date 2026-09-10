@@ -320,7 +320,7 @@ Navigation state не должен проникать в Domain или Infrastru
 
 ## DS-03 — Интеграция Tasks в навигацию
 
-Статус: pending
+Статус: done
 
 Зависит от: DS-02
 
@@ -357,7 +357,19 @@ Navigation state не должен проникать в Domain или Infrastru
 
 ### Результат / доказательства
 
-Pending.
+- Architecture gate пройден против ADR-0022, ADR-0023, ADR-0024, ADR-0025, ADR-0026 и ADR-0027; нового решения не потребовалось.
+- На старте DS-03 `HEAD` = `4ab3f5f` (`main`, на 5 commits впереди `origin/main`); единственным рабочим изменением был пользовательский `.obsidian/workspace.json`, который не затрагивался.
+- Добавлен feature-owned `TaskPage`, который только композирует прежние локализованные Task header и существующий `TaskList`.
+- Desktop shell теперь отображает `TaskPage` как content для `LifeOsDestination.tasks`; shell не содержит Task mutation logic и не создаёт Task providers, use cases, repositories или database.
+- Existing `TaskList`, `TaskListController`, `CreateLifeOsTask` и `ToggleStoredTaskCompletion` переиспользованы без изменения.
+- Focused navigation test подтверждает последовательность `Home -> Tasks -> Home -> Tasks`, отображение ранее загруженной Task, создание новой Task, completion toggle и сохранение обоих состояний после повторного переключения destination.
+- Domain, Application, Infrastructure, production database composition, Drift schema и Outbox implementation не изменялись.
+- Focused shell + Tasks + persistence tests: PASS — 30 tests.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 43 tests.
+- Import-boundary scan: PASS — Presentation не импортирует Infrastructure/Drift, Application и Domain не получили framework/platform dependencies, persistence construction остаётся вне Presentation/Application.
+- Routing dependency scan: PASS — новые routing packages отсутствуют.
+- `git diff --check`: PASS.
 
 ---
 
@@ -606,13 +618,13 @@ Pending.
 
 # Точка возобновления
 
-Текущий checkpoint: DS-03
+Текущий checkpoint: DS-04
 
 Следующее действие:
 
-Перед изменениями повторно сверить Git и план, прочитать ADR и scope DS-03, затем отметить DS-03 как `active`. Проверить существующий `TaskList` как реальный navigation destination, переход `Tasks -> Home -> Tasks`, создание и completion через прежние Application/Domain boundaries, не меняя persistence composition.
+Перед изменениями повторно сверить Git и план, прочитать ADR и scope DS-04, затем отметить DS-04 как `active`. Оценить начальную информационную архитектуру против уже достаточного набора `Home` + `Tasks`; не добавлять placeholder destinations без отдельного фактического обоснования.
 
-DS-02 завершён и валидирован. DS-03 в этом запуске не начинался и остаётся `pending`.
+DS-03 завершён и валидирован. DS-04 в этом запуске не начинался и остаётся `pending`.
 
 ---
 
@@ -620,8 +632,8 @@ DS-02 завершён и валидирован. DS-03 в этом запуск
 
 Статус: active
 
-Завершённые checkpoints: DS-01, DS-02
+Завершённые checkpoints: DS-01, DS-02, DS-03
 
-Текущий checkpoint: DS-03
+Текущий checkpoint: DS-04
 
 Blockers: отсутствуют
