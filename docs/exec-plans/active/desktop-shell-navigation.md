@@ -122,7 +122,7 @@ Shell/navigation может размещать или открывать сущ�
 
 ## DS-01 — Аудит текущего Presentation и навигации
 
-Статус: pending
+Статус: done
 
 ### Цель
 
@@ -168,7 +168,87 @@ Shell/navigation может размещать или открывать сущ�
 
 ### Результат / доказательства
 
-Pending.
+Architecture gate: PASS. Нерешённых архитектурных вопросов перед DS-02 нет.
+
+#### Сверка репозитория и Git
+
+- На момент аудита `HEAD` = `09e9e81` (`main`, на 3 commits впереди `origin/main`).
+- `desktop-shell-navigation.md` является единственным active execution plan; DS-01 был первым незавершённым checkpoint.
+- До изменений checkpoint рабочее дерево содержало только пользовательское изменение `.obsidian/workspace.json`; оно не затрагивалось.
+- Завершённый MVP vertical slice присутствует в репозитории и предоставляет рабочие Task Presentation, Application use cases, Domain contracts и production composition.
+
+#### Фактическая текущая структура Presentation/navigation
+
+- `lib/main.dart` инициализирует Flutter binding, создаёт production dependencies и запускает `LifeOSApp`.
+- `lib/app/dependencies.dart` является composition root для database, repository и Task use case; Presentation не создаёт persistence.
+- `lib/app/app.dart` владеет application/database lifecycle, `ProviderScope`, localization configuration и корневым `MaterialApp`.
+- `MaterialApp.home` напрямую открывает `LifeosShellPage`; `MaterialApp.router`, route table, `Navigator` и отдельная navigation infrastructure отсутствуют.
+- `lib/presentation/shell/lifeos_shell_page.dart` сейчас является stateless `Scaffold`, который одновременно показывает общую шапку приложения и непосредственно размещает `TaskList`. Постоянной области навигации, модели destinations и состояния выбранного раздела пока нет.
+- `lib/presentation/tasks/` содержит существующие Task widgets и Riverpod presentation state. Создание, чтение и completion проходят через существующие Application use cases и Domain repository abstraction.
+- `lib/l10n/` содержит English/Russian ARB и generated localization classes; `LifeOSApp` выбирает platform locale и безопасно откатывается на English.
+- Существующие widget tests покрывают shell identity, Task UI/use-case boundary, production composition lifecycle и localization, но пока не содержат navigation assertions.
+- `pubspec.yaml` не содержит `go_router` или другой routing dependency.
+
+#### Решение по navigation capability и зависимостям
+
+- Для текущего требования достаточно Flutter SDK: `NavigationRail` для основной desktop-навигации и `IndexedStack` либо эквивалентная widget-композиция для области content.
+- Новый routing package в DS-02 не требуется и добавляться не должен. Переключение верхнеуровневого destination внутри одной shell не требует route graph, URL routing, deep links или navigation history.
+- Предварительный выбор GoRouter из ADR-0002 не отменяется: он остаётся допустимым решением для будущей route-level навигации, когда появится подтверждённая необходимость. ADR-0022 не фиксирует конкретную navigation library.
+- Riverpod продолжает обслуживать meaningful Task state, но отдельный provider только для простого выбранного индекса не нужен.
+
+#### Владелец navigation state
+
+- Выбранный destination является локальным ephemeral Presentation state и принадлежит `State<LifeosShellPage>`.
+- Shell меняет только выбранный destination и визуальную композицию. Она не вызывает Domain mutations, не создаёт repositories/database и не владеет application persistence lifecycle.
+- Состояние не сохраняется между запусками и не синхронизируется; persistence navigation history явно отложена.
+- Feature subtree следует сохранять при переключении через `IndexedStack`, чтобы возврат в Tasks не создавал случайный lifecycle reset.
+
+#### Минимально обоснованный набор destinations
+
+1. `Tasks` — существующий реальный feature destination и начальный выбранный destination, что сохраняет текущее полезное startup-поведение.
+2. `Home` — единственный Presentation-only placeholder, необходимый для проверки реального переключения destination и расширяемости shell.
+
+`Notes`, `Projects`, `Search`, `AI` и `Settings` не нужны для проверки основы shell и не должны создаваться в DS-02. Их необходимость повторно оценивается в DS-04; отсутствие feature implementation не является основанием создавать дополнительные placeholders.
+
+#### Предлагаемая структура файлов и ответственности
+
+```text
+lib/presentation/
+├── navigation/
+│   └── lifeos_destination.dart
+├── shell/
+│   └── lifeos_shell_page.dart
+├── home/
+│   └── home_placeholder.dart
+└── tasks/
+    ├── task_page.dart
+    └── existing Task widgets/providers
+
+test/presentation/
+├── shell/
+│   └── lifeos_shell_page_test.dart
+└── tasks/
+    └── existing Task tests
+```
+
+- `lifeos_destination.dart`: только Presentation enum/identity destinations; без localized strings, routes, repositories или business rules.
+- `lifeos_shell_page.dart`: persistent frame, `NavigationRail`, выбранный destination, localized label resolution и content composition.
+- `home_placeholder.dart`: минимальный локализованный Presentation-only placeholder без других слоёв.
+- `task_page.dart`: feature-owned layout, переиспользующий существующий `TaskList`; Task providers/use cases/repository composition не дублируются.
+- `app/app.dart`: сохраняет только root application configuration, Provider overrides, localization и lifecycle; shell state туда не переносится.
+- Новые строки добавляются в `app_en.arb` и `app_ru.arb`; generated localization files вручную не редактируются.
+
+#### Решение по ADR
+
+Новый ADR не требуется. ADR-0022 уже закрепляет navigation за Presentation и оставляет конкретную библиотеку открытой; ADR-0027 покрывает localization; ADR-0007 и ADR-0024 сохраняют composition/persistence ownership в `app/`. Выбор локального widget state и Flutter SDK для двух in-shell destinations является обратимым implementation decision, а не новым архитектурным контрактом.
+
+Если позднее реально потребуются deep links, URL routing, persistent navigation history или независимые route stacks, DS-06 должен остановиться на architecture gate и определить необходимость отдельного navigation ADR до подключения GoRouter.
+
+#### Ограниченная проверка
+
+- Git/repository reconciliation: PASS.
+- Import-boundary scan: PASS — запрещённых Domain/Application/Presentation imports не найдено; persistence construction остаётся в `app/`.
+- `git diff --check`: PASS.
 
 ---
 
@@ -513,13 +593,13 @@ Pending.
 
 # Точка возобновления
 
-Текущий checkpoint: DS-01
+Текущий checkpoint: DS-02
 
 Следующее действие:
 
-Сверить состояние репозитория и Git, прочитать управляющие ADR и изучить текущую структуру Presentation/application до внесения изменений в shell.
+Перед изменениями повторно сверить Git и план, отметить DS-02 как `active`, затем реализовать только основу Presentation-owned desktop shell по решению DS-01: Flutter SDK `NavigationRail`, shell-local destination state, `Tasks` как начальный destination, минимальный локализованный `Home` placeholder и focused shell/localization tests. Существующие Task providers, use cases и composition переиспользовать без дублирования.
 
-Не начинать DS-02, пока architecture gate DS-01 не разрешён.
+DS-01 завершён. DS-02 в этом запуске не начинался и остаётся `pending`.
 
 ---
 
@@ -527,8 +607,8 @@ Pending.
 
 Статус: active
 
-Завершённые checkpoints: отсутствуют
+Завершённые checkpoints: DS-01
 
-Текущий checkpoint: DS-01
+Текущий checkpoint: DS-02
 
-Blockers: неизвестны
+Blockers: отсутствуют
