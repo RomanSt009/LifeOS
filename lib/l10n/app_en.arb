@@ -1,0 +1,15 @@
+{
+  "@@locale": "en",
+  "appTitle": "LifeOS",
+  "appDescription": "Personal Operating System",
+  "taskListTitle": "Tasks",
+  "taskListEmpty": "No Tasks yet",
+  "taskLoadError": "Unable to load Tasks",
+  "taskUnavailable": "Task unavailable",
+  "taskCompletionMarkComplete": "Mark complete",
+  "taskCompletionMarkIncomplete": "Mark incomplete",
+  "taskTitleFieldLabel": "Task title",
+  "taskTitleRequired": "Enter a Task title",
+  "taskCreateError": "Unable to create Task",
+  "taskCreateAction": "Add Task"
+}

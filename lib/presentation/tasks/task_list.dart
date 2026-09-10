@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
 import 'task_list_providers.dart';
 
 class TaskList extends ConsumerWidget {
@@ -9,6 +10,7 @@ class TaskList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tasks = ref.watch(taskListControllerProvider);
+    final localizations = AppLocalizations.of(context);
 
     return Column(
       children: [
@@ -18,7 +20,7 @@ class TaskList extends ConsumerWidget {
           child: tasks.when(
             data: (tasks) {
               if (tasks.isEmpty) {
-                return const Center(child: Text('No Tasks yet'));
+                return Center(child: Text(localizations.taskListEmpty));
               }
 
               return ListView.builder(
@@ -28,8 +30,8 @@ class TaskList extends ConsumerWidget {
                   return ListTile(
                     leading: IconButton(
                       tooltip: task.isCompleted
-                          ? 'Mark incomplete'
-                          : 'Mark complete',
+                          ? localizations.taskCompletionMarkIncomplete
+                          : localizations.taskCompletionMarkComplete,
                       icon: Icon(
                         task.isCompleted
                             ? Icons.check_circle
@@ -48,7 +50,7 @@ class TaskList extends ConsumerWidget {
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, stackTrace) =>
-                const Center(child: Text('Unable to load Tasks')),
+                Center(child: Text(localizations.taskLoadError)),
           ),
         ),
       ],
@@ -66,7 +68,7 @@ class TaskCreationForm extends ConsumerStatefulWidget {
 class _TaskCreationFormState extends ConsumerState<TaskCreationForm> {
   final _titleController = TextEditingController();
   bool _isSaving = false;
-  String? _errorText;
+  _TaskCreationError? _error;
 
   @override
   void dispose() {
@@ -76,13 +78,13 @@ class _TaskCreationFormState extends ConsumerState<TaskCreationForm> {
 
   Future<void> _createTask() async {
     if (_titleController.text.trim().isEmpty) {
-      setState(() => _errorText = 'Enter a Task title');
+      setState(() => _error = _TaskCreationError.titleRequired);
       return;
     }
 
     setState(() {
       _isSaving = true;
-      _errorText = null;
+      _error = null;
     });
 
     try {
@@ -92,7 +94,7 @@ class _TaskCreationFormState extends ConsumerState<TaskCreationForm> {
       _titleController.clear();
     } catch (_) {
       if (mounted) {
-        setState(() => _errorText = 'Unable to create Task');
+        setState(() => _error = _TaskCreationError.saveFailed);
       }
     } finally {
       if (mounted) {
@@ -103,6 +105,13 @@ class _TaskCreationFormState extends ConsumerState<TaskCreationForm> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final errorText = switch (_error) {
+      _TaskCreationError.titleRequired => localizations.taskTitleRequired,
+      _TaskCreationError.saveFailed => localizations.taskCreateError,
+      null => null,
+    };
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -111,8 +120,8 @@ class _TaskCreationFormState extends ConsumerState<TaskCreationForm> {
             key: const Key('task-title-field'),
             controller: _titleController,
             decoration: InputDecoration(
-              labelText: 'Task title',
-              errorText: _errorText,
+              labelText: localizations.taskTitleFieldLabel,
+              errorText: errorText,
             ),
             onSubmitted: _isSaving ? null : (_) => _createTask(),
           ),
@@ -121,9 +130,11 @@ class _TaskCreationFormState extends ConsumerState<TaskCreationForm> {
         FilledButton(
           key: const Key('create-task-button'),
           onPressed: _isSaving ? null : _createTask,
-          child: const Text('Add Task'),
+          child: Text(localizations.taskCreateAction),
         ),
       ],
     );
   }
 }
+
+enum _TaskCreationError { titleRequired, saveFailed }

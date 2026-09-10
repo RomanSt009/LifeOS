@@ -7,6 +7,7 @@ import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
+import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list.dart';
 import 'package:lifeos/presentation/tasks/task_list_providers.dart';
@@ -122,7 +123,12 @@ Widget testApp(LifeOsTaskRepository repository) {
       lifeOsTaskRepositoryProvider.overrideWithValue(repository),
       createLifeOsTaskProvider.overrideWithValue(createTask),
     ],
-    child: const MaterialApp(home: Scaffold(body: TaskList())),
+    child: const MaterialApp(
+      locale: Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: TaskList()),
+    ),
   );
 }
 

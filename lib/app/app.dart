@@ -4,7 +4,7 @@ import 'dart:ui' show AppExitResponse;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../application/use_cases/get_lifeos_identity.dart';
+import '../l10n/app_localizations.dart';
 import '../presentation/shell/lifeos_shell_page.dart';
 import '../presentation/tasks/task_completion_providers.dart';
 import '../presentation/tasks/task_list_providers.dart';
@@ -52,10 +52,30 @@ class _LifeOSAppState extends State<LifeOSApp> {
         ),
       ],
       child: MaterialApp(
-        title: 'LifeOS',
+        onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localeResolutionCallback: resolveLifeOsLocale,
         theme: ThemeData(colorSchemeSeed: Colors.indigo),
-        home: const LifeosShellPage(getLifeOsIdentity: GetLifeOsIdentity()),
+        home: const LifeosShellPage(),
       ),
     );
   }
+}
+
+Locale resolveLifeOsLocale(Locale? locale, Iterable<Locale> supportedLocales) {
+  final fallbackLocale = supportedLocales.firstWhere(
+    (supportedLocale) => supportedLocale.languageCode == 'en',
+  );
+  if (locale == null) {
+    return fallbackLocale;
+  }
+
+  for (final supportedLocale in supportedLocales) {
+    if (supportedLocale.languageCode == locale.languageCode) {
+      return supportedLocale;
+    }
+  }
+
+  return fallbackLocale;
 }

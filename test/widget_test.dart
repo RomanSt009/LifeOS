@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lifeos/application/use_cases/get_lifeos_identity.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
+import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/shell/lifeos_shell_page.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 
@@ -20,7 +20,10 @@ void main() {
           ),
         ],
         child: const MaterialApp(
-          home: LifeosShellPage(getLifeOsIdentity: GetLifeOsIdentity()),
+          locale: Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: LifeosShellPage(),
         ),
       ),
     );

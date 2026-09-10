@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
 import 'task_completion_providers.dart';
 
 class TaskCompletionCard extends ConsumerWidget {
@@ -9,6 +10,7 @@ class TaskCompletionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final taskState = ref.watch(taskCompletionControllerProvider);
+    final localizations = AppLocalizations.of(context);
 
     return taskState.when(
       data: (task) => CheckboxListTile(
@@ -19,7 +21,7 @@ class TaskCompletionCard extends ConsumerWidget {
         },
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => const Text('Task unavailable'),
+      error: (error, stackTrace) => Text(localizations.taskUnavailable),
     );
   }
 }

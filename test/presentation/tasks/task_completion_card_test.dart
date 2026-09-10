@@ -5,6 +5,7 @@ import 'package:lifeos/application/use_cases/toggle_stored_task_completion.dart'
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
+import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/tasks/task_completion_card.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 
@@ -38,7 +39,12 @@ void main() {
             applicationAction,
           ),
         ],
-        child: const MaterialApp(home: Scaffold(body: TaskCompletionCard())),
+        child: const MaterialApp(
+          locale: Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(body: TaskCompletionCard()),
+        ),
       ),
     );
 

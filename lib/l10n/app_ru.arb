@@ -1,0 +1,15 @@
+{
+  "@@locale": "ru",
+  "appTitle": "LifeOS",
+  "appDescription": "Персональная операционная система",
+  "taskListTitle": "Задачи",
+  "taskListEmpty": "Задач пока нет",
+  "taskLoadError": "Не удалось загрузить задачи",
+  "taskUnavailable": "Задача недоступна",
+  "taskCompletionMarkComplete": "Отметить выполненной",
+  "taskCompletionMarkIncomplete": "Отметить невыполненной",
+  "taskTitleFieldLabel": "Название задачи",
+  "taskTitleRequired": "Введите название задачи",
+  "taskCreateError": "Не удалось создать задачу",
+  "taskCreateAction": "Добавить задачу"
+}
