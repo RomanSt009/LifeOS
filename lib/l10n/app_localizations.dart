@@ -122,6 +122,42 @@ abstract class AppLocalizations {
   /// **'Tasks'**
   String get navigationTasks;
 
+  /// No description provided for @searchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get searchTitle;
+
+  /// No description provided for @searchQueryFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Task title'**
+  String get searchQueryFieldLabel;
+
+  /// No description provided for @searchAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get searchAction;
+
+  /// No description provided for @searchInitial.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a Task title to search'**
+  String get searchInitial;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No Tasks found'**
+  String get searchNoResults;
+
+  /// No description provided for @searchError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to search Tasks'**
+  String get searchError;
+
   /// No description provided for @taskListTitle.
   ///
   /// In en, this message translates to:

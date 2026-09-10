@@ -366,7 +366,7 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 ## LS-04 — Search Presentation
 
-Статус: pending
+Статус: done
 
 Зависит от: LS-03
 
@@ -413,7 +413,24 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 ### Результат / доказательства
 
-Ожидает выполнения.
+- Architecture gate: PASS. Для локального query/input/async-result state достаточно feature-owned `ConsumerStatefulWidget` и существующего Riverpod dependency injection; новый глобальный state contract, singleton или ADR не требуются.
+- На старте checkpoint `HEAD` = `7adf12a` (`main`, на 2 commits впереди `origin/main`); LS-01 — LS-03 были `done`, LS-04 — первым pending checkpoint. Единственным исходным незакоммиченным файлом был пользовательский `.obsidian/workspace.json`, который не затрагивался.
+- Добавлен standalone `TaskSearchPage` в `lib/presentation/search/`; он не интегрирован в shell и не изменяет текущие `LifeOsDestination`/`NavigationRail`.
+- Query принадлежит локальному `TextEditingController`, а nullable `AsyncValue<List<LifeOsTask>>` внутри `State<TaskSearchPage>` различает initial, loading, error, no-results и results без глобального application state.
+- `searchLifeOsTasksProvider` предоставляет единственную Presentation dependency типа `SearchLifeOsTasks` и требует override от app composition. Он не создаёт repository/database и не импортирует Infrastructure.
+- Presentation передаёт пользовательский input в `SearchLifeOsTasks` без `trim` или собственной empty-query логики. Focused test подтверждает, что repository получает нормализованный query через Application, а whitespace-only input не вызывает repository и не показывает полный список.
+- Результаты отображаются в порядке, возвращённом Application. UI использует существующие `LifeOsTask` напрямую, без generic `SearchResult` и fake Notes/Projects/all-entities behavior.
+- Completed Task визуально отличается `Icons.check_circle` и зачёркнутым title; incomplete active Task использует `Icons.radio_button_unchecked` без зачёркивания. Search остаётся read-only.
+- Добавлены localized initial/no-results/error states, page title, query label и action. English/Russian ARB изменены вместе; generated `app_localizations*.dart` обновлены только командой `flutter gen-l10n`.
+- Focused Search Presentation + localization tests: PASS — 11 tests, включая 6 новых widget scenarios.
+- Первая focused попытка обнаружила неверное ожидание количества Russian `Поиск`: кнопка корректно локализована как `Найти`. Исправлен только test assertion; повторный focused suite прошёл.
+- `flutter gen-l10n`: PASS.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 61 test.
+- Import-boundary scan: PASS — Search Presentation импортирует Flutter/Riverpod, Application use case и Domain Task только; direct Drift/SQLite/Infrastructure imports отсутствуют.
+- Scope audit: PASS — Domain, Infrastructure, app composition, shell/navigation, dependencies и persistence не изменялись; Search destination остаётся LS-05.
+- `git diff --check`: PASS; выведены только информационные предупреждения Git о преобразовании LF/CRLF.
+- Итоговый Git ref: `HEAD` = `7adf12a`, `origin/main` = `adcf4b0`, divergence `2/0`. Рабочее дерево содержит только LS-04 files и отдельное исходное пользовательское изменение `.obsidian/workspace.json`.
 
 ### Blocker
 
@@ -603,20 +620,20 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 # Точка возобновления
 
-Текущий checkpoint: LS-04 — pending
+Текущий checkpoint: LS-05 — pending
 
-Resume checkpoint: LS-04, начать с повторной сверки Git/plan и отметить LS-04 `active` перед реализацией Search Presentation.
+Resume checkpoint: LS-05, начать с повторной сверки Git/plan и отметить LS-05 `active` перед интеграцией Search в desktop shell.
 
-Не начинать LS-04 в текущем запуске.
+Не начинать LS-05 в текущем запуске.
 
 # Состояние выполнения плана
 
 Статус: active
 
-Завершённые checkpoints: LS-01, LS-02, LS-03
+Завершённые checkpoints: LS-01, LS-02, LS-03, LS-04
 
-Текущий checkpoint: LS-04 — pending
+Текущий checkpoint: LS-05 — pending
 
-Следующий pending checkpoint: LS-04
+Следующий pending checkpoint: LS-05
 
 Blockers: отсутствуют

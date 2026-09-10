@@ -22,6 +22,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navigationTasks => 'Задачи';
 
   @override
+  String get searchTitle => 'Поиск';
+
+  @override
+  String get searchQueryFieldLabel => 'Название задачи';
+
+  @override
+  String get searchAction => 'Найти';
+
+  @override
+  String get searchInitial => 'Введите название задачи для поиска';
+
+  @override
+  String get searchNoResults => 'Задачи не найдены';
+
+  @override
+  String get searchError => 'Не удалось выполнить поиск задач';
+
+  @override
   String get taskListTitle => 'Задачи';
 
   @override

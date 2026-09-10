@@ -12,10 +12,22 @@ void main() {
     expect(english.taskCreateAction, 'Add Task');
     expect(english.navigationHome, 'Home');
     expect(english.navigationTasks, 'Tasks');
+    expect(english.searchTitle, 'Search');
+    expect(english.searchQueryFieldLabel, 'Task title');
+    expect(english.searchAction, 'Search');
+    expect(english.searchInitial, 'Enter a Task title to search');
+    expect(english.searchNoResults, 'No Tasks found');
+    expect(english.searchError, 'Unable to search Tasks');
     expect(russian.taskListTitle, 'Задачи');
     expect(russian.taskCreateAction, 'Добавить задачу');
     expect(russian.navigationHome, 'Главная');
     expect(russian.navigationTasks, 'Задачи');
+    expect(russian.searchTitle, 'Поиск');
+    expect(russian.searchQueryFieldLabel, 'Название задачи');
+    expect(russian.searchAction, 'Найти');
+    expect(russian.searchInitial, 'Введите название задачи для поиска');
+    expect(russian.searchNoResults, 'Задачи не найдены');
+    expect(russian.searchError, 'Не удалось выполнить поиск задач');
   });
 
   test('configures English and Russian as the supported locales', () {

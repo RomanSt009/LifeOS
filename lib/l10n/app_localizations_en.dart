@@ -22,6 +22,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationTasks => 'Tasks';
 
   @override
+  String get searchTitle => 'Search';
+
+  @override
+  String get searchQueryFieldLabel => 'Task title';
+
+  @override
+  String get searchAction => 'Search';
+
+  @override
+  String get searchInitial => 'Enter a Task title to search';
+
+  @override
+  String get searchNoResults => 'No Tasks found';
+
+  @override
+  String get searchError => 'Unable to search Tasks';
+
+  @override
   String get taskListTitle => 'Tasks';
 
   @override
