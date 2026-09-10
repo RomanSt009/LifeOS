@@ -91,9 +91,9 @@ Milestone: Local persistent Task vertical slice
 
 Status: active
 
-Current checkpoint: CP-06A
+Current checkpoint: CP-07
 
-Next ready checkpoint: CP-06A
+Next ready checkpoint: CP-07
 
 Blockers: none.
 
@@ -540,7 +540,7 @@ Validation:
 
 ## CP-06A — Localization foundation
 
-Status: pending
+Status: done
 
 Depends on: CP-06
 
@@ -591,7 +591,25 @@ Establish Flutter localization for the existing Presentation surface without cha
 
 ### Result / evidence
 
-Pending.
+Completed on 2026-09-10.
+
+Evidence:
+
+- Flutter's standard `flutter_localizations` and `gen_l10n` mechanism is enabled with ARB resources under `lib/l10n/`;
+- English and Russian resources define every currently visible static Presentation string;
+- generated localization sources were produced by `flutter gen-l10n` and were not edited manually;
+- production `MaterialApp` uses the generated delegates and supported locale list;
+- platform English and Russian locales resolve to their matching resources, while unsupported locales explicitly fall back to English;
+- the shell, Task list states, completion actions, form labels, validation feedback, and bounded errors use localization resources;
+- localization dependencies remain outside Domain, Application, and Infrastructure.
+
+Validation:
+
+- focused localization/Presentation tests: PASS — 14 tests;
+- flutter analyze: PASS — no issues;
+- flutter test: PASS — 39 tests;
+- import-boundary scan: PASS;
+- git diff --check: PASS.
 
 ---
 
@@ -704,9 +722,9 @@ Do not implement as part of this plan unless an accepted architecture decision e
 
 This section is maintained by Codex.
 
-Last checkpoint update: 2026-09-10 — ADR-0027 accepted; CP-06A added before CP-07
+Last checkpoint update: 2026-09-10 — CP-06A completed; stopped before CP-07
 
-Current checkpoint: CP-06A
+Current checkpoint: CP-07
 
 Current checkpoint status: pending
 
@@ -745,16 +763,23 @@ Last successful validation:
 - CP-06 flutter test: PASS — 34 tests
 - CP-06 import-boundary scan: PASS
 - CP-06 git diff --check: PASS
+- CP-06A focused localization/Presentation tests: PASS — 14 tests
+- CP-06A flutter analyze: PASS — no issues
+- CP-06A flutter test: PASS — 39 tests
+- CP-06A import-boundary scan: PASS
+- CP-06A git diff --check: PASS
 
 Work completed in current checkpoint:
 
 - CP-01 through CP-06 completed and validated;
 - CP-06 persistent completion, UI state, Outbox, and restart behavior are complete.
 - ADR-0027 is accepted and establishes the localization architecture.
+- CP-06A architecture gate passed against ADR-0022 and ADR-0027.
+- CP-06A localization resources, production configuration, Presentation migration, and focused tests are complete.
 
 Work remaining in current checkpoint:
 
-- implement and validate CP-06A localization without changing completed Task behavior.
+- begin CP-07 restart persistence verification after its architecture gate.
 
 Known blockers:
 
@@ -782,7 +807,7 @@ Working-tree notes:
 - `.obsidian/workspace.json` and ADR-0026 were not modified by the agent;
 - CP-05 production code, tests, and this plan were changed by the agent;
 - CP-06 production code, tests, and this plan were changed by the agent;
-- CP-06A has not started;
+- CP-06A production localization, tests, generated sources, and this plan were changed by the agent;
 - CP-07 has not started;
 - never assume this section is newer than repository evidence.
 
