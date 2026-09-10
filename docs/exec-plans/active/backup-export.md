@@ -300,7 +300,7 @@ Docs-only closure после ADR-0028:
 
 ## BE-02 — Backup/export format и versioning contract
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -346,7 +346,106 @@ Docs-only closure после ADR-0028:
 
 ### Result / blocker
 
-Не начато. Зависит от architecture gate BE-01.
+Architecture gate: PASS. ADR-0028 полностью определяет необходимые долгоживущие границы; нового ADR для конкретизации чистого v1 format contract не требуется.
+
+#### Сверка Git и repository
+
+- На старте BE-02 `HEAD` = `d974d43eb81e7e6544d4030cd4ad5ef24558e00c`, branch `main` синхронизирован с `origin/main`.
+- Единственным исходным незакоммиченным файлом был пользовательский `.obsidian/workspace.json`; он не читался и не изменялся.
+- ADR-0028 уже находился в `HEAD`, BE-01 имел статус `done`, BE-02 — `pending`; расхождений с фактическим repository state не обнаружено.
+- Существующих Backup/Export format DTO или serializers не было. Текущий `LifeOsTaskMapper.toJsonSnapshot` обслуживает Outbox payload и намеренно не переиспользован как публичный Backup/Export contract.
+
+#### Backup v1 logical structure
+
+- Public Backup contract представляет versioned logical archive/container, но конкретная archive technology на BE-02 не выбиралась.
+- Обязательные logical entries:
+
+```text
+backup/
+├── manifest.json
+└── data.json
+```
+
+- Optional sections в v1 отсутствуют.
+- `data.json` является source of truth для восстанавливаемого logical Domain State; `manifest.json` описывает kind/version, compatibility metadata, required sections и integrity digest.
+- В v1 запрещены raw `lifeos.db`, active Outbox/change records, `device_id`, runtime/cache/UI state и derived indexes.
+
+#### Manifest v1
+
+Точный JSON contract:
+
+- `format` = `lifeos-backup`;
+- `formatVersion` = `1`;
+- `createdAt` — ISO-8601 UTC;
+- `applicationId` = `lifeos`;
+- `applicationVersion` — диагностическая metadata;
+- `sourceDatabaseSchemaVersion` — диагностическая/compatibility metadata, не определяющая Backup format;
+- `requiredSections` = ровно `["data.json"]` для v1;
+- `dataSha256` — lowercase 64-character SHA-256 digest точных bytes будущего `data.json` artifact.
+
+Отдельная logical data version не добавлена: структура `data.json` в v1 управляется `formatVersion`. Database schema version, Backup format version, Export format version, Entity version и Outbox payload schema version остаются независимыми.
+
+#### Logical Task snapshot
+
+`data.json` является object envelope с обязательным массивом `tasks`. Каждая запись содержит:
+
+- `id` — canonical UUID string;
+- `entityType` = `task`;
+- `createdAt` и `updatedAt` — ISO-8601 UTC;
+- `lifecycle` — stable serialized name `active`/`archived`/`deleted`;
+- `version` — positive integer Entity version;
+- `source` — stable serialized name `user`/`ai`/`import`/`sync`/`system`;
+- `title` — non-empty string;
+- `isCompleted` — JSON boolean.
+
+Все lifecycle states включаются: Backup/Export не ограничиваются только active Tasks. `change_id`, Outbox и `device_id` отсутствуют по структуре DTO.
+
+#### Export JSON v1
+
+- Export является отдельным human-readable object envelope, а не bare list.
+- Обязательные top-level fields: `format = lifeos-export`, `formatVersion = 1`, `createdAt`, `applicationId`, `applicationVersion`, `tasks`.
+- Export не содержит database schema metadata, checksum, required archive sections или installation/runtime state и не заявляется как Restore input.
+- Полные Entity UUID, lifecycle, Entity version, source/provenance и Task state сохранены, поскольку они полезны для переносимости и не являются transport state.
+
+#### Canonical representation и ordering
+
+- Writer принимает только UTC `DateTime` и кодирует canonical `toIso8601String()` с `Z`; reader отклоняет timestamps без UTC `Z`.
+- UUID представлены строками canonical `8-4-4-4-12`; enum values сериализуются явными stable names; booleans — JSON `true`/`false`; обязательные fields не nullable.
+- JSON object field order не является semantic requirement. Writer использует стабильный порядок для repeatable output.
+- Tasks всегда сортируются по Entity UUID ascending. Порядок SQLite или входной collection не влияет на encoded result.
+- Export кодируется с indentation для human readability; Backup data — compact JSON для будущего container artifact.
+
+#### Versioning и validation
+
+- Текущие writers создают только Backup v1 и Export v1.
+- Readers принимают только явно поддерживаемую version `1`; absent/malformed/unknown/newer versions дают typed `unsupportedVersion`/structural error без silent best-effort parsing.
+- Migration framework и speculative future readers не добавлены.
+- Typed `LifeOsDataFormatException` различает `malformedJson`, `missingField`, `invalidField`, `unsupportedVersion` и `duplicateEntityId`.
+- Validation отклоняет malformed/non-object JSON, missing/null required fields, неверные primitive types, invalid UUID/UTC timestamp/enum/entity type, non-positive version, empty title, `updatedAt < createdAt`, duplicate Entity UUID, неверный application/format identifier, invalid required sections и malformed SHA-256 digest.
+- Unknown JSON fields игнорируются как optional extensions. Unknown required section и unknown Entity type отклоняются, поэтому новая обязательная semantics не принимается молча.
+- Archive existence, checksum computation/comparison и corruption of physical container остаются BE-04/BE-08: BE-02 фиксирует logical contract и digest field, но не выполняет filesystem I/O.
+
+#### Реализация и boundaries
+
+- Добавлен `lib/infrastructure/backup/formats/backup_export_format_v1.dart` с небольшими immutable structures `BackupManifestV1`, `BackupSnapshotV1`, `BackupTaskRecordV1`, `ExportDocumentV1` и pure in-memory codec `LifeOsDataFormatV1`.
+- DTO/JSON находятся в Infrastructure как external format concern. Domain не получил JSON/archive/filesystem concepts; format mapper принимает/возвращает существующий `LifeOsTask` без изменения Domain contract.
+- Не создавались generic DTO framework, Application use cases, repository/database reads, filesystem APIs, ZIP/archive implementation, Restore writes или Presentation.
+- Drift schema/generated API, Outbox, device identity, localization и dependencies не менялись.
+
+#### Validation evidence
+
+- Focused `backup_export_format_v1_test.dart`: PASS — 12 tests; покрыты manifest, Task/Domain round-trip, UTC/UUID/enums, deterministic ordering, Export envelope, forbidden operational state, malformed/missing fields, unknown enums/types, duplicate IDs, unsupported versions и unknown optional fields.
+- `flutter analyze`: PASS — no issues.
+- Полный `flutter test`: PASS — 79 tests.
+- Import-boundary scan: PASS — Domain/Application не получили framework/Infrastructure dependencies, Presentation не импортирует Infrastructure; новый format layer зависит только от `dart:convert` и Domain entities.
+- BE-02 filesystem/database guard scan: PASS — production format source не импортирует `dart:io`, Drift/database, Outbox или device identity.
+- Dependency scan: not applicable — `pubspec.yaml` и `pubspec.lock` не изменялись, новые packages не добавлены.
+- Drift generation: not applicable — schema/API/generated files не менялись.
+- `git diff --check`: PASS; только информационные LF/CRLF warnings для пользовательского `.obsidian/workspace.json` и execution plan.
+- Итоговый Git ref: `HEAD` = `d974d43eb81e7e6544d4030cd4ad5ef24558e00c`, `main` синхронизирован с `origin/main`.
+- Итоговый working tree: пользовательский `M .obsidian/workspace.json`; BE-02 changes — `M docs/exec-plans/active/backup-export.md`, новые `lib/infrastructure/backup/formats/backup_export_format_v1.dart` и `test/infrastructure/backup/formats/backup_export_format_v1_test.dart`.
+
+BE-02 Definition of Done выполнен. BE-03 остаётся `pending` и не начинался.
 
 ---
 
@@ -695,7 +794,7 @@ Docs-only closure после ADR-0028:
 
 # Точка возобновления
 
-Resume point: BE-01 завершён, architecture gate снят принятым ADR-0028. BE-02 является следующим `pending` checkpoint; перед его началом перечитать ADR-0010, ADR-0011, ADR-0019, ADR-0020 и ADR-0028 и сверить Git/repository state.
+Resume point: BE-02 завершён. BE-03 является следующим `pending` checkpoint; перед его началом перечитать ADR-0022, ADR-0028, новый v1 format contract и сверить Git/repository state. BE-03 в этом запуске не начинать.
 
 # Состояние выполнения плана
 
