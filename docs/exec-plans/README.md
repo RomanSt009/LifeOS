@@ -6,9 +6,24 @@
 
 ## Где Codex хранит прогресс
 
-Активный план:
+Текущий основной активный план:
 
-`docs/exec-plans/active/lifeos-mvp.md`
+`docs/exec-plans/active/desktop-shell-navigation.md`
+
+Структура каталогов:
+
+```text
+docs/exec-plans/
+├── README.md
+├── active/
+│   └── desktop-shell-navigation.md
+└── completed/
+    └── lifeos-mvp.md
+```
+
+- `active/` содержит планы, которые Codex может выполнять сейчас;
+- `completed/` содержит завершённые исторические планы, которые нельзя случайно продолжать;
+- одновременно в `active/` должен находиться только один основной execution plan, если отдельным решением явно не установлено иное.
 
 В нём смотри:
 
@@ -121,7 +136,9 @@ git diff --stat
 flutter analyze
 flutter test
 git diff --check
-Главное правило
+```
+
+## Главное правило
 
 Не определять прогресс по памяти разговора.
 
@@ -199,4 +216,3 @@ flutter test
 ```
 
 ---
-
