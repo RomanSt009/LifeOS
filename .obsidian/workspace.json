@@ -190,18 +190,19 @@
   },
   "active": "9f6ebd33193ec19f",
   "lastOpenFiles": [
+    "docs/adr/ADR-0027-localization-strategy.md",
+    "build/test_cache/build/7f0da28e",
+    "build/test_cache/build/a951ad24",
+    "build/test_cache/build/1d1082c",
+    "build/native_assets/windows/fab7e847",
+    "build/test_cache/build/77b78b80",
+    "build/test_cache/build/4cb5e917",
+    "build/test_cache/build/2637764a",
+    "build/test_cache/build/7438578a",
+    "build/test_cache/build/d7ef265c",
+    "build/native_assets/windows/native_assets.json",
     "docs/adr/ADR-0025-local-change-and-device-identity.md",
     "docs/adr/ADR-0026-entity-creation-identity-and-defaults.md",
-    "build/test_cache/build/176cb199",
-    "build/test_cache/build/a0463fa",
-    "build/native_assets/windows/209242ca",
-    "build/test_cache/build/1e68eb3f",
-    "build/test_cache/build/69edb38",
-    "build/native_assets/windows/7485f00b",
-    "build/test_cache/build/2c8e65ed",
-    "build/test_cache/build/d5092ceb",
-    "build/test_cache/build/372834f5",
-    "build/native_assets/windows/a9b67174",
     "docs/exec-plans/README.md",
     "docs/exec-plans/active/lifeos-mvp.md",
     "docs/adr/ADR-0024-production-database-lifecycle.md",
@@ -224,7 +225,6 @@
     "docs/adr/ADR-0010-security-architecture.md",
     "docs/adr/ADR-0009-synchronization-architecture.md",
     "docs/adr/ADR-0008-ai-provider-architecture.md",
-    "docs/adr/ADR-0007-dependency-injection-strategy.md",
-    "docs/adr/ADR-0006-database-schema.md"
+    "docs/adr/ADR-0007-dependency-injection-strategy.md"
   ]
 }
