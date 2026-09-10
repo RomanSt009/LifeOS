@@ -8,7 +8,7 @@
 
 Текущий основной активный план:
 
-`docs/exec-plans/active/desktop-shell-navigation.md`
+`docs/exec-plans/active/local-search.md`
 
 Структура каталогов:
 
@@ -16,8 +16,9 @@
 docs/exec-plans/
 ├── README.md
 ├── active/
-│   └── desktop-shell-navigation.md
+│   └── local-search.md
 └── completed/
+    ├── desktop-shell-navigation.md
     └── lifeos-mvp.md
 ```
 
