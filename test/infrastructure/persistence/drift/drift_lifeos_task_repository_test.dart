@@ -272,12 +272,59 @@ void main() {
         updatedAt: firstUpdatedAt,
         version: 1,
       );
+      final ordinaryTask = createTask(
+        id: const LifeOsEntityId(
+          value: 'task-ordinary',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Обычная задача без специальных символов',
+        isCompleted: false,
+        updatedAt: secondUpdatedAt,
+        version: 1,
+      );
       await repository.save(cyrillicTask);
+      await repository.save(ordinaryTask);
 
       expect(await repository.searchByTitle('ПРОВЕРИТЬ'), [cyrillicTask]);
       expect(await repository.searchByTitle(r'100% _ путь\'), [cyrillicTask]);
+      expect(await repository.searchByTitle('%'), [cyrillicTask]);
+      expect(await repository.searchByTitle('_'), [cyrillicTask]);
+      expect(await repository.searchByTitle(r'\'), [cyrillicTask]);
     },
   );
+
+  test('returns updated Task data on a later read-only search', () async {
+    final original = createTask(
+      title: 'Before update',
+      isCompleted: false,
+      updatedAt: firstUpdatedAt,
+      version: 1,
+    );
+    await repository.save(original);
+    expect(await repository.searchByTitle('before'), [original]);
+
+    final updated = createTask(
+      title: 'After update',
+      isCompleted: true,
+      updatedAt: secondUpdatedAt,
+      version: 2,
+    );
+    await repository.save(updated);
+    final outboxBeforeSearch = await database
+        .select(database.outboxEntries)
+        .get();
+
+    expect(await repository.searchByTitle('before'), isEmpty);
+    expect(await repository.searchByTitle('after'), [updated]);
+    expect(
+      (await repository.searchByTitle('after')).single.isCompleted,
+      isTrue,
+    );
+    expect(
+      await database.select(database.outboxEntries).get(),
+      outboxBeforeSearch,
+    );
+  });
 
   test(
     'keeps a completed Task searchable without adding an Outbox entry',

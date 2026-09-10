@@ -53,6 +53,22 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Layout check'), findsOneWidget);
+
+      final searchLabel = scenario.locale.languageCode == 'ru'
+          ? 'Поиск'
+          : 'Search';
+      await tester.tap(find.text(searchLabel));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byKey(const Key('search-query-field')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('search-submit-button')).hitTestable(),
+        findsOneWidget,
+      );
     });
   }
 

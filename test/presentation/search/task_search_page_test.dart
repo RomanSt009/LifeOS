@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -117,6 +119,83 @@ void main() {
     expect(find.textContaining('repository failure'), findsNothing);
   });
 
+  testWidgets('shows loading and allows recovery with a successful search', (
+    tester,
+  ) async {
+    final firstSearch = Completer<List<LifeOsTask>>();
+    final recoveredTask = task(id: 'task-recovered', title: 'Recovered Task');
+    final repository = StubLifeOsTaskRepository(
+      onSearch: (query) {
+        if (query == 'failure') {
+          return firstSearch.future;
+        }
+        return Future.value([recoveredTask]);
+      },
+    );
+    await tester.pumpWidget(searchTestApp(repository));
+
+    await search(tester, 'failure');
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    firstSearch.completeError(StateError('private failed query'));
+    await tester.pumpAndSettle();
+    expect(find.text('Unable to search Tasks'), findsOneWidget);
+
+    await search(tester, 'recovered');
+    await tester.pumpAndSettle();
+    expect(find.text('Recovered Task'), findsOneWidget);
+    expect(find.text('Unable to search Tasks'), findsNothing);
+  });
+
+  testWidgets('keeps the newest result when an older search completes last', (
+    tester,
+  ) async {
+    final searches = <String, Completer<List<LifeOsTask>>>{};
+    final repository = StubLifeOsTaskRepository(
+      onSearch: (query) =>
+          (searches[query] ??= Completer<List<LifeOsTask>>()).future,
+    );
+    await tester.pumpWidget(searchTestApp(repository));
+
+    await search(tester, 'first');
+    await search(tester, 'second');
+    searches['second']!.complete([
+      task(id: 'task-second', title: 'Newest result'),
+    ]);
+    await tester.pumpAndSettle();
+    expect(find.text('Newest result'), findsOneWidget);
+
+    searches['first']!.complete([
+      task(id: 'task-first', title: 'Stale result'),
+    ]);
+    await tester.pumpAndSettle();
+    expect(find.text('Newest result'), findsOneWidget);
+    expect(find.text('Stale result'), findsNothing);
+  });
+
+  testWidgets('ignores an older error after a newer successful search', (
+    tester,
+  ) async {
+    final searches = <String, Completer<List<LifeOsTask>>>{};
+    final repository = StubLifeOsTaskRepository(
+      onSearch: (query) =>
+          (searches[query] ??= Completer<List<LifeOsTask>>()).future,
+    );
+    await tester.pumpWidget(searchTestApp(repository));
+
+    await search(tester, 'old failure');
+    await search(tester, 'new success');
+    searches['new success']!.complete([
+      task(id: 'task-new', title: 'Current result'),
+    ]);
+    await tester.pumpAndSettle();
+
+    searches['old failure']!.completeError(StateError('private stale error'));
+    await tester.pumpAndSettle();
+    expect(find.text('Current result'), findsOneWidget);
+    expect(find.text('Unable to search Tasks'), findsNothing);
+    expect(find.textContaining('private stale error'), findsNothing);
+  });
+
   testWidgets('localizes the Search Presentation in Russian', (tester) async {
     final repository = StubLifeOsTaskRepository();
     await tester.pumpWidget(
@@ -137,6 +216,12 @@ void main() {
 
     expect(find.text('Задачи не найдены'), findsOneWidget);
   });
+}
+
+Future<void> search(WidgetTester tester, String query) async {
+  await tester.enterText(find.byKey(const Key('search-query-field')), query);
+  await tester.tap(find.byKey(const Key('search-submit-button')));
+  await tester.pump();
 }
 
 Widget searchTestApp(
@@ -177,10 +262,12 @@ class StubLifeOsTaskRepository implements LifeOsTaskRepository {
   StubLifeOsTaskRepository({
     this.results = const [],
     this.shouldFail = false,
+    this.onSearch,
   });
 
   final List<LifeOsTask> results;
   final bool shouldFail;
+  final Future<List<LifeOsTask>> Function(String query)? onSearch;
   final List<String> queries = [];
 
   @override
@@ -194,6 +281,10 @@ class StubLifeOsTaskRepository implements LifeOsTaskRepository {
     queries.add(query);
     if (shouldFail) {
       throw StateError('repository failure with private content');
+    }
+    final search = onSearch;
+    if (search != null) {
+      return search(query);
     }
     return results;
   }

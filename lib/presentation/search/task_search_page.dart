@@ -15,6 +15,7 @@ class TaskSearchPage extends ConsumerStatefulWidget {
 class _TaskSearchPageState extends ConsumerState<TaskSearchPage> {
   final _queryController = TextEditingController();
   AsyncValue<List<LifeOsTask>>? _searchResult;
+  int _latestSearchRequest = 0;
 
   @override
   void dispose() {
@@ -23,12 +24,14 @@ class _TaskSearchPageState extends ConsumerState<TaskSearchPage> {
   }
 
   Future<void> _search() async {
+    final request = ++_latestSearchRequest;
+    final query = _queryController.text;
     setState(() => _searchResult = const AsyncLoading());
 
     final result = await AsyncValue.guard(
-      () => ref.read(searchLifeOsTasksProvider)(_queryController.text),
+      () => ref.read(searchLifeOsTasksProvider)(query),
     );
-    if (mounted) {
+    if (mounted && request == _latestSearchRequest) {
       setState(() => _searchResult = result);
     }
   }
@@ -36,7 +39,6 @@ class _TaskSearchPageState extends ConsumerState<TaskSearchPage> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
-    final isSearching = _searchResult?.isLoading ?? false;
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -58,13 +60,13 @@ class _TaskSearchPageState extends ConsumerState<TaskSearchPage> {
                   decoration: InputDecoration(
                     labelText: localizations.searchQueryFieldLabel,
                   ),
-                  onSubmitted: isSearching ? null : (_) => _search(),
+                  onSubmitted: (_) => _search(),
                 ),
               ),
               const SizedBox(width: 8),
               FilledButton(
                 key: const Key('search-submit-button'),
-                onPressed: isSearching ? null : _search,
+                onPressed: _search,
                 child: Text(localizations.searchAction),
               ),
             ],

@@ -513,7 +513,7 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 ## LS-06 — Edge cases, persistence и UX audit
 
-Статус: pending
+Статус: done
 
 Зависит от: LS-05
 
@@ -564,7 +564,24 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 ### Результат / доказательства
 
-Ожидает выполнения.
+- Architecture gate: PASS. ADR-0005, ADR-0010, ADR-0012, ADR-0016, ADR-0017, ADR-0021, ADR-0024 и ADR-0027 поддерживают bounded edge/UX correction внутри Presentation; новый долгоживущий contract, ADR, dependency или persistence решение не требуются.
+- На старте checkpoint `HEAD` = `0ee3b1e` и совпадал с `origin/main`; LS-01 — LS-05 были `done`, LS-06 — первым pending checkpoint. Единственным исходным изменением рабочего дерева был пользовательский `.obsidian/workspace.json`, который не затрагивался.
+- Аудит обнаружил конкретный async correctness defect: параллельные вызовы `_search()` не имели request identity, поэтому более старый result/error мог завершиться позже и перезаписать более новое UI state.
+- `TaskSearchPage` получил локальный монотонный `_latestSearchRequest`; query snapshot и request id фиксируются перед вызовом `SearchLifeOsTasks`, а result/error применяется только для последнего запроса. Search action остаётся доступным во время loading, поэтому новый запрос может заменить медленный старый без debounce, cancellation package, глобального state или изменения Application/Domain/Infrastructure.
+- Focused Presentation tests подтверждают initial/loading/no-results/error/single/multiple states, completed/active rendering, восстановление успешным запросом после ошибки, latest-result-wins при завершении A после B и suppression устаревшей ошибки A после успешного B. Текст ошибки не раскрывает repository exception или пользовательский query.
+- Application tests подтверждают trim, empty и whitespace-only semantics: repository не вызывается и match-everything не возникает. Infrastructure tests подтверждают literal substring для `%`, `_` и `\\`, English/Cyrillic simple lowercase behavior, отсутствие duplicates и порядок `updatedAt DESC`, затем `id ASC`.
+- Persistence tests подтверждают active lifecycle filtering, searchable completed Task с актуальным completion state, обновление title/state при следующем поиске, search после create/save и после close/reopen, а также неизменность Outbox от read-only search.
+- Shell tests подтверждают сохранение Search query/result через `IndexedStack`, сохранение Task state и пригодность Search field/action без RenderFlex/overflow exceptions на representative desktop sizes 1280x800 и 640x600.
+- Focused Search UX tests: PASS — 9 tests. Focused Application/persistence/reopen/shell/Task navigation tests: PASS — 27 tests.
+- `flutter gen-l10n`: PASS; ARB/generated localization diff отсутствует.
+- `flutter analyze`: PASS — no issues.
+- `flutter test`: PASS — 67 tests.
+- Import-boundary scan: PASS — Domain/Application не импортируют Flutter/Drift/Infrastructure/Presentation; Presentation не импортирует Drift/SQLite/Infrastructure; localization не вышла за Presentation/composition.
+- Routing/dependency scan: PASS — routing package/API отсутствуют; `pubspec.yaml` и lockfile не изменялись.
+- Drift generation: not applicable — schema и `lifeos_database.dart`/`lifeos_database.g.dart` не изменялись.
+- Scope audit: PASS — production change ограничен Search Presentation race protection; searchable types, contracts, schema, Outbox, navigation destinations и deferred scope не изменялись.
+- `git diff --check`: PASS; выведены только информационные предупреждения Git о преобразовании LF/CRLF.
+- Итоговый Git ref до пользовательского review: `HEAD` = `0ee3b1e`, `origin/main` = `0ee3b1e`, divergence `0/0`. Рабочее дерево содержит LS-06 files и отдельное исходное пользовательское изменение `.obsidian/workspace.json`.
 
 ### Blocker
 
@@ -633,20 +650,20 @@ Architecture gate: PASS. Для LS-02 не требуется новый ADR и 
 
 # Точка возобновления
 
-Текущий checkpoint: LS-06 — pending
+Текущий checkpoint: LS-07 — pending
 
-Resume checkpoint: LS-06, начать с повторной сверки Git/plan и отметить LS-06 `active` перед edge cases, persistence и UX audit.
+Resume checkpoint: LS-07, начать с повторной сверки Git/plan и отметить LS-07 `active` перед финальным архитектурным и интеграционным аудитом.
 
-Не начинать LS-06 в текущем запуске.
+Не начинать LS-07 в текущем запуске.
 
 # Состояние выполнения плана
 
 Статус: active
 
-Завершённые checkpoints: LS-01, LS-02, LS-03, LS-04, LS-05
+Завершённые checkpoints: LS-01, LS-02, LS-03, LS-04, LS-05, LS-06
 
-Текущий checkpoint: LS-06 — pending
+Текущий checkpoint: LS-07 — pending
 
-Следующий pending checkpoint: LS-06
+Следующий pending checkpoint: LS-07
 
 Blockers: отсутствуют
