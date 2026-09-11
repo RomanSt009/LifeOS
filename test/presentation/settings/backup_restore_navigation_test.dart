@@ -96,6 +96,92 @@ void main() {
       expect(find.text('Old local Task'), findsNothing);
     },
   );
+
+  testWidgets(
+    'Backup then Restore returns Tasks and Search to the captured snapshot',
+    (tester) async {
+      final snapshotTask = LifeOsTask.createUserTask(
+        id: const LifeOsEntityId(
+          value: 'snapshot-task',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Snapshot searchable Task',
+        timestamp: DateTime.utc(2026, 9, 10),
+      );
+      final repository = MutableTaskRepository([snapshotTask]);
+      final operations = SnapshotBackupOperations(repository);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            lifeOsTaskRepositoryProvider.overrideWithValue(repository),
+            createLifeOsTaskProvider.overrideWithValue(
+              CreateLifeOsTask(
+                repository: repository,
+                entityIdGenerator: () => 'post-backup-task',
+                utcClock: () => DateTime.utc(2026, 9, 11),
+              ),
+            ),
+            searchLifeOsTasksProvider.overrideWithValue(
+              SearchLifeOsTasks(repository),
+            ),
+            lifeOsBackupOperationsProvider.overrideWithValue(operations),
+            lifeOsArtifactFileChooserProvider.overrideWithValue(
+              const RoundTripFileChooser(),
+            ),
+          ],
+          child: const MaterialApp(
+            locale: Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: LifeosShellPage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('create-backup-button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Backup created successfully.'), findsOneWidget);
+
+      await tester.tap(find.text('Tasks'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('task-title-field')),
+        'Created after Backup',
+      );
+      await tester.tap(find.byKey(const Key('create-task-button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Created after Backup'), findsOneWidget);
+
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('restore-backup-button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('restore-confirmation-confirm')));
+      await tester.pumpAndSettle();
+      expect(find.text('Backup restored successfully.'), findsOneWidget);
+
+      await tester.tap(find.text('Tasks'));
+      await tester.pumpAndSettle();
+      expect(find.text('Snapshot searchable Task'), findsOneWidget);
+      expect(find.text('Created after Backup'), findsNothing);
+
+      await tester.tap(find.text('Search'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('search-query-field')),
+        'searchable',
+      );
+      await tester.tap(find.byKey(const Key('search-submit-button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Snapshot searchable Task'), findsOneWidget);
+      expect(find.text('Created after Backup'), findsNothing);
+      expect(operations.confirmations, [false, true]);
+    },
+  );
 }
 
 class RestoreReplacingOperations implements LifeOsBackupOperations {
@@ -151,8 +237,62 @@ class RestoreFileChooser implements LifeOsArtifactFileChooser {
   }
 
   @override
-  Future<String?> chooseBackupToRestore({required String fileTypeLabel}) async =>
-      r'C:\backup.zip';
+  Future<String?> chooseBackupToRestore({
+    required String fileTypeLabel,
+  }) async => r'C:\backup.zip';
+}
+
+class RoundTripFileChooser implements LifeOsArtifactFileChooser {
+  const RoundTripFileChooser();
+
+  @override
+  Future<String?> chooseBackupDestination({
+    required String suggestedName,
+    required String fileTypeLabel,
+  }) async => r'C:\snapshot.zip';
+
+  @override
+  Future<String?> chooseExportDestination({
+    required String suggestedName,
+    required String fileTypeLabel,
+  }) async => null;
+
+  @override
+  Future<String?> chooseBackupToRestore({
+    required String fileTypeLabel,
+  }) async => r'C:\snapshot.zip';
+}
+
+class SnapshotBackupOperations implements LifeOsBackupOperations {
+  SnapshotBackupOperations(this.repository);
+
+  final MutableTaskRepository repository;
+  List<LifeOsTask>? snapshot;
+  final List<bool> confirmations = [];
+
+  @override
+  Future<void> createBackupAt(String destinationPath) async {
+    snapshot = List<LifeOsTask>.from(repository.tasks);
+  }
+
+  @override
+  Future<void> exportDataAt(String destinationPath) async {}
+
+  @override
+  Future<void> restoreBackupFrom(
+    String sourcePath, {
+    required bool destructiveReplaceConfirmed,
+  }) async {
+    confirmations.add(destructiveReplaceConfirmed);
+    if (!destructiveReplaceConfirmed) {
+      throw const LifeOsBackupOperationException(
+        LifeOsBackupOperationErrorCode.confirmationRequired,
+      );
+    }
+    repository.tasks
+      ..clear()
+      ..addAll(snapshot!);
+  }
 }
 
 class MutableTaskRepository implements LifeOsTaskRepository {

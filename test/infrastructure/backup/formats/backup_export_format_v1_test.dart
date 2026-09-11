@@ -125,15 +125,15 @@ void main() {
     ) as Map<String, dynamic>;
 
     expect(
-      (backupJson['tasks'] as List<dynamic>)
-          .cast<Map<String, dynamic>>()
-          .map((record) => record['id']),
+      (backupJson['tasks'] as List<dynamic>).cast<Map<String, dynamic>>().map(
+        (record) => record['id'],
+      ),
       [firstId, secondId],
     );
     expect(
-      (exportJson['tasks'] as List<dynamic>)
-          .cast<Map<String, dynamic>>()
-          .map((record) => record['id']),
+      (exportJson['tasks'] as List<dynamic>).cast<Map<String, dynamic>>().map(
+        (record) => record['id'],
+      ),
       [firstId, secondId],
     );
   });
@@ -143,9 +143,7 @@ void main() {
       ExportDocumentV1(
         createdAt: createdAt,
         applicationVersion: '1.0.0+1',
-        tasks: [
-          task(lifecycle: LifeOsEntityLifecycle.deleted, version: 5),
-        ],
+        tasks: [task(lifecycle: LifeOsEntityLifecycle.deleted, version: 5)],
       ),
     );
     final decoded = LifeOsDataFormatV1.decodeExport(encoded);
@@ -180,7 +178,9 @@ void main() {
 
   test('rejects missing required fields and malformed JSON', () {
     expect(
-      () => LifeOsDataFormatV1.decodeBackupData('{"tasks": [{"id": "$firstId"}]}'),
+      () => LifeOsDataFormatV1.decodeBackupData(
+        '{"tasks": [{"id": "$firstId"}]}',
+      ),
       throwsFormatError(LifeOsDataFormatErrorCode.missingField),
     );
     expect(
@@ -261,15 +261,105 @@ void main() {
     );
   });
 
-  test('ignores unknown optional JSON fields', () {
-    final taskJson = {...task().toJson(), 'futureTaskField': 'ignored'};
-    final export = ExportDocumentV1(
+  test('rejects missing, malformed, zero, and newer Backup versions', () {
+    final valid = BackupManifestV1(
       createdAt: createdAt,
       applicationVersion: '1.0.0+1',
-      tasks: [task()],
-    ).toJson()
-      ..['futureTopLevelField'] = true
-      ..['tasks'] = [taskJson];
+      sourceDatabaseSchemaVersion: 1,
+      requiredSections: const [lifeOsBackupDataFileName],
+      dataSha256: sha256,
+    ).toJson();
+    final missing = Map<String, Object>.from(valid)..remove('formatVersion');
+    final malformed = {...valid, 'formatVersion': '1'};
+    final zero = {...valid, 'formatVersion': 0};
+    final newer = {...valid, 'formatVersion': 99};
+
+    expect(
+      () => LifeOsDataFormatV1.decodeBackupManifest(jsonEncode(missing)),
+      throwsFormatError(LifeOsDataFormatErrorCode.missingField),
+    );
+    expect(
+      () => LifeOsDataFormatV1.decodeBackupManifest(jsonEncode(malformed)),
+      throwsFormatError(LifeOsDataFormatErrorCode.invalidField),
+    );
+    for (final unsupported in [zero, newer]) {
+      expect(
+        () => LifeOsDataFormatV1.decodeBackupManifest(jsonEncode(unsupported)),
+        throwsFormatError(LifeOsDataFormatErrorCode.unsupportedVersion),
+      );
+    }
+  });
+
+  test(
+    'rejects additional required sections without rejecting optional fields',
+    () {
+      final manifest = BackupManifestV1(
+        createdAt: createdAt,
+        applicationVersion: '1.0.0+1',
+        sourceDatabaseSchemaVersion: 1,
+        requiredSections: const [lifeOsBackupDataFileName],
+        dataSha256: sha256,
+      ).toJson()..['futureOptionalField'] = true;
+      final data = BackupSnapshotV1(tasks: [task()]).toJson()
+        ..['futureOptionalField'] = true
+        ..['tasks'] = [
+          {...task().toJson(), 'futureTaskField': 'ignored'},
+        ];
+
+      expect(
+        LifeOsDataFormatV1.decodeBackupManifest(jsonEncode(manifest))
+            .dataSha256,
+        sha256,
+      );
+      expect(
+        LifeOsDataFormatV1.decodeBackupData(jsonEncode(data)).tasks.single.id,
+        firstId,
+      );
+
+      manifest['requiredSections'] = [
+        lifeOsBackupDataFileName,
+        'future-required.json',
+      ];
+      expect(
+        () => LifeOsDataFormatV1.decodeBackupManifest(jsonEncode(manifest)),
+        throwsFormatError(LifeOsDataFormatErrorCode.invalidField),
+      );
+    },
+  );
+
+  test('rejects inconsistent Task metadata and missing Task state', () {
+    final valid = task().toJson();
+    final missingTitle = Map<String, Object>.from(valid)..remove('title');
+    final invalidSource = {...valid, 'source': 'unknown'};
+    final invalidVersion = {...valid, 'version': 0};
+    final reversedTimestamps = {
+      ...valid,
+      'createdAt': '2026-09-03T00:00:00.000Z',
+      'updatedAt': '2026-09-02T00:00:00.000Z',
+    };
+
+    expect(
+      () => decodeTasks([missingTitle]),
+      throwsFormatError(LifeOsDataFormatErrorCode.missingField),
+    );
+    for (final invalid in [invalidSource, invalidVersion, reversedTimestamps]) {
+      expect(
+        () => decodeTasks([invalid]),
+        throwsFormatError(LifeOsDataFormatErrorCode.invalidField),
+      );
+    }
+  });
+
+  test('ignores unknown optional JSON fields', () {
+    final taskJson = {...task().toJson(), 'futureTaskField': 'ignored'};
+    final export =
+        ExportDocumentV1(
+            createdAt: createdAt,
+            applicationVersion: '1.0.0+1',
+            tasks: [task()],
+          ).toJson()
+          ..['futureTopLevelField'] = true
+          ..['tasks'] = [taskJson];
 
     final decoded = LifeOsDataFormatV1.decodeExport(jsonEncode(export));
 

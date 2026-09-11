@@ -100,6 +100,23 @@ void main() {
         reader.read(path.join(temporaryDirectory.path, 'missing.zip')),
         throwsRestoreError(LifeOsBackupRestoreErrorCode.unreadableFile),
       );
+
+      final valid = await writeArchive(
+        'valid-for-truncation.zip',
+        validEntries(),
+      );
+      final validBytes = await valid.readAsBytes();
+      final truncated = File(
+        path.join(temporaryDirectory.path, 'truncated.zip'),
+      );
+      await truncated.writeAsBytes(
+        validBytes.sublist(0, validBytes.length - 8),
+        flush: true,
+      );
+      await expectLater(
+        reader.read(truncated.path),
+        throwsRestoreError(LifeOsBackupRestoreErrorCode.invalidContainer),
+      );
     },
   );
 
@@ -160,7 +177,40 @@ void main() {
     );
   });
 
+  test('hashes exact physical data.json bytes', () async {
+    final originalData = validDataBytes();
+    final oneByteChanged = List<int>.from(originalData);
+    final titleByte = oneByteChanged.indexOf('R'.codeUnitAt(0));
+    expect(titleByte, isNonNegative);
+    oneByteChanged[titleByte] = 'r'.codeUnitAt(0);
+    final changedByte = await writeArchive('changed-byte.zip', [
+      MapEntry(
+        lifeOsBackupManifestFileName,
+        manifestBytes(dataBytes: originalData),
+      ),
+      MapEntry(lifeOsBackupDataFileName, oneByteChanged),
+    ]);
+    final whitespaceChanged = await writeArchive('changed-whitespace.zip', [
+      MapEntry(
+        lifeOsBackupManifestFileName,
+        manifestBytes(dataBytes: originalData),
+      ),
+      MapEntry(lifeOsBackupDataFileName, [...originalData, 0x20]),
+    ]);
+
+    for (final file in [changedByte, whitespaceChanged]) {
+      await expectLater(
+        reader.read(file.path),
+        throwsRestoreError(LifeOsBackupRestoreErrorCode.checksumMismatch),
+      );
+    }
+  });
+
   test('rejects malformed JSON and invalid logical Task data', () async {
+    final malformedManifest = await writeArchive('malformed-manifest.zip', [
+      MapEntry(lifeOsBackupManifestFileName, utf8.encode('{malformed')),
+      MapEntry(lifeOsBackupDataFileName, validDataBytes()),
+    ]);
     final malformedData = utf8.encode('{malformed');
     final malformed = await writeArchive('malformed-json.zip', [
       MapEntry(
@@ -182,6 +232,10 @@ void main() {
       MapEntry(lifeOsBackupDataFileName, duplicateData),
     ]);
 
+    await expectLater(
+      reader.read(malformedManifest.path),
+      throwsRestoreError(LifeOsBackupRestoreErrorCode.invalidData),
+    );
     await expectLater(
       reader.read(malformed.path),
       throwsRestoreError(LifeOsBackupRestoreErrorCode.invalidData),

@@ -951,7 +951,7 @@ BE-07 Definition of Done выполнен. BE-08 установлен следу
 
 ## BE-08 — Round-trip, corruption и compatibility verification
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -994,7 +994,45 @@ BE-07 Definition of Done выполнен. BE-08 установлен следу
 
 ### Result / blocker
 
-Не начато.
+Architecture gate: PASS. ADR-0028, BE-02 format contract и BE-05 Restore semantics полностью определяют проверяемое поведение; новые architecture decisions, dependencies или schema migration не потребовались.
+
+#### Реализованное verification coverage
+
+- Добавлен отдельный production-like file-backed round-trip suite `test/integration/backup/backup_round_trip_test.dart`, использующий реальный `createProductionDependencies`, SQLite/Drift, Application use cases, ZIP/JSON writers, Backup reader и Restore store.
+- Cross-installation acceptance test сохраняет несколько Tasks с разными UUID, title, completion, timestamps, lifecycle, version и source, подтверждает исходный state после close/reopen, создаёт Backup, восстанавливает его в отдельную installation и повторно проверяет Domain equality после target close/reopen.
+- Новая installation сохраняет собственный отличный `device_id`; source identity не попадает в Backup. Source Outbox не переносится, target Outbox после Restore пуст и остаётся пустым после reopen.
+- Same-installation test создаёт snapshot, изменяет completion/title и добавляет Task после Backup, подтверждает наличие текущих pending Outbox Changes, затем восстанавливает snapshot с explicit confirmation. State откатывается к snapshot, Outbox очищается, текущий `device_id` не меняется, результат сохраняется после reopen.
+- Empty-state test подтверждает Backup пустого Domain State и replace непустой database пустым snapshot с пустым Outbox и устойчивостью после reopen.
+- Export integration проверяет реальный Application → Infrastructure → UTF-8 JSON file path, v1 envelope, полную Task metadata, UUID ordering, semantic determinism двух exports и отсутствие Outbox/change/device fields.
+- Backup integration открывает созданный ZIP после writer close, проверяет ровно `manifest.json` и `data.json`, отсутствие runtime state и одинаковый deterministic logical `data.json` для одинакового snapshot без требования byte-identical ZIP.
+- Fail-if-exists проверен через production-composed Backup/Export operations: возвращается typed `destinationAlreadyExists`, existing bytes не меняются, sibling temp artifacts отсутствуют.
+- Reader/format matrix расширена truncated ZIP, malformed manifest, missing/malformed/zero/newer format version, unknown optional fields, unknown required section, exact-byte checksum changes, invalid source/version, missing Task field и inconsistent timestamps.
+- Exact-byte checksum tests подтверждают, что изменение одного byte или JSON whitespace в physical `data.json` даёт `checksumMismatch`, а исходные bytes принимаются.
+- Representative real Restore tests подтверждают, что отсутствие destructive confirmation, invalid ZIP/version/checksum/JSON/UUID/timestamp/entity/lifecycle/source/version/missing field не меняют current Tasks, Outbox или `device_id`; после confirmation replace выполняется.
+- Presentation integration с fake file chooser теперь проходит полный UI flow Settings → Backup → post-backup Task mutation → Restore confirmation → Tasks/Search snapshot verification без native dialog.
+- Existing writer tests продолжают подтверждать flush/close до validation/rename, успешное открытие ZIP, sibling temp cleanup после success/failure и сохранение исходной ошибки при best-effort cleanup. Platform-fragile forced cleanup-failure test не добавлялся.
+
+#### Найденные defects и fixes
+
+- Production defects не обнаружены; production sources, format v1, dependencies, Drift schema, Outbox/device semantics и localization не изменялись.
+- При первоначальном запуске нового test suite обнаружена локальная ошибка scope test helper `_deviceId`; helper перенесён на top level. Это был дефект только нового тестового кода, после исправления вся validation прошла.
+
+#### Validation evidence
+
+- Focused BE-02 — BE-08 Backup/Export/Restore/reader/writer/persistence/identity/Presentation suite: PASS, 65 tests.
+- Отдельный file-backed round-trip + Drift Restore invariant suite: PASS, 10 tests.
+- `flutter gen-l10n`: PASS; localization sources/generated files не изменились.
+- `flutter analyze`: PASS, `No issues found`.
+- Полный `flutter test`: PASS, 127 tests.
+- Import-boundary scan: PASS — Domain/Application/Presentation не получили запрещённых filesystem/archive/crypto/Drift/Infrastructure dependencies.
+- Routing guard: PASS — новые routing packages/imports отсутствуют.
+- Dependency guard: PASS — `pubspec.yaml`/`pubspec.lock` не изменены; `dart pub deps --style=compact` завершился успешно и подтвердил direct `archive 3.6.1`, `crypto 3.0.7` и `file_selector 1.1.0`.
+- Schema/generated guard: PASS — `lifeos_database.dart` и `lifeos_database.g.dart` не изменены; Drift generation не требуется.
+- Runtime-state leakage scan: PASS — Backup/Export format и creation paths не содержат Outbox, `change_id`, `device_id`, raw SQLite или `lifeos.db`; Restore path не вставляет Outbox records.
+- `git diff --check`: PASS; присутствуют только информационные LF/CRLF warnings, whitespace errors отсутствуют.
+- Исходный пользовательский `.obsidian/workspace.json` не читался и не изменялся в BE-08.
+
+BE-08 Definition of Done выполнен. BE-09 установлен следующим `pending` checkpoint и не начинался.
 
 ---
 
@@ -1048,7 +1086,7 @@ BE-07 Definition of Done выполнен. BE-08 установлен следу
 
 # Точка возобновления
 
-Resume point: BE-08 `pending`. BE-07 завершён и полностью провалидирован; BE-08 не начинался.
+Resume point: BE-09 `pending`. BE-08 завершён и полностью провалидирован; BE-09 не начинался.
 
 # Состояние выполнения плана
 

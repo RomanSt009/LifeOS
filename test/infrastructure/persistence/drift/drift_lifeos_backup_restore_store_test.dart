@@ -124,6 +124,60 @@ void main() {
     },
   );
 
+  test('confirmation failure preserves real Domain State and Outbox', () async {
+    final original = task(
+      id: '00000000-0000-4000-8000-000000000010',
+      title: 'Original before confirmation',
+    );
+    await repository.save(original);
+    final outboxBefore = await database.select(database.outboxEntries).get();
+    final directory = await Directory.systemTemp.createTemp(
+      'lifeos-confirmation-restore-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final candidate = <String, Object?>{
+      'id': '00000000-0000-4000-8000-000000000020',
+      'entityType': 'task',
+      'createdAt': '2026-09-01T00:00:00.000Z',
+      'updatedAt': '2026-09-02T00:00:00.000Z',
+      'lifecycle': 'active',
+      'version': 2,
+      'source': 'user',
+      'title': 'Confirmed replacement',
+      'isCompleted': true,
+    };
+    final backup = await _writeRestoreArchive(
+      directory,
+      'confirmation.zip',
+      utf8.encode(
+        jsonEncode({
+          'tasks': [candidate],
+        }),
+      ),
+    );
+    final restore = RestoreLifeOsBackup(
+      reader: const LifeOsBackupFileReader(),
+      restoreStore: restoreStore,
+    );
+
+    await expectLater(
+      restore(sourcePath: backup.path, destructiveReplaceConfirmed: false),
+      throwsA(
+        isA<LifeOsBackupRestoreException>().having(
+          (error) => error.code,
+          'code',
+          LifeOsBackupRestoreErrorCode.confirmationRequired,
+        ),
+      ),
+    );
+    expect(await repository.getAll(), [original]);
+    expect(await database.select(database.outboxEntries).get(), outboxBefore);
+
+    await restore(sourcePath: backup.path, destructiveReplaceConfirmed: true);
+    expect((await repository.getAll()).single.title, 'Confirmed replacement');
+    expect(await database.select(database.outboxEntries).get(), isEmpty);
+  });
+
   test('invalid Backup variants never mutate current persistence', () async {
     final original = task(
       id: '00000000-0000-4000-8000-000000000010',
@@ -135,6 +189,11 @@ void main() {
       'lifeos-invalid-restore-',
     );
     addTearDown(() => directory.delete(recursive: true));
+    final identityStore = FileDeviceIdentityStore(
+      directory,
+      () => 'current-device-identity',
+    );
+    final deviceIdBefore = await identityStore.resolve();
     final restore = RestoreLifeOsBackup(
       reader: const LifeOsBackupFileReader(),
       restoreStore: restoreStore,
@@ -202,6 +261,30 @@ void main() {
         'invalid-enum.zip',
         dataWith({...validTask, 'lifecycle': 'unknown'}),
       ),
+      await _writeRestoreArchive(
+        directory,
+        'invalid-source.zip',
+        dataWith({...validTask, 'source': 'unknown'}),
+      ),
+      await _writeRestoreArchive(
+        directory,
+        'invalid-version.zip',
+        dataWith({...validTask, 'version': 0}),
+      ),
+      await _writeRestoreArchive(
+        directory,
+        'inconsistent-timestamps.zip',
+        dataWith({
+          ...validTask,
+          'createdAt': '2026-09-03T00:00:00.000Z',
+          'updatedAt': '2026-09-02T00:00:00.000Z',
+        }),
+      ),
+      await _writeRestoreArchive(
+        directory,
+        'missing-title.zip',
+        dataWith(Map<String, Object?>.from(validTask)..remove('title')),
+      ),
     ];
     final malformedZip = File(path.join(directory.path, 'malformed.zip'));
     await malformedZip.writeAsBytes([1, 2, 3], flush: true);
@@ -221,6 +304,7 @@ void main() {
         await database.select(database.outboxEntries).get(),
         originalOutbox,
       );
+      expect(await identityStore.resolve(), deviceIdBefore);
     }
   });
 
