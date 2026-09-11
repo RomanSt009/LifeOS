@@ -633,7 +633,7 @@ BE-04 Definition of Done выполнен. BE-05 остаётся `pending` и �
 
 ## BE-05 — Restore/import strategy и architecture gate
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -675,7 +675,87 @@ BE-04 Definition of Done выполнен. BE-05 остаётся `pending` и �
 
 ### Result / blocker
 
-Не начато.
+Architecture gate: PASS. Новый ADR не требуется: решения ниже конкретизируют уже принятый ADR-0028 и не вводят новую Sync/conflict architecture. BE-06 разрешён только в этих границах.
+
+#### Сверка Git и repository
+
+- На старте BE-05 `HEAD` = `5d074ba0e2dd3f7c6ab6bf132a6eb16cb1a4f10f` (`feat: add backup export file writers`), branch `main` синхронизирован с `origin/main`.
+- BE-02 — BE-04 полностью находятся в `HEAD`; единственное исходное незакоммиченное изменение — пользовательский `.obsidian/workspace.json`, оно не читалось и не изменялось.
+- Текущая schema version = `1`; реализованы `entities`, `tasks` и `outbox`. `tasks.entity_id` и `outbox.entity_id` имеют foreign key на `entities.id` без cascade delete.
+- Каждый обычный `DriftLifeOsTaskRepository.save()` в одной transaction сохраняет Entity/Task и создаёт immutable Outbox Change `CREATE`/`UPDATE` с full Task snapshot, base/new Entity versions и текущим `device_id`.
+- Production `device_id` хранится отдельным файлом `<application-support>/device_id`, создаётся до repository composition и не является частью SQLite или Backup ZIP.
+
+#### Restore и Import
+
+- **Backup Restore v1** — destructive full replace всего поддерживаемого logical user/Domain state текущей installation из валидного Backup v1. Entity UUID, type, timestamps, lifecycle, Entity version, source/provenance и Task state сохраняются буквально.
+- **Import** — потенциальное добавление/merge/selective применение внешних данных в существующий state. Оно требует duplicate/conflict/provenance policy и не является Restore.
+- Import из Export JSON полностью deferred. Export остаётся one-way portability capability текущего milestone; preview, parse-only Import и mutation Import не реализуются в BE-06/BE-07.
+
+#### Текущий Outbox при replace
+
+Принята policy **B: текущий Outbox очищается атомарно вместе с заменой Domain State**.
+
+- Policy A (разрешать Restore только при пустом Outbox) отвергнута: сейчас каждая mutation создаёт `PENDING` entry, а Sync worker/acknowledgement ещё не реализованы, поэтому практически любая непустая installation навсегда блокировала бы Restore.
+- Policy C (сохранить текущий Outbox) отвергнута: entries описывают pre-restore Entity state и могут ссылаться на удалённые после replace Entities либо позднее отправить старые snapshots, нарушив restored local truth.
+- Отдельное inert/archive-хранение Outbox отвергнуто для v1: текущая schema не имеет такой semantics, а её добавление потребовало бы migration и преждевременной Sync/history architecture.
+- Очистка Outbox соответствует ADR-0028: restored logical snapshot становится локальной истиной текущей installation; старые Changes не replay, а будущий Sync обязан использовать отдельный reconciliation/bootstrap protocol.
+- Restore path не вызывает обычный repository `save()` и не создаёт новый Outbox Change на каждую restored Entity. Это техническая replacement operation, а не набор пользовательских синхронизируемых mutations.
+- Пользовательский destructive confirmation должен явно предупреждать, что текущие данные и pending unsynchronized Changes будут заменены. Presentation реализует это позднее, но Application contract считает подтверждение обязательной precondition.
+
+#### Transactionality и persistence boundary
+
+- Полностью validated in-memory snapshot передаётся отдельному Application-level persistence port для atomic replace; concrete Drift implementation принадлежит Infrastructure. Текущий `LifeOsTaskRepository` не расширяется restore-specific semantics.
+- Application restore orchestration зависит от abstractions и Domain Tasks; оно не импортирует `dart:io`, `archive`, Drift/SQLite или concrete Infrastructure.
+- Infrastructure reader отвечает за ZIP, exact entries, CRC/checksum, manifest/data decoding и mapping в полностью validated logical snapshot. Он завершает всю проверку до вызова persistence port.
+- Persistence implementation выполняет одну SQLite transaction. Для текущих foreign keys порядок удаления: `outbox` → `tasks` → `entities`; порядок вставки: `entities` → `tasks`. Outbox после replace остаётся пустым.
+- Любая ошибка delete/insert откатывает transaction целиком, включая очистку Outbox: после failure остаётся полный pre-restore state, а не смесь старых и новых records.
+- Database может оставаться открытой под ownership существующего composition root; отдельный database instance, raw file replacement и новый persistence lifecycle не требуются. Когда появится Sync worker, composition обязан приостановить его на время restore и запустить отдельный bootstrap/reconciliation после commit; сам Sync protocol остаётся deferred.
+
+#### Validation до mutation
+
+До первой SQLite mutation должны успешно завершиться:
+
+1. чтение ZIP и проверка, что container содержит ровно `manifest.json` и `data.json`;
+2. CRC/archive structural validation;
+3. parse и validation manifest, `format = lifeos-backup`, `formatVersion = 1`, application metadata и required sections;
+4. SHA-256 exact bytes `data.json` и сравнение с `dataSha256`;
+5. parse полного `data.json`, required fields, canonical UUID, UTC timestamps, enums, positive Entity version и Task invariants;
+6. duplicate Entity ID, supported Entity type и logical consistency validation;
+7. построение immutable validated in-memory snapshot.
+
+Malformed container/JSON, checksum mismatch, unsupported format version, unknown required section/entity type или любая logical inconsistency отклоняют весь Restore до persistence call. Silent partial restore запрещён.
+
+`sourceDatabaseSchemaVersion` является diagnostic/compatibility metadata. Restore читает logical Backup v1 и записывает его через текущую supported persistence schema; физическое равенство source/current SQLite schema не требуется. Backup format version, database schema version и Entity version не смешиваются.
+
+#### Existing installation и safety
+
+- Replace разрешён как для пустой, так и для непустой current database; отдельная fresh-install-only precondition не вводится.
+- Для непустого state требуется явное destructive confirmation до mutation. Отсутствие confirmation является precondition failure.
+- SQLite transaction обеспечивает автоматический rollback при техническом failure. Автоматический второй safety Backup не является обязательной частью Restore v1: он потребовал бы отдельного destination/overwrite workflow и не заменяет transaction safety. BE-07 должна предложить пользователю заранее создать Backup текущего state и ясно объяснить необратимый успешный replace.
+- `device_id` не читается из Backup и не изменяется restore persistence path. Существующая installation сохраняет текущий файл `device_id`; новая installation использует новый ID, уже созданный production composition.
+
+#### Future component boundaries и error model
+
+BE-06 должен минимально предоставить:
+
+- Infrastructure Backup v1 reader, возвращающий validated logical snapshot/metadata через Application abstraction;
+- Application Restore use case с explicit destructive-confirmation precondition;
+- отдельный Application persistence replacement port;
+- Drift implementation atomic replace без обычного `save()`/Outbox generation;
+- composition wiring без второго database owner.
+
+Будущие errors должны различать: invalid/unreadable file or ZIP, unsupported format version, checksum mismatch, logical validation failure, unsupported required entity/section, destructive confirmation/precondition failure и persistence transaction failure. Raw `IOException`, archive exception или Drift exception не должны выходить непосредственно в Presentation contract.
+
+#### Validation evidence
+
+- Documentation/ADR consistency scan: PASS — Restore/Import, Outbox, device identity, compatibility и layer decisions согласованы с ADR-0011, ADR-0018 — ADR-0020, ADR-0024 — ADR-0026 и приоритетным ADR-0028.
+- Schema/repository audit: PASS — фактические foreign keys, transaction-bound `save()` + Outbox и отсутствие cascade подтверждают отдельный restore port и указанный delete/insert order.
+- Lifecycle audit: PASS — production database принадлежит единственному composition root, а `device_id` физически расположен вне SQLite.
+- Production code, tests, schema, generated files и dependencies в BE-05 не изменялись; Flutter/Drift generation не запускались как не относящиеся к docs-only gate.
+- Итоговый Git ref: `HEAD` = `5d074ba0e2dd3f7c6ab6bf132a6eb16cb1a4f10f`, branch `main` синхронизирован с `origin/main`.
+- Итоговый `git status --short`: пользовательский `M .obsidian/workspace.json`; BE-05 — `M docs/exec-plans/active/backup-export.md`. Commit и push не выполнялись.
+
+BE-05 Definition of Done выполнен. BE-06 является следующим `pending` checkpoint и в этом запуске не начинался.
 
 ---
 
@@ -876,7 +956,7 @@ BE-04 Definition of Done выполнен. BE-05 остаётся `pending` и �
 
 # Точка возобновления
 
-Resume point: BE-04 завершён. BE-05 является следующим `pending` checkpoint; перед его началом перечитать ADR-0010, ADR-0011, ADR-0018 — ADR-0020, ADR-0024 — ADR-0026, ADR-0028, принятые BE-01 — BE-04 decisions и сверить Git/repository state. BE-05 в этом запуске не начинать.
+Resume point: BE-05 завершён. BE-06 является следующим `pending` checkpoint; перед его началом перечитать ADR-0011, ADR-0019 — ADR-0022, ADR-0024 — ADR-0026, ADR-0028, принятые BE-01 — BE-05 decisions и сверить Git/repository state. BE-06 в этом запуске не начинать.
 
 # Состояние выполнения плана
 
