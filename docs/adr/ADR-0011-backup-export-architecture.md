@@ -1940,6 +1940,8 @@ estimateSize()
 
 # 103. Что не фиксируется этим ADR
 
+> **Позднейшее уточнение:** Backup/Export/Restore v1 contract, logical ZIP/JSON formats, SHA-256 integrity, device/Outbox policy и replace-style Restore определены ADR-0028 и реализованы milestone Backup / Export. Encryption/key management, cloud storage, retention/RPO/RTO, Import conflicts и future format evolution остаются deferred.
+
 Данный документ не определяет конкретно:
 
 - формат базы данных;

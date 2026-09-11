@@ -1015,6 +1015,8 @@ Cloud
 
 # 38. Что пока не решаем
 
+> **Позднейшее уточнение:** initial Sync Queue persistence конкретизирован ADR-0023, local device identity — ADR-0025, а Backup/Export/Restore format v1 — ADR-0028. Remote Sync protocol/backend/conflicts/authentication, encryption, FTS и semantic search по-прежнему остаются отдельным future scope.
+
 Следующие вопросы требуют отдельных архитектурных решений:
 
 - конкретный Sync Protocol;

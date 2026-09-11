@@ -2,6 +2,8 @@
 
 Статус: завершён
 
+> **Историческое уточнение:** `MVP` в названии этого execution plan означает первый ограниченный local-first Task vertical slice. Это не утверждение о завершении более широкой product MVP boundary из `docs/07-roadmap/roadmap.md`, `technical-architecture.md` или `ui-ux-architecture.md`.
+
 Последняя проверка: 2026-09-10
 
 ## 1. Цель

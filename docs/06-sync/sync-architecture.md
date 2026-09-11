@@ -1247,6 +1247,8 @@ Advanced File Sync
 
 # 51. Открытые вопросы
 
+> **Текущая сверка:** локальная installation identity и change ID определены ADR-0025, а минимальный Outbox foundation реализован по ADR-0023. Это не означает наличие Sync. Cloud Backend, authentication, remote device registration/pairing, protocol, cursor, acknowledgement/retry, tombstones и conflict resolution остаются нерешёнными.
+
 Остаются нерешёнными:
 
 - выбор Cloud Backend;
@@ -1269,4 +1271,3 @@ Advanced File Sync
 Эти решения принимаются после технического прототипирования.
 
 ---
-

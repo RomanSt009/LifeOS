@@ -4,6 +4,8 @@
 **Дата:** 2026-08-12  
 **Версия:** 0.1
 
+> **Уточнение текущей реализации (2026-09-11):** этот ADR сохраняет исторический предварительный выбор stack. Production repository использует Flutter, Riverpod и Drift/SQLite. Desktop navigation реализована средствами Flutter SDK (`NavigationRail`, `IndexedStack`, shell-local state) согласно [`desktop-shell-navigation.md`](../exec-plans/completed/desktop-shell-navigation.md); GoRouter не является текущей dependency и остаётся возможным будущим выбором только при появлении требований к deep links, URL routing или navigation history. Freezed и json_serializable также не являются текущими dependencies и могут вводиться только при доказанной необходимости.
+
 ## Контекст
 
 В ADR-0001 был выбран Flutter как основной UI-фреймворк LifeOS и Dart как основной язык разработки.

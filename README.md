@@ -4,11 +4,23 @@
 
 ## Статус проекта
 
-**Фаза:** Основа / Документация
+**Фаза:** ранняя реализация / Windows desktop
 
-**Версия:** 0.1.0
+LifeOS уже имеет рабочую local-first реализацию на Flutter для Windows. Текущее приложение использует layered architecture, Riverpod и file-backed SQLite через Drift.
 
-LifeOS в настоящее время находится на стадии разработки архитектуры и документации. Код приложения еще не реализован.
+Реализованы:
+
+- desktop shell и навигация Home / Tasks / Search / Settings;
+- создание, отображение и переключение completion для Tasks;
+- локальное хранение Tasks и атомарный Outbox foundation;
+- постоянная identity локальной installation;
+- Task-specific local Search;
+- английская и русская локализация;
+- Backup / Export / Restore v1.
+
+Пока не реализованы Sync, AI, Notes, Projects, Relationships и Documents. Home остаётся минимальным placeholder.
+
+`version: 1.0.0+1` в `pubspec.yaml` является текущей package/application metadata. Формальные критерии релиза LifeOS v1.0 отдельным решением пока не определены.
 
 ## Vision
 
@@ -27,6 +39,12 @@ LifeOS стремится стать персональной цифровой �
 ## Философия разработки
 
 Проект разрабатывается до начала реализации. Требования к продукту, архитектура и важные технические решения документируются и пересматриваются по мере развития системы.
+
+## Документация и выполнение
+
+- архитектура и продуктовые документы: [`docs/`](docs/);
+- архитектурные решения: [`docs/adr/`](docs/adr/);
+- active/completed execution plans: [`docs/exec-plans/`](docs/exec-plans/).
 
 ## Лицензия
 

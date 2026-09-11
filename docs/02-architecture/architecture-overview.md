@@ -199,6 +199,8 @@ AI Service
 
 Этот документ описывает только первоначальное направление.
 
+> **Уточнение текущего состояния (2026-09-11):** язык Dart, Flutter, SQLite/Drift, layered architecture, Riverpod, production database lifecycle, localization и Backup / Export / Restore v1 уже определены поздними ADR и реализованы. Список ниже сохранён как исторический список открытых вопросов на момент создания документа. Sync, AI providers, plugins и encryption по-прежнему не имеют production implementation.
+
 Следующие решения пока остаются открытыми:
 
 - язык программирования;
@@ -216,5 +218,5 @@ AI Service
 - [[../00-vision/vision]]
 - [[../01-product/product-overview]]
 - [[../03-database/database-overview]]
-- [[../04-ai/ai-overview]]
+- [[../04-ai/ai-architecture]]
 - [[../07-roadmap/roadmap]]

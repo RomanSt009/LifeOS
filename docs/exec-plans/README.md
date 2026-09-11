@@ -8,7 +8,7 @@
 
 Текущий основной активный план: отсутствует.
 
-Следующий milestone и новый execution plan должны быть выбраны и приняты явно.
+Следующий product milestone должен быть обсуждён и принят явно; автоматически новый план не создаётся.
 
 Структура каталогов:
 
@@ -19,6 +19,7 @@ docs/exec-plans/
 │   └── (пусто)
 └── completed/
     ├── backup-export.md
+    ├── documentation-reconciliation.md
     ├── desktop-shell-navigation.md
     ├── local-search.md
     └── lifeos-mvp.md

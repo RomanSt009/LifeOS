@@ -805,6 +805,8 @@ Repository Interfaces должны оставаться независимыми
 
 # 41. Что не фиксируется этим ADR
 
+> **Позднейшее уточнение:** Flutter project boundaries определены ADR-0022, current Drift tables и repositories — ADR-0023, production lifecycle — ADR-0024. Future table expansion, migration evolution, encryption, Sync protocol и performance/isolate choices остаются отдельными decisions.
+
 Этот ADR не определяет:
 
 - конкретную версию Drift;

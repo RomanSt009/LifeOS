@@ -4,6 +4,8 @@
 **Дата:** 2026-08-14  
 **Версия:** 0.1
 
+> **Уточнение текущей реализации (2026-09-11):** для существующего scope применяется constructor injection и ручной composition root в `lib/app/dependencies.dart`; Presentation получает composed dependencies через Riverpod overrides. Отдельная DI-библиотека или Service Locator не используются и не требуются текущей реализацией.
+
 ## Контекст
 
 LifeOS состоит из большого количества независимых компонентов.
@@ -962,6 +964,8 @@ TaskService
 ---
 
 # 39. Что пока не решаем
+
+> **Позднейшее уточнение:** текущая implementation использует manual composition root, constructor injection и Riverpod overrides без отдельной DI-библиотеки или Service Locator. Production database lifecycle конкретизирован ADR-0024. Исходный список ниже сохранён как historical context.
 
 Не фиксируем окончательно:
 

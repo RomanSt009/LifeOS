@@ -4,6 +4,8 @@
 **Дата:** 2026-08-26
 **Версия:** 0.1
 
+> **Уточнение текущей реализации (2026-09-11):** layered structure этого ADR реализована в `lib/app`, `lib/presentation`, `lib/application`, `lib/domain` и `lib/infrastructure`. Riverpod используется на Presentation/composition boundary; desktop navigation использует Flutter SDK `NavigationRail` + `IndexedStack`; concrete persistence — Drift/SQLite. Эти implementation choices не меняют описанное ниже направление зависимостей.
+
 ## 1. Контекст
 
 Предыдущие ADR определили основные архитектурные принципы LifeOS:
@@ -1262,6 +1264,8 @@ Performance-sensitive operations могут выполняться в Infrastruc
 ---
 
 # 49. Что не фиксируется этим ADR
+
+> **Позднейшее уточнение:** current implementation использует Riverpod, manual composition, Flutter SDK desktop navigation, Drift tables из ADR-0023 и en/ru localization по ADR-0027. GoRouter, отдельный DI framework и logging package не являются текущими production dependencies.
 
 Этот ADR не определяет:
 

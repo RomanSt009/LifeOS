@@ -104,13 +104,14 @@ Flutter is the primary UI framework.
 
 Dart is the primary programming language.
 
-The currently selected supporting technologies include:
+The current production stack includes:
 
 - Riverpod — state management
-- GoRouter — navigation
 - SQLite + Drift — local persistence
-- Freezed — immutable/domain-support models where appropriate
-- json_serializable — serialization where appropriate
+- Flutter SDK `NavigationRail` + `IndexedStack` — current desktop navigation
+- Flutter `gen_l10n` + ARB — localization
+
+ADR-0002 recorded GoRouter, Freezed, and json_serializable as preliminary stack choices. They are not current production dependencies and must be introduced only when a concrete requirement and the applicable architecture gate justify them.
 
 Do not add a package merely because it is popular or convenient.
 
@@ -244,7 +245,9 @@ Providers should represent meaningful application or presentation dependencies/s
 
 ## 11. Navigation
 
-GoRouter is the selected navigation solution.
+The current desktop shell uses Flutter SDK navigation with `NavigationRail`, `IndexedStack`, and shell-local destination state, as recorded by the completed Desktop Shell / Navigation execution plan.
+
+GoRouter was an early preliminary choice in ADR-0002, but it is not a current production dependency. Reconsider it only when concrete requirements such as deep links, URL routing, or persistent navigation history require an architecture decision.
 
 Navigation configuration belongs to the appropriate application/presentation composition layer.
 

@@ -66,6 +66,12 @@ Sync:
 собственная подсистема поверх выбранного backend
 ````
 
+## Уточнение текущей реализации
+
+Приведённый выше список сохраняет исторический preliminary state документа. Текущий production stack использует Flutter/Dart, Riverpod, Drift/SQLite и ручной composition root с constructor injection. Desktop navigation реализована средствами Flutter SDK: `NavigationRail`, `IndexedStack` и shell-local destination state. GoRouter, Freezed и json_serializable не являются текущими dependencies.
+
+Sync и AI по-прежнему не реализованы; их архитектурные разделы ниже описывают future direction, а не current capabilities.
+
 ---
 
 # 3. Основной архитектурный принцип
@@ -1470,6 +1476,8 @@ SQLite implementation
 
 # 58. MVP Boundary
 
+> **Уточнение:** этот раздел описывает широкую будущую границу product MVP. Он не равен завершённому execution milestone первого Task vertical slice в `docs/exec-plans/completed/lifeos-mvp.md`; Relationships, Basic Logging и полноценная migration evolution из списка ниже ещё не реализованы.
+
 Первая рабочая версия должна содержать:
 
 ```
@@ -1563,6 +1571,8 @@ SQLite implementation
 ---
 
 # 61. Открытые архитектурные решения
+
+> **Историческая сверка:** State Management реализован через Riverpod; dependency wiring — через manual composition, constructor injection и Riverpod overrides; SQLite package/ORM — Drift согласно ADR-0021. Эти пункты ниже были открыты на момент создания документа. Encryption, Cloud Provider, Backend, Authentication, AI provider/runtime, embeddings/vector search, Sync protocol и file sync остаются нерешёнными либо future scope.
 
 Пока не определены:
 

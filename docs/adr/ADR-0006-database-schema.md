@@ -912,6 +912,8 @@ Vector Index
 
 # 38. Что требует следующего решения
 
+> **Позднейшее уточнение:** Drift выбран ADR-0021; начальная hybrid schema `entities` + typed `tasks` и Outbox contract определены ADR-0023; production database lifecycle — ADR-0024. Текущая production schema v1 содержит только `entities`, `tasks` и `outbox`; остальные описанные таблицы остаются conceptual/future.
+
 После этого ADR необходимо отдельно определить:
 
 - точный Drift schema;

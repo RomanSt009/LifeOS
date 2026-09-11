@@ -1773,6 +1773,8 @@ Read/Write separation может использоваться локально �
 
 # 101. Что не фиксируется этим ADR
 
+> **Позднейшее уточнение:** Drift/SQLite выбран ADR-0021; current Entity/Task/Outbox storage уточнён ADR-0023; UUID identity и production lifecycle — ADR-0024 — ADR-0026; Backup format v1 — ADR-0028. Окончательная расширенная schema, migrations beyond v1, encryption, Search index и remote Sync остаются future decisions.
+
 Этот ADR не определяет:
 
 - конкретную SQLite Flutter/Dart library;

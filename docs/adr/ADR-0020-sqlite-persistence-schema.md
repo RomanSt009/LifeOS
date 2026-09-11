@@ -1469,6 +1469,8 @@ SQLite
 
 # 73. MVP Tables
 
+> **Уточнение implementation state:** этот перечень является conceptual target. Production schema v1 реализует `entities`, typed `tasks` и `outbox`; relationships, tombstones, sync state и conflicts ещё не реализованы.
+
 Для первого Persistence Prototype необходимо предусмотреть:
 
 Domain tables
@@ -1568,6 +1570,8 @@ conflicts
 ---
 
 # 78. Что не фиксируется этим ADR
+
+> **Позднейшее уточнение:** конкретный persistence package — ADR-0021 выбрал Drift; current tables/payload/foreign-key decisions уточнены ADR-0023. Остальные пункты ниже сохраняют historical/future scope.
 
 Этот ADR не определяет:
 

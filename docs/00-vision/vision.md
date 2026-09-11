@@ -104,9 +104,11 @@ LifeOS должна предоставить доступ к соответст�
 
 ## Текущий статус проекта
 
-В настоящее время проект находится на стадии планирования и архитектуры. 
+Vision остаётся долгосрочным направлением проекта, а не описанием уже готового набора функций.
 
-Код для рабочей (production) версии приложения пока не реализуется.
+В repository уже существует рабочая Windows-first Flutter implementation: desktop shell, Tasks с локальным SQLite/Drift persistence, Task-specific Search, en/ru localization и Backup / Export / Restore v1.
+
+Notes, Projects, Documents, Relationships, AI, Sync и дополнительные платформы остаются будущими возможностями. Их упоминание выше не означает наличие production implementation.
 
 ## Связанные документы
 
