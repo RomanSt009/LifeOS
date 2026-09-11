@@ -6,9 +6,9 @@
 
 ## Где Codex хранит прогресс
 
-Текущий основной активный план:
+Текущий основной активный план: отсутствует.
 
-`docs/exec-plans/active/backup-export.md`
+Следующий milestone и новый execution plan должны быть выбраны и приняты явно.
 
 Структура каталогов:
 
@@ -16,8 +16,9 @@
 docs/exec-plans/
 ├── README.md
 ├── active/
-│   └── backup-export.md
+│   └── (пусто)
 └── completed/
+    ├── backup-export.md
     ├── desktop-shell-navigation.md
     ├── local-search.md
     └── lifeos-mvp.md

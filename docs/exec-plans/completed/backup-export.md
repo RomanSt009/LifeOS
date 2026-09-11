@@ -1,6 +1,6 @@
 # LifeOS Backup / Export — план выполнения
 
-Статус: active
+Статус: completed
 
 ## Цель
 
@@ -1038,7 +1038,7 @@ BE-08 Definition of Done выполнен. BE-09 установлен следу
 
 ## BE-09 — Финальный архитектурный и интеграционный аудит
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -1080,14 +1080,54 @@ BE-08 Definition of Done выполнен. BE-09 установлен следу
 
 ### Result / blocker
 
-Не начато.
+BE-09 завершён. Финальный аудит проведён на `HEAD` `ad20e274ac33a94729faf3ee4398e7cec61bd2ff` (`test: verify backup restore round trip`). На входе единственным незакоммиченным пользовательским файлом был `.obsidian/workspace.json`; он не читался, не изменялся и не включался в milestone scope.
+
+Фактический результат:
+
+- Backup v1 остаётся local-first ZIP с ровно `manifest.json` и `data.json`; SHA-256 считается по точным physical bytes `data.json`, формат versioned и не связан с Drift schema как публичным contract.
+- Export v1 остаётся отдельным deterministic human-readable UTF-8 JSON и не используется как Restore input.
+- Backup/Export сохраняют Task Domain State, Entity UUID и metadata; operational `device_id`, Outbox, `change_id`, raw SQLite и runtime/cache state не входят в artifacts.
+- Restore полностью валидирует Backup до mutation, требует явного подтверждения для непустого состояния и atomically заменяет Entity/Task state в одной Drift transaction; rollback сохраняет прежние Domain State и Outbox, успешный Restore очищает Outbox и не создаёт новые Changes.
+- Текущий `device_id` installation сохраняется; новая installation использует собственный identity lifecycle. Source installation identity не переносится.
+- Production database/repository/device identity создаются единожды в composition root и закрываются существующим lifecycle; Settings/navigation не создают persistence owners.
+- Application не импортирует Infrastructure, Drift, SQLite, `dart:io`, `archive`, `crypto` или platform filesystem APIs. ZIP/filesystem/checksum/read/write/restore-store implementations остаются в Infrastructure; file selection — в Presentation adapter.
+- Settings предоставляет реальные локализованные en/ru flows Backup, Export и Restore, включая cancel, busy, success, typed errors и destructive confirmation. После Restore Tasks и Search перечитывают актуальное состояние.
+- Прямые dependencies соответствуют принятому scope: `archive 3.6.1`, `crypto 3.0.7`, `file_selector 1.1.0`; новых или неиспользуемых dependencies в BE-09 не добавлено.
+- Schema и generated Drift API в BE-09 не изменялись; Drift regeneration не требовалась. Generated localization files вручную не редактировались.
+- Scope creep не обнаружен. Не реализованы cloud/scheduled backup, encryption/password protection, retention/rotation, merge/selective Restore, Import из Export, Sync bootstrap/reconciliation, дополнительные Entity types и дополнительные Export formats.
+
+Validation evidence:
+
+- Acceptance `backup_round_trip_test.dart`: PASS, 4 tests — separate-installation round trip и reopen, same-installation earlier snapshot, empty snapshot replacement, deterministic Export и fail-if-exists.
+- Focused Application/format/file/restore-store/database/identity/composition suite: PASS, 49 tests.
+- Focused Settings/Restore navigation/shell/localization suite: PASS, 26 tests.
+- `flutter gen-l10n`: PASS; source ARB для en/ru согласованы, unexpected generated diff отсутствует.
+- `flutter analyze`: PASS, `No issues found`.
+- Полный `flutter test`: PASS, 127 tests.
+- `dart pub deps --style=compact`: PASS; direct и transitive dependency graph разрешён штатно.
+- Import-boundary scan: PASS.
+- Routing dependency scan: PASS; новые routing packages/imports отсутствуют.
+- Runtime-state leakage и Restore Outbox insertion scans: PASS.
+- Dependency diff guard: PASS; `pubspec.yaml` и `pubspec.lock` не изменены.
+- Schema/generated diff guard: PASS; Drift schema/generated API не изменены.
+- `git diff --check`: PASS; только информационные LF/CRLF warnings, whitespace errors отсутствуют.
+
+Итоговое repository state после завершения:
+
+- `HEAD`: `ad20e274ac33a94729faf3ee4398e7cec61bd2ff` (`test: verify backup restore round trip`), branch `main...origin/main`.
+- План перенесён из `docs/exec-plans/active/backup-export.md` в `docs/exec-plans/completed/backup-export.md`; `docs/exec-plans/active/` пуст.
+- `docs/exec-plans/README.md` обновлён: активный основной план отсутствует.
+- Итоговый `git status --short`: пользовательский `M .obsidian/workspace.json`; milestone bookkeeping — `M docs/exec-plans/README.md`, `D docs/exec-plans/active/backup-export.md`, `?? docs/exec-plans/completed/backup-export.md`.
+- Commit и push не выполнялись.
+
+Definition of Done выполнен, unresolved blockers отсутствуют. Milestone Backup / Export завершён.
 
 ---
 
 # Точка возобновления
 
-Resume point: BE-09 `pending`. BE-08 завершён и полностью провалидирован; BE-09 не начинался.
+Resume point: milestone completed. Активный основной execution plan отсутствует. Следующее действие — выбрать следующий milestone и явно создать/принять новый execution plan; автоматически новый план не начинать.
 
 # Состояние выполнения плана
 
-Статус: active
+Статус: completed
