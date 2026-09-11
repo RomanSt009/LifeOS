@@ -25,6 +25,87 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationSearch => 'Search';
 
   @override
+  String get navigationSettings => 'Settings';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get backupDataSectionTitle => 'Backup and data';
+
+  @override
+  String get backupDataSectionDescription =>
+      'Create an unencrypted local backup, export your data, or replace current data from a backup.';
+
+  @override
+  String get backupCreateAction => 'Create backup';
+
+  @override
+  String get exportDataAction => 'Export JSON';
+
+  @override
+  String get restoreBackupAction => 'Restore backup';
+
+  @override
+  String get backupZipFileTypeLabel => 'LifeOS backup';
+
+  @override
+  String get jsonFileTypeLabel => 'JSON document';
+
+  @override
+  String get backupOperationSelecting => 'Choosing a file…';
+
+  @override
+  String get backupOperationRunning => 'Operation in progress…';
+
+  @override
+  String get backupCreateSuccess => 'Backup created successfully.';
+
+  @override
+  String get exportDataSuccess => 'Export created successfully.';
+
+  @override
+  String get restoreBackupSuccess => 'Backup restored successfully.';
+
+  @override
+  String get cancelAction => 'Cancel';
+
+  @override
+  String get restoreConfirmationTitle => 'Replace current LifeOS data?';
+
+  @override
+  String get restoreConfirmationMessage =>
+      'Current local LifeOS data will be replaced by this backup. This is not a merge, and local changes still waiting to sync will not remain queued after restore.';
+
+  @override
+  String get restoreReplaceAction => 'Restore and replace';
+
+  @override
+  String get backupInvalidError => 'This backup is invalid or corrupted.';
+
+  @override
+  String get backupUnsupportedError => 'This backup version is not supported.';
+
+  @override
+  String get backupChecksumError => 'The backup integrity check failed.';
+
+  @override
+  String get backupDestinationExistsError =>
+      'A file already exists at the selected destination.';
+
+  @override
+  String get backupFileSystemError =>
+      'The selected file could not be read or written.';
+
+  @override
+  String get restoreConfirmationRequiredError =>
+      'Confirmation is required before replacing current data.';
+
+  @override
+  String get restorePersistenceError =>
+      'The backup could not replace current LifeOS data.';
+
+  @override
   String get searchTitle => 'Search';
 
   @override

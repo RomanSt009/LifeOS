@@ -69,6 +69,17 @@ void main() {
         find.byKey(const Key('search-submit-button')).hitTestable(),
         findsOneWidget,
       );
+
+      final settingsLabel = scenario.locale.languageCode == 'ru'
+          ? 'Настройки'
+          : 'Settings';
+      await tester.tap(find.text(settingsLabel));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byKey(const Key('backup-settings-page')).hitTestable(),
+        findsOneWidget,
+      );
     });
   }
 
@@ -86,9 +97,15 @@ void main() {
       LifeOsDestination.home,
       LifeOsDestination.tasks,
       LifeOsDestination.search,
+      LifeOsDestination.settings,
     ]);
-    expect(navigationRail.destinations, hasLength(3));
-    expect(destinationLabels(navigationRail), ['Home', 'Tasks', 'Search']);
+    expect(navigationRail.destinations, hasLength(4));
+    expect(destinationLabels(navigationRail), [
+      'Home',
+      'Tasks',
+      'Search',
+      'Settings',
+    ]);
   });
 
   testWidgets('shows a persistent desktop frame with Tasks selected', (
@@ -103,7 +120,12 @@ void main() {
 
     expect(navigationRail.selectedIndex, LifeOsDestination.tasks.index);
     expect(navigationRail.labelType, NavigationRailLabelType.all);
-    expect(destinationLabels(navigationRail), ['Home', 'Tasks', 'Search']);
+    expect(destinationLabels(navigationRail), [
+      'Home',
+      'Tasks',
+      'Search',
+      'Settings',
+    ]);
     expect(find.byType(TaskList), findsOneWidget);
     expect(find.byKey(const Key('task-title-field')), findsOneWidget);
   });
@@ -149,7 +171,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      tester.widget<TextField>(find.byKey(const Key('search-query-field')))
+      tester
+          .widget<TextField>(find.byKey(const Key('search-query-field')))
           .controller
           ?.text,
       'result',
@@ -214,6 +237,10 @@ void main() {
     );
     await tester.tap(find.text('Home'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
 
     expect(repository.getAllCallCount, 1);
     expect(
@@ -239,7 +266,12 @@ void main() {
       find.byType(NavigationRail),
     );
 
-    expect(destinationLabels(navigationRail), ['Главная', 'Задачи', 'Поиск']);
+    expect(destinationLabels(navigationRail), [
+      'Главная',
+      'Задачи',
+      'Поиск',
+      'Настройки',
+    ]);
   });
 }
 

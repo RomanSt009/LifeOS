@@ -1,1 +1,1 @@
-enum LifeOsDestination { home, tasks, search }
+enum LifeOsDestination { home, tasks, search, settings }

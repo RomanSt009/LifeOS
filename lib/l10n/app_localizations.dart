@@ -128,6 +128,156 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get navigationSearch;
 
+  /// No description provided for @navigationSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get navigationSettings;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @backupDataSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup and data'**
+  String get backupDataSectionTitle;
+
+  /// No description provided for @backupDataSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an unencrypted local backup, export your data, or replace current data from a backup.'**
+  String get backupDataSectionDescription;
+
+  /// No description provided for @backupCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create backup'**
+  String get backupCreateAction;
+
+  /// No description provided for @exportDataAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Export JSON'**
+  String get exportDataAction;
+
+  /// No description provided for @restoreBackupAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup'**
+  String get restoreBackupAction;
+
+  /// No description provided for @backupZipFileTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'LifeOS backup'**
+  String get backupZipFileTypeLabel;
+
+  /// No description provided for @jsonFileTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'JSON document'**
+  String get jsonFileTypeLabel;
+
+  /// No description provided for @backupOperationSelecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Choosing a file…'**
+  String get backupOperationSelecting;
+
+  /// No description provided for @backupOperationRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Operation in progress…'**
+  String get backupOperationRunning;
+
+  /// No description provided for @backupCreateSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup created successfully.'**
+  String get backupCreateSuccess;
+
+  /// No description provided for @exportDataSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Export created successfully.'**
+  String get exportDataSuccess;
+
+  /// No description provided for @restoreBackupSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored successfully.'**
+  String get restoreBackupSuccess;
+
+  /// No description provided for @cancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelAction;
+
+  /// No description provided for @restoreConfirmationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace current LifeOS data?'**
+  String get restoreConfirmationTitle;
+
+  /// No description provided for @restoreConfirmationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Current local LifeOS data will be replaced by this backup. This is not a merge, and local changes still waiting to sync will not remain queued after restore.'**
+  String get restoreConfirmationMessage;
+
+  /// No description provided for @restoreReplaceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore and replace'**
+  String get restoreReplaceAction;
+
+  /// No description provided for @backupInvalidError.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup is invalid or corrupted.'**
+  String get backupInvalidError;
+
+  /// No description provided for @backupUnsupportedError.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup version is not supported.'**
+  String get backupUnsupportedError;
+
+  /// No description provided for @backupChecksumError.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup integrity check failed.'**
+  String get backupChecksumError;
+
+  /// No description provided for @backupDestinationExistsError.
+  ///
+  /// In en, this message translates to:
+  /// **'A file already exists at the selected destination.'**
+  String get backupDestinationExistsError;
+
+  /// No description provided for @backupFileSystemError.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected file could not be read or written.'**
+  String get backupFileSystemError;
+
+  /// No description provided for @restoreConfirmationRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmation is required before replacing current data.'**
+  String get restoreConfirmationRequiredError;
+
+  /// No description provided for @restorePersistenceError.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup could not replace current LifeOS data.'**
+  String get restorePersistenceError;
+
   /// No description provided for @searchTitle.
   ///
   /// In en, this message translates to:

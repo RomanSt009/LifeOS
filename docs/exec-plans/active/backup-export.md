@@ -838,7 +838,7 @@ BE-06 Definition of Done выполнен. BE-07 является следующ
 
 ## BE-07 — Presentation и desktop integration
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -882,7 +882,70 @@ BE-06 Definition of Done выполнен. BE-07 является следующ
 
 ### Result / blocker
 
-Не начато.
+Первоначально BE-07 был остановлен на обязательном file-picker architecture/dependency gate до изменения production code.
+
+Dependency gate снят явным подтверждением пользователя: принято добавить direct dependency `file_selector: ^1.1.0`, использовать его системные Windows open/save dialogs и считать `null` нормальной отменой. Новый ADR не создаётся. BE-07 возвращён в `active`; варианты `file_picker`, ручной ввод absolute path и собственный Win32 plugin не используются.
+
+#### Сверка Git и repository
+
+- На старте `HEAD` = `880cbab8b0f9750f2551da8e4b85899cc0d7407f` (`feat: implement backup restore`), branch `main` синхронизирован с `origin/main`.
+- BE-06 полностью находится в `HEAD`; единственное исходное незакоммиченное изменение — пользовательский `.obsidian/workspace.json`, оно не читалось и не изменялось.
+- Текущий shell использует shell-local `LifeOsDestination`, `NavigationRail` и `IndexedStack`; реальные destinations: Home, Tasks и Search. Settings ранее был отложен, потому что реальной Settings functionality не существовало.
+- Production composition уже предоставляет `CreateLifeOsBackup`, `ExportLifeOsData` и `RestoreLifeOsBackup` через единственный composition-owned `LifeOsDatabase`, но file chooser отсутствует.
+- В `pubspec.yaml`/`pubspec.lock` нет `file_selector`, `file_picker` или другой dependency для native open/save dialogs. Существующий `path_provider` предоставляет системные каталоги, а не пользовательский выбор файла.
+
+#### Entry point decision
+
+После снятия dependency gate минимально оправданный entry point — новый реальный destination **Settings**, содержащий только действующую секцию Backup / Export / Restore. Это больше не placeholder: операции управляют локальными данными и являются устойчивой application-management capability. Текущий enum/`NavigationRail`/`IndexedStack` позволяет добавить destination без нового router или изменения navigation-state architecture. Фиктивные AI/theme/account/sync settings не добавляются.
+
+#### File picker options
+
+**A. `file_selector: ^1.1.0` — рекомендуется.** Flutter-team package (`flutter.dev` publisher), поддерживает Windows 10+, native `getSaveLocation` и `openFile`, suggested filename, extension filters и `null` при cancel. API покрывает ровно Backup/Export save dialogs и Restore open dialog. Platform implementation для Windows endorsed и подключается транзитивно; напрямую `file_selector_windows` добавлять не требуется. Project Dart SDK `^3.13.1` совместим с minimum Dart SDK package. Для widget tests будет введена одна узкая feature-owned chooser abstraction, а native adapter останется заменяемым fake; package types не будут протекать в Application/Domain/Infrastructure contracts.
+
+**A2. `file_picker: ^12.2.0`.** Также поддерживает Windows open/save и filters, но это сторонний package с существенно более широкой API surface (multiple files, directories, bytes/cloud-platform scenarios), чем требуется milestone. Для текущего scope dependency weight и maintenance surface выше; преимуществ перед `file_selector` для трёх одиночных dialogs нет.
+
+**B. Собственный Flutter/Windows mechanism без dependency.** Flutter SDK не предоставляет cross-platform open/save-file dialog API. Реализация потребовала бы собственного Windows plugin/platform channel либо прямого Win32 COM/FFI кода, отдельного lifecycle/error handling и platform tests. Это увеличивает platform leakage и maintenance и фактически создаёт более тяжёлую dependency surface внутри репозитория.
+
+**C. Ручной ввод absolute path.** Технически совместим с BE-04 writer contract, но отклонён как production UX: пользователь не получает native destination/source selection, filters, normal cancel behavior и безопасную навигацию по filesystem; возрастает риск ошибочного пути и existing-target failures.
+
+#### Минимальное решение, требующее подтверждения
+
+Разрешить direct dependency `file_selector: ^1.1.0`. После подтверждения BE-07 можно вернуть в `active` и реализовать:
+
+- real Settings destination только с Backup / Export / Restore;
+- узкую fakeable file-chooser boundary с `.zip`/`.json` filters и Windows-safe UTC suggested names;
+- feature-local running/success/error/cancel state;
+- typed localized error mapping и destructive Restore confirmation flow через существующий Application precondition;
+- invalidation/reload `taskListControllerProvider` после успешного Restore; новый Search query продолжит читать restored repository state;
+- en/ru ARB и focused widget/integration/layout tests без native dialog.
+
+Новый ADR не требуется: blocker ограничен выбором прямой platform UX dependency, а entry point следует существующей shell architecture. До подтверждения dependency production code, localization resources, generated files, tests, schema и dependencies не изменялись; BE-08 не начинался.
+
+#### Реализованный результат
+
+- Добавлен реальный `Settings` destination в существующие `LifeOsDestination`, `NavigationRail` и `IndexedStack`; Home, Tasks и Search сохранены без изменения shell-local navigation architecture.
+- `BackupSettingsPage` предоставляет только готовые Backup, Export и Restore operations. Секция явно сообщает, что Backup локальный и незашифрованный; Restore требует отдельного подтверждения необратимой замены текущих данных.
+- Узкая `LifeOsArtifactFileChooser` boundary принадлежит Presentation. Production adapter использует `file_selector` для Windows open/save dialogs, `.zip`/`.json` filters, локализованных file-type labels, безопасных UTC suggested filenames и трактует `null` как обычную отмену.
+- Presentation зависит только от `LifeOsBackupOperations` Application contract. `ComposedLifeOsBackupOperations` в composition layer соединяет существующие use cases с Infrastructure readers/writers; Application не импортирует Infrastructure, `dart:io`, `file_selector`, Drift, `archive` или `crypto`.
+- Production composition переиспользует единственный `LifeOsDatabase`, repositories и use cases. После успешного Restore инвалидируется существующий Task-list provider; последующие Tasks и Search читают восстановленное repository state.
+- Добавлены локализованные en/ru navigation, Settings, progress, success, confirmation, file-type и typed error strings. Generated localization files обновлены только через `flutter gen-l10n`.
+- Добавлена direct dependency `file_selector: ^1.1.0`; `flutter pub get` штатно обновил lockfile и generated Windows plugin registration. Новых routing/state-management dependencies нет. Drift schema/generated API не менялись.
+- Focused widget/integration tests покрывают en/ru Settings, cancel/success/error/running states, защиту от повторного запуска, destructive Restore confirm/cancel, shell layout/navigation, сохранение Task state и видимость восстановленных данных в Tasks и новом Search.
+
+#### Validation evidence
+
+- Focused Settings/shell/Tasks/Search/localization/composition/lifecycle suite: PASS, 38 tests.
+- `flutter gen-l10n`: PASS; ARB и generated delegates содержат одинаковый набор новых en/ru keys.
+- `flutter analyze`: PASS, `No issues found`.
+- Полный `flutter test`: PASS, 117 tests.
+- Import-boundary scan: PASS; запрещённых imports в Domain/Application/Presentation не найдено, `file_selector` остаётся только в Presentation adapter.
+- Routing dependency scan: PASS; новые routing packages/imports отсутствуют.
+- Dependency hygiene: `pubspec.yaml` содержит direct `archive`, `crypto` и подтверждённый `file_selector`; lockfile фиксирует `file_selector 1.1.0` и его federated transitive packages, generated Windows registration содержит только `file_selector_windows`. `dart pub deps --style=compact` завис без вывода более 30 секунд и был остановлен; вместо неподтверждённого результата проверены успешный `flutter pub get` и точный dependency diff.
+- Drift generation не запускалась: `git diff --name-only -- lib/infrastructure/persistence/drift` пуст, schema/API не изменялись.
+- `git diff --check`: PASS; только предупреждения Git о configured LF/CRLF conversion, whitespace errors отсутствуют.
+- `.obsidian/workspace.json` остаётся отдельным исходным пользовательским изменением и не читался/не изменялся в BE-07.
+
+BE-07 Definition of Done выполнен. BE-08 установлен следующим `pending` checkpoint и не начинался.
 
 ---
 
@@ -985,7 +1048,7 @@ BE-06 Definition of Done выполнен. BE-07 является следующ
 
 # Точка возобновления
 
-Resume point: BE-06 завершён. BE-07 является следующим `pending` checkpoint; перед его началом перечитать ADR-0010, ADR-0011, ADR-0022, ADR-0027, ADR-0028, решения BE-01 — BE-06 и сверить Git/repository state. BE-07 в этом запуске не начинать.
+Resume point: BE-08 `pending`. BE-07 завершён и полностью провалидирован; BE-08 не начинался.
 
 # Состояние выполнения плана
 

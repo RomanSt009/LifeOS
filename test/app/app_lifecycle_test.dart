@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/app/app.dart';
 import 'package:lifeos/app/dependencies.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_backup.dart';
+import 'package:lifeos/application/backup/lifeos_backup_operations.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
 import 'package:lifeos/application/use_cases/export_lifeos_data.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_backup.dart';
@@ -53,6 +54,7 @@ void main() {
         reader: const LifeOsBackupFileReader(),
         restoreStore: DriftLifeOsBackupRestoreStore(database),
       ),
+      backupOperations: const _NoopBackupOperations(),
     );
 
     await tester.pumpWidget(LifeOSApp(dependencies: dependencies));
@@ -102,6 +104,7 @@ void main() {
         reader: const LifeOsBackupFileReader(),
         restoreStore: DriftLifeOsBackupRestoreStore(database),
       ),
+      backupOperations: const _NoopBackupOperations(),
     );
 
     await tester.pumpWidget(LifeOSApp(dependencies: dependencies));
@@ -118,4 +121,20 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await dependencies.close();
   });
+}
+
+class _NoopBackupOperations implements LifeOsBackupOperations {
+  const _NoopBackupOperations();
+
+  @override
+  Future<void> createBackupAt(String destinationPath) async {}
+
+  @override
+  Future<void> exportDataAt(String destinationPath) async {}
+
+  @override
+  Future<void> restoreBackupFrom(
+    String sourcePath, {
+    required bool destructiveReplaceConfirmed,
+  }) async {}
 }

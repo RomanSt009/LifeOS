@@ -3,6 +3,7 @@ import '../application/use_cases/create_lifeos_task.dart';
 import '../application/use_cases/export_lifeos_data.dart';
 import '../application/use_cases/restore_lifeos_backup.dart';
 import '../application/use_cases/search_lifeos_tasks.dart';
+import '../application/backup/lifeos_backup_operations.dart';
 import '../domain/repositories/lifeos_task_repository.dart';
 import '../infrastructure/backup/files/lifeos_backup_file_reader.dart';
 import '../infrastructure/backup/formats/v1_backup_export_encoder.dart';
@@ -12,6 +13,7 @@ import '../infrastructure/persistence/drift/lifeos_database.dart';
 import '../infrastructure/persistence/drift/production_database.dart';
 import '../infrastructure/persistence/drift/repositories/drift_lifeos_task_repository.dart';
 import '../infrastructure/persistence/drift/restore/drift_lifeos_backup_restore_store.dart';
+import 'backup_operations.dart';
 
 class LifeOsAppDependencies {
   LifeOsAppDependencies({
@@ -22,6 +24,7 @@ class LifeOsAppDependencies {
     required this.createBackup,
     required this.exportData,
     required this.restoreBackup,
+    required this.backupOperations,
   });
 
   final LifeOsDatabase database;
@@ -31,6 +34,7 @@ class LifeOsAppDependencies {
   final CreateLifeOsBackup createBackup;
   final ExportLifeOsData exportData;
   final RestoreLifeOsBackup restoreBackup;
+  final LifeOsBackupOperations backupOperations;
 
   Future<void>? _closeFuture;
 
@@ -79,6 +83,12 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     reader: const LifeOsBackupFileReader(),
     restoreStore: DriftLifeOsBackupRestoreStore(database),
   );
+  final backupOperations = ComposedLifeOsBackupOperations(
+    createBackup: createBackup,
+    exportData: exportData,
+    restoreBackup: restoreBackup,
+    sourceDatabaseSchemaVersion: database.schemaVersion,
+  );
 
   return LifeOsAppDependencies(
     database: database,
@@ -88,6 +98,7 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     createBackup: createBackup,
     exportData: exportData,
     restoreBackup: restoreBackup,
+    backupOperations: backupOperations,
   );
 }
 

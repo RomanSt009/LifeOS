@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/app/dependencies.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
-import 'package:lifeos/infrastructure/backup/files/lifeos_backup_export_file_writers.dart';
 import 'package:path/path.dart' as path;
 
 void main() {
@@ -59,15 +58,15 @@ void main() {
       expect(outboxAfterBackupAndExport, hasLength(1));
 
       final backupPath = path.join(supportDirectory.path, 'restore-test.zip');
-      await const LifeOsBackupFileWriter().write(
-        draft: backupDraft,
-        sourceDatabaseSchemaVersion: dependencies.database.schemaVersion,
-        destinationPath: backupPath,
-      );
-      await dependencies.restoreBackup(
-        sourcePath: backupPath,
+      final exportPath = path.join(supportDirectory.path, 'export-test.json');
+      await dependencies.backupOperations.createBackupAt(backupPath);
+      await dependencies.backupOperations.exportDataAt(exportPath);
+      await dependencies.backupOperations.restoreBackupFrom(
+        backupPath,
         destructiveReplaceConfirmed: true,
       );
+      expect(await File(backupPath).exists(), isTrue);
+      expect(await File(exportPath).exists(), isTrue);
       expect(await dependencies.taskRepository.getById(taskId), task);
       expect(
         await dependencies.database

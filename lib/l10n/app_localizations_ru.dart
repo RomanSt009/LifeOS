@@ -25,6 +25,90 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navigationSearch => 'Поиск';
 
   @override
+  String get navigationSettings => 'Настройки';
+
+  @override
+  String get settingsTitle => 'Настройки';
+
+  @override
+  String get backupDataSectionTitle => 'Резервная копия и данные';
+
+  @override
+  String get backupDataSectionDescription =>
+      'Создайте незашифрованную локальную резервную копию, экспортируйте данные или замените текущие данные из резервной копии.';
+
+  @override
+  String get backupCreateAction => 'Создать копию';
+
+  @override
+  String get exportDataAction => 'Экспортировать JSON';
+
+  @override
+  String get restoreBackupAction => 'Восстановить копию';
+
+  @override
+  String get backupZipFileTypeLabel => 'Резервная копия LifeOS';
+
+  @override
+  String get jsonFileTypeLabel => 'Документ JSON';
+
+  @override
+  String get backupOperationSelecting => 'Выбор файла…';
+
+  @override
+  String get backupOperationRunning => 'Операция выполняется…';
+
+  @override
+  String get backupCreateSuccess => 'Резервная копия создана.';
+
+  @override
+  String get exportDataSuccess => 'Экспорт успешно создан.';
+
+  @override
+  String get restoreBackupSuccess => 'Данные успешно восстановлены.';
+
+  @override
+  String get cancelAction => 'Отмена';
+
+  @override
+  String get restoreConfirmationTitle => 'Заменить текущие данные LifeOS?';
+
+  @override
+  String get restoreConfirmationMessage =>
+      'Текущие локальные данные LifeOS будут заменены данными из резервной копии. Это не объединение данных, а локальные изменения, ожидающие синхронизации, не сохранятся в очереди после восстановления.';
+
+  @override
+  String get restoreReplaceAction => 'Восстановить и заменить';
+
+  @override
+  String get backupInvalidError =>
+      'Резервная копия повреждена или имеет неверный формат.';
+
+  @override
+  String get backupUnsupportedError =>
+      'Эта версия резервной копии не поддерживается.';
+
+  @override
+  String get backupChecksumError =>
+      'Не удалось подтвердить целостность резервной копии.';
+
+  @override
+  String get backupDestinationExistsError =>
+      'В выбранном месте уже существует файл.';
+
+  @override
+  String get backupFileSystemError =>
+      'Не удалось прочитать или записать выбранный файл.';
+
+  @override
+  String get restoreConfirmationRequiredError =>
+      'Перед заменой текущих данных требуется подтверждение.';
+
+  @override
+  String get restorePersistenceError =>
+      'Не удалось заменить текущие данные LifeOS из резервной копии.';
+
+  @override
   String get searchTitle => 'Поиск';
 
   @override
