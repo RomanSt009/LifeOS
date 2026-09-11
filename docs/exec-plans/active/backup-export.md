@@ -517,7 +517,7 @@ BE-03 Definition of Done выполнен. BE-04 не начинался.
 
 ## BE-04 — Desktop file I/O implementation
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -563,7 +563,71 @@ BE-03 Definition of Done выполнен. BE-04 не начинался.
 
 ### Result / blocker
 
-Не начато.
+Architecture gate: PASS после явного подтверждения пользователя. Решение зафиксировано непосредственно в execution plan; новый ADR не создаётся.
+
+Принято для Backup v1:
+
+- physical archive format — ZIP;
+- `archive` и `crypto` добавляются как direct dependencies; использование транзитивных packages запрещено;
+- absolute destination path передаётся извне, Infrastructure writer не открывает file picker;
+- existing target policy — fail-if-exists для Backup и Export без молчаливой перезаписи;
+- writer создаёт temporary sibling file, записывает и flush/close handles, выполняет validation/finalization и только затем rename в final destination;
+- при ошибке temporary file удаляется best-effort, а cleanup failure не скрывает исходную ошибку;
+- Backup ZIP v1 содержит ровно `manifest.json` и `data.json`; raw SQLite, Outbox, `device_id`, cache/runtime state запрещены;
+- `dataSha256` вычисляется через direct dependency `crypto` строго по точным UTF-8 bytes `data.json`, как определено BE-02.
+
+Destination naming и file picker остаются BE-07; Restore/Import не входят в BE-04.
+
+#### Сверка Git и repository
+
+- На старте BE-04 `HEAD` = `dacd37aba3cbb1e27d0701372bb6ad7457eb49f6`, branch `main` синхронизирован с `origin/main`.
+- BE-03 полностью находится в `HEAD` отдельным commit `dacd37a` (`feat: add backup export application path`); Application use cases возвращают готовые in-memory Backup/Export результаты и не зависят от filesystem/Infrastructure.
+- Единственное исходное незакоммиченное изменение — пользовательский `.obsidian/workspace.json`; оно не читалось и не изменялось.
+- BE-02 прямо фиксирует обязательные logical entries `manifest.json` и `data.json`, SHA-256 точных UTF-8 bytes `data.json`, но также прямо говорит, что concrete archive technology не выбиралась.
+- В direct dependencies уже есть `path` и `path_provider`, но нет archive или checksum package. `crypto` присутствует только транзитивно в `pubspec.lock`, поэтому использовать его как production API без direct dependency нельзя.
+- Локальный Dart SDK предоставляет `ZLibCodec`/`GZipCodec`, но не multi-entry archive API с именованными `manifest.json` и `data.json`. GZip сам по себе не реализует принятый container contract.
+
+#### Исторический blocker
+
+До подтверждения требовалось принять concrete physical representation Backup v1 и разрешённые direct dependencies. Без этого было невозможно однозначно определить bytes artifact, file extension, reader compatibility и тесты physical container. Выбор нельзя было спрятать внутри Infrastructure как заменяемую деталь: созданные Backup-файлы должны читаться будущим Restore и потому являются стабильным внешним contract.
+
+#### Минимальные варианты
+
+1. **ZIP container через прямую dependency `archive`; SHA-256 через прямую dependency `crypto`.** Стандартный cross-platform archive с именованными entries, хорошо соответствует `manifest.json` + `data.json`, расширяется будущими sections/files и тестируется без platform process. Цена — две явные production dependencies и необходимость закрепить ZIP как representation Backup v1.
+2. **Самописный ZIP/TAR и SHA-256.** Не добавляет packages, но вводит собственную реализацию binary archive/crypto primitives, повышает риск corruption, Windows incompatibility и ошибок будущего reader. Не рекомендуется.
+3. **Custom JSON/binary envelope либо GZip stream.** Можно реализовать средствами SDK, но это новый proprietary container/framing contract; GZip не имеет двух именованных entries. Потребуется изменить/уточнить BE-02 physical contract. Не рекомендуется.
+4. **Directory container.** Не требует archive dependency, но не является единым переносимым Backup file, усложняет atomic finalization/copy и расходится с ожидаемым desktop artifact. Не рекомендуется.
+
+#### Принятое решение пользователя
+
+Подтверждён ZIP container с entries `manifest.json` и `data.json`, direct dependencies `archive`/`crypto`, fail-if-exists policy и передаваемый извне absolute destination path. Решение фиксируется этим execution plan без нового ADR. BE-04 продолжен с минимальной Infrastructure implementation.
+
+#### Реализация
+
+- Добавлены узкие Infrastructure components `LifeOsBackupFileWriter` и `LifeOsExportFileWriter`; они принимают готовые in-memory BE-03 результаты и absolute destination path, не читают database/Outbox/device identity и не открывают file picker.
+- Backup writer вычисляет SHA-256 точных UTF-8 bytes `data.json`, создаёт BE-02 `BackupManifestV1` и ZIP ровно с двумя root entries: `manifest.json` и `data.json`.
+- До final rename временный ZIP повторно читается с CRC verification, проверяется точный набор entries, BE-02 manifest/data codecs, source schema metadata, SHA-256 и byte identity исходного `data.json`.
+- Export writer записывает точные UTF-8 bytes готового human-readable v1 JSON и до finalization повторно читает, декодирует через BE-02 codec и сравнивает bytes с input.
+- Общий приватный atomic writer требует absolute path и существующий destination directory, дважды применяет fail-if-exists, создаёт уникальный temporary sibling через exclusive create, выполняет write/flush/close/validation и затем rename.
+- При любой ошибке после создания temp выполняется best-effort cleanup; cleanup/close failure не скрывает первоначальную ошибку. Filesystem failures преобразуются в `LifeOsArtifactWriteException` с отдельными codes для invalid/missing/inaccessible destination, existing target, temp creation, write, validation и finalization.
+- `pubspec.yaml`: `archive: ^3.6.1` и `crypto: ^3.0.7` добавлены как direct main dependencies. `pubspec.lock`: `archive 3.6.1` добавлен, `crypto 3.0.7` переведён из transitive в direct main. Offline dependency resolution завершён успешно.
+- Не изменялись Application/Domain/Presentation, composition/database lifecycle, Drift schema/generated files, Outbox или device identity. Naming и file picker остаются BE-07; Restore/Import не начинались.
+
+#### Validation evidence
+
+- documentation/repository consistency scan: PASS — отсутствие concrete archive choice и direct dependencies подтверждено фактическими BE-02 sources, `pubspec.yaml`, `pubspec.lock` и локальным Dart SDK;
+- focused filesystem/format/Application tests: PASS — 24 tests; покрыты exact ZIP entries, manifest/data content, SHA-256, UTF-8 Export, successful finalization без temp, fail-if-exists с сохранением старого файла, malformed input cleanup, relative path и missing directory;
+- `flutter analyze`: PASS — no issues;
+- полный `flutter test`: PASS — 91 tests;
+- import-boundary scan: PASS — Domain/Application не получили `dart:io`, archive/crypto, Infrastructure или framework dependencies; Presentation не импортирует Infrastructure; filesystem остается в Infrastructure;
+- BE-04 database/runtime-state guard: PASS — writer не импортирует database/Drift/path provider и не обращается к raw SQLite, Outbox, change/device identity или file picker;
+- `dart pub deps --style=compact`: PASS — `archive 3.6.1` и `crypto 3.0.7` отображаются как direct dependencies;
+- `git diff --check`: PASS; только информационные LF/CRLF warnings для пользовательского `.obsidian/workspace.json`, execution plan и `pubspec.yaml`;
+- Drift generation: not applicable — schema/API/generated files не затрагивались;
+- итоговый Git ref: `HEAD` = `dacd37aba3cbb1e27d0701372bb6ad7457eb49f6`, branch `main` синхронизирован с `origin/main`;
+- итоговый `git status --short`: пользовательский `M .obsidian/workspace.json`; BE-04 — `M docs/exec-plans/active/backup-export.md`, `M pubspec.yaml`, `M pubspec.lock`, новые `lib/infrastructure/backup/files/lifeos_backup_export_file_writers.dart` и `test/infrastructure/backup/files/lifeos_backup_export_file_writers_test.dart`.
+
+BE-04 Definition of Done выполнен. BE-05 остаётся `pending` и не начинался.
 
 ---
 
@@ -812,7 +876,7 @@ BE-03 Definition of Done выполнен. BE-04 не начинался.
 
 # Точка возобновления
 
-Resume point: BE-03 завершён. BE-04 является следующим `pending` checkpoint; перед его началом перечитать ADR-0010, ADR-0011, ADR-0022, ADR-0024, ADR-0028, BE-02 format contract и сверить Git/repository state. BE-04 в этом запуске не начинать.
+Resume point: BE-04 завершён. BE-05 является следующим `pending` checkpoint; перед его началом перечитать ADR-0010, ADR-0011, ADR-0018 — ADR-0020, ADR-0024 — ADR-0026, ADR-0028, принятые BE-01 — BE-04 decisions и сверить Git/repository state. BE-05 в этом запуске не начинать.
 
 # Состояние выполнения плана
 
