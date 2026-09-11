@@ -761,7 +761,7 @@ BE-05 Definition of Done выполнен. BE-06 является следующ
 
 ## BE-06 — Restore/import implementation
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -803,7 +803,36 @@ BE-05 Definition of Done выполнен. BE-06 является следующ
 
 ### Result / blocker
 
-Не начато; условный checkpoint, зависит от BE-05.
+Architecture gate: PASS — текущие таблицы `entities`, `tasks` и `outbox`, их foreign keys и единый composition-owned `LifeOsDatabase` позволили реализовать validated Restore через отдельный Application port и одну Drift transaction без schema migration или нового ADR.
+
+Реализован полный Backup Restore v1 в разрешённых BE-05 границах:
+
+- Application получил `LifeOsBackupReader`, `LifeOsBackupRestoreStore`, typed `LifeOsBackupRestoreException` и use case `RestoreLifeOsBackup`; Application не импортирует filesystem, ZIP, crypto, Drift/SQLite или concrete Infrastructure;
+- use case сначала получает полностью validated in-memory `LifeOsDataSnapshot`, затем проверяет наличие restorable state и требует `destructiveReplaceConfirmed` только для непустого current state; до успешной validation persistence boundary не вызывается;
+- `LifeOsBackupFileReader` читает ZIP с CRC verification, проверяет raw central-directory names (включая duplicate entries), exact entries `manifest.json`/`data.json`, UTF-8, manifest/version, SHA-256 exact bytes и переиспользует `LifeOsDataFormatV1` для logical validation/mapping;
+- reader разделяет typed categories unreadable file, invalid container, unsupported format, checksum mismatch и invalid logical data без выхода raw `FileSystemException`/archive errors;
+- `DriftLifeOsBackupRestoreStore` не использует `LifeOsTaskRepository.save()`: в одной transaction удаляет `outbox` → `tasks` → `entities`, затем напрямую вставляет `entities` → `tasks`, сохраняя UUID, type, timestamps, lifecycle, version, source, title и completion буквально; новые Outbox rows не создаются;
+- transaction failure через реальный SQLite trigger доказал rollback исходных Domain State и Outbox; successful replace удаляет старое состояние и очищает current Outbox атомарно;
+- file-backed close/reopen test подтвердил persistence restored Task/metadata и пустого Outbox; отдельный `device_id` до и после Restore совпадает;
+- пустая database принимает Restore без confirmation; пустой validated Backup заменяет подтверждённое текущее состояние пустым;
+- production composition связывает reader/use case/restore store с тем же принадлежащим composition `LifeOsDatabase`; второй database/repository lifecycle не создаётся;
+- Import из Export, Presentation/file picker, Settings, Sync reconciliation и прочий deferred scope не начинались.
+
+Validation evidence:
+
+- focused reader/Application/Drift/composition/lifecycle tests: PASS, 18 tests;
+- invalid-before-mutation integration coverage: PASS для unsupported version, checksum mismatch, malformed JSON, duplicate ID, invalid UUID, invalid timestamp, unknown Entity type, invalid enum и malformed ZIP; исходные state/Outbox сохраняются после каждого случая;
+- `flutter analyze`: PASS, no issues;
+- полный `flutter test`: PASS, 106 tests;
+- import-boundary scan: PASS для Domain, Application и Presentation; Application не импортирует Infrastructure/Drift/`dart:io`/`archive`/`crypto`;
+- routing dependency scan: PASS;
+- dependency/schema/generated guard: PASS — `pubspec.yaml`, `pubspec.lock`, Drift schema и `lifeos_database.g.dart` не изменены; новые dependencies отсутствуют, Drift generation не требуется;
+- `dart pub deps --style=compact` не завершился и был остановлен без вывода; dependency hygiene подтверждена неизменными manifest/lockfile и уже успешными analyze/test resolution;
+- `git diff --check`: PASS (только штатные предупреждения Git о CRLF conversion для существующих файлов);
+- итоговый `HEAD` = `246e5797ed56f8c0223e420d5f8ffc5ef768038a`, branch `main` синхронизирован с `origin/main`; commit/push не выполнялись;
+- `.obsidian/workspace.json` остаётся отдельным пользовательским изменением и не читался/не изменялся.
+
+BE-06 Definition of Done выполнен. BE-07 является следующим `pending` checkpoint и не начинался.
 
 ---
 
@@ -956,7 +985,7 @@ BE-05 Definition of Done выполнен. BE-06 является следующ
 
 # Точка возобновления
 
-Resume point: BE-05 завершён. BE-06 является следующим `pending` checkpoint; перед его началом перечитать ADR-0011, ADR-0019 — ADR-0022, ADR-0024 — ADR-0026, ADR-0028, принятые BE-01 — BE-05 decisions и сверить Git/repository state. BE-06 в этом запуске не начинать.
+Resume point: BE-06 завершён. BE-07 является следующим `pending` checkpoint; перед его началом перечитать ADR-0010, ADR-0011, ADR-0022, ADR-0027, ADR-0028, решения BE-01 — BE-06 и сверить Git/repository state. BE-07 в этом запуске не начинать.
 
 # Состояние выполнения плана
 

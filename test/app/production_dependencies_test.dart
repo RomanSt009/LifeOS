@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/app/dependencies.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
+import 'package:lifeos/infrastructure/backup/files/lifeos_backup_export_file_writers.dart';
+import 'package:path/path.dart' as path;
 
 void main() {
   test(
@@ -17,8 +19,7 @@ void main() {
       final dependencies = await createProductionDependencies(
         applicationSupportDirectoryProvider: () async => supportDirectory,
         identifierGenerator: () => generatedIdentifiers.removeAt(0),
-        entityIdGenerator: () =>
-            '00000000-0000-4000-8000-000000000001',
+        entityIdGenerator: () => '00000000-0000-4000-8000-000000000001',
         utcClock: () => DateTime.utc(2026, 9, 8, 12),
       );
       addTearDown(dependencies.close);
@@ -33,11 +34,10 @@ void main() {
           .select(dependencies.database.outboxEntries)
           .getSingle();
       final backupDraft = await dependencies.createBackup();
-      final backupData = jsonDecode(backupDraft.dataJson) as Map<String, dynamic>;
-      final exportData = jsonDecode(
-        await dependencies.exportData(),
-      ) as Map<String, dynamic>;
-
+      final backupData =
+          jsonDecode(backupDraft.dataJson) as Map<String, dynamic>;
+      final exportData =
+          jsonDecode(await dependencies.exportData()) as Map<String, dynamic>;
       expect(await dependencies.taskRepository.getById(taskId), task);
       expect(await dependencies.searchTasks('production'), [task]);
       expect(task.createdAt, DateTime.utc(2026, 9, 8, 12));
@@ -57,6 +57,24 @@ void main() {
           .select(dependencies.database.outboxEntries)
           .get();
       expect(outboxAfterBackupAndExport, hasLength(1));
+
+      final backupPath = path.join(supportDirectory.path, 'restore-test.zip');
+      await const LifeOsBackupFileWriter().write(
+        draft: backupDraft,
+        sourceDatabaseSchemaVersion: dependencies.database.schemaVersion,
+        destinationPath: backupPath,
+      );
+      await dependencies.restoreBackup(
+        sourcePath: backupPath,
+        destructiveReplaceConfirmed: true,
+      );
+      expect(await dependencies.taskRepository.getById(taskId), task);
+      expect(
+        await dependencies.database
+            .select(dependencies.database.outboxEntries)
+            .get(),
+        isEmpty,
+      );
     },
   );
 }
