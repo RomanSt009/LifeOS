@@ -4,8 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/app/app.dart';
 import 'package:lifeos/app/dependencies.dart';
+import 'package:lifeos/application/use_cases/create_lifeos_backup.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
+import 'package:lifeos/application/use_cases/export_lifeos_data.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
+import 'package:lifeos/infrastructure/backup/formats/v1_backup_export_encoder.dart';
 import 'package:lifeos/infrastructure/persistence/drift/lifeos_database.dart';
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_task_repository.dart';
 import 'package:lifeos/presentation/search/task_search_providers.dart';
@@ -21,6 +24,7 @@ void main() {
       () => 'change-test',
       'device-test',
     );
+    const backupExportEncoder = V1BackupExportEncoder();
     final dependencies = LifeOsAppDependencies(
       database: database,
       taskRepository: repository,
@@ -30,6 +34,18 @@ void main() {
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),
       searchTasks: SearchLifeOsTasks(repository),
+      createBackup: CreateLifeOsBackup(
+        taskRepository: repository,
+        encoder: backupExportEncoder,
+        utcClock: () => DateTime.utc(2026, 9, 11),
+        applicationVersion: lifeOsApplicationVersion,
+      ),
+      exportData: ExportLifeOsData(
+        taskRepository: repository,
+        encoder: backupExportEncoder,
+        utcClock: () => DateTime.utc(2026, 9, 11),
+        applicationVersion: lifeOsApplicationVersion,
+      ),
     );
 
     await tester.pumpWidget(LifeOSApp(dependencies: dependencies));
@@ -53,6 +69,7 @@ void main() {
       () => 'change-test',
       'device-test',
     );
+    const backupExportEncoder = V1BackupExportEncoder();
     final dependencies = LifeOsAppDependencies(
       database: database,
       taskRepository: repository,
@@ -62,6 +79,18 @@ void main() {
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),
       searchTasks: SearchLifeOsTasks(repository),
+      createBackup: CreateLifeOsBackup(
+        taskRepository: repository,
+        encoder: backupExportEncoder,
+        utcClock: () => DateTime.utc(2026, 9, 11),
+        applicationVersion: lifeOsApplicationVersion,
+      ),
+      exportData: ExportLifeOsData(
+        taskRepository: repository,
+        encoder: backupExportEncoder,
+        utcClock: () => DateTime.utc(2026, 9, 11),
+        applicationVersion: lifeOsApplicationVersion,
+      ),
     );
 
     await tester.pumpWidget(LifeOSApp(dependencies: dependencies));

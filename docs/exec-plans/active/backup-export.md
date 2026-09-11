@@ -451,7 +451,7 @@ BE-02 Definition of Done выполнен. BE-03 остаётся `pending` и �
 
 ## BE-03 — Application backup/export path
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -493,7 +493,25 @@ BE-02 Definition of Done выполнен. BE-03 остаётся `pending` и �
 
 ### Result / blocker
 
-Не начато.
+Architecture gate: PASS. ADR-0007 и ADR-0028 уже определяют необходимое dependency inversion: Application координирует use cases через abstractions, Infrastructure выполняет logical mapping/serialization, а composition root связывает их. Новый ADR не требуется.
+
+- На возобновлении repository state сверено с Git: `HEAD` = `f328fe5cd0973e024eee6e6e25f507aa5b9e2e53` (`feat: define backup export format v1`), branch `main` опережает `origin/main` на один существующий коммит. Execution plan отставал только в resume point: фактическая BE-03 implementation уже присутствовала, поэтому работа продолжена с первой незавершённой validation action.
+- Добавлены Application contracts `LifeOsDataSnapshot`, `LifeOsBackupDraft` и `LifeOsBackupExportEncoder`. Snapshot содержит immutable список всех возвращённых repository Tasks и детерминированно сортирует его по Entity UUID ascending.
+- Добавлены отдельные use cases `CreateLifeOsBackup` и `ExportLifeOsData`. Оба зависят только от Domain `LifeOsTaskRepository`, Application encoder abstraction, injected UTC clock и application version; filesystem, Drift, SQLite и platform APIs в Application отсутствуют.
+- `CreateLifeOsBackup` возвращает in-memory draft с единым UTC `createdAt`, application version и serialized logical `data.json`, готовый для filesystem/container orchestration BE-04. `ExportLifeOsData` возвращает отдельный human-readable v1 Export JSON. Manifest/archive/file writing намеренно не реализованы.
+- `V1BackupExportEncoder` в Infrastructure адаптирует Application snapshot к принятому BE-02 codec и переиспользует его Domain mapping/validation без дублирования format contract.
+- Production composition создаёт один v1 encoder и передаёт его обоим use cases вместе с уже существующим singleton repository/database lifecycle. Текущая application version `1.0.0+1` совпадает с `pubspec.yaml` и передаётся как overridable composition input.
+- Текущий `LifeOsTaskRepository.getAll()` читает Entity metadata и Task state одним Drift join query; Application не выполняет независимые UI queries. Все текущие lifecycle states сохраняются, Outbox и `device_id` не читаются и не сериализуются.
+- Deterministic Application fakes покрывают несколько Tasks, ID ordering, пустой repository, lifecycle/completion/metadata preservation, один clock read, repository failure propagation и отказ от non-UTC timestamp до чтения данных.
+- Production composition test подтверждает, что оба новых use cases видят сохранённый Task, не содержат Outbox/device identity в output и не изменяют единственную существующую Outbox entry.
+- Focused BE-03/BE-02/composition/lifecycle validation: PASS — 20 tests.
+- `flutter analyze`: PASS — no issues.
+- Полный `flutter test`: PASS — 84 tests.
+- Import-boundary scan: PASS — Domain/Application не импортируют Flutter, Drift, SQLite, platform или Infrastructure; Presentation не импортирует Infrastructure; concrete v1 encoder создаётся только composition root.
+- `git diff --check`: PASS; dependency и Drift generation не требуются, поскольку `pubspec.yaml`, `pubspec.lock`, schema/API и generated files не изменялись.
+- Пользовательский `.obsidian/workspace.json` сохранён без изменений со стороны checkpoint. Commit и push не выполнялись.
+
+BE-03 Definition of Done выполнен. BE-04 не начинался.
 
 ---
 
@@ -794,7 +812,7 @@ BE-02 Definition of Done выполнен. BE-03 остаётся `pending` и �
 
 # Точка возобновления
 
-Resume point: BE-02 завершён. BE-03 является следующим `pending` checkpoint; перед его началом перечитать ADR-0022, ADR-0028, новый v1 format contract и сверить Git/repository state. BE-03 в этом запуске не начинать.
+Resume point: BE-03 завершён. BE-04 является следующим `pending` checkpoint; перед его началом перечитать ADR-0010, ADR-0011, ADR-0022, ADR-0024, ADR-0028, BE-02 format contract и сверить Git/repository state. BE-04 в этом запуске не начинать.
 
 # Состояние выполнения плана
 
