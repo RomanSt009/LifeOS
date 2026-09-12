@@ -22,7 +22,8 @@ docs/exec-plans/
     ├── documentation-reconciliation.md
     ├── desktop-shell-navigation.md
     ├── local-search.md
-    └── lifeos-mvp.md
+    ├── lifeos-mvp.md
+    └── notes-vertical-slice.md
 ```
 
 - `active/` содержит планы, которые Codex может выполнять сейчас;

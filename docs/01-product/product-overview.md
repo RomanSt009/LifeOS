@@ -8,7 +8,7 @@
 
 LifeOS — это персональная цифровая операционная система, которая объединяет информацию, задачи, проекты, файлы, знания и AI-помощь.
 
-> **Текущее состояние:** это описание целевого продукта. В production repository сейчас реализованы desktop shell, локальная Task Entity, Task-specific Search, en/ru localization и Backup / Export / Restore v1. Notes, Projects, Documents, Relationships, AI и Sync остаются будущим scope.
+> **Текущее состояние:** это описание целевого продукта. В production repository сейчас реализованы desktop shell, локальные Task и Note Entity, Task-specific Search, en/ru localization, SQLite schema v2 и Backup / Export v2 с Restore совместимых v1/v2 Backup. Note/unified Search, Projects, Documents, Relationships, AI и Sync остаются будущим scope.
 
 ## Проблема
 

@@ -199,7 +199,7 @@ AI Service
 
 Этот документ описывает только первоначальное направление.
 
-> **Уточнение текущего состояния (2026-09-11):** язык Dart, Flutter, SQLite/Drift, layered architecture, Riverpod, production database lifecycle, localization и Backup / Export / Restore v1 уже определены поздними ADR и реализованы. Список ниже сохранён как исторический список открытых вопросов на момент создания документа. Sync, AI providers, plugins и encryption по-прежнему не имеют production implementation.
+> **Уточнение текущего состояния (2026-09-12):** язык Dart, Flutter, SQLite/Drift, layered architecture, Riverpod, production database lifecycle, Task и Note vertical slices, localization и Backup / Export v2 с Restore v1/v2 уже определены поздними ADR и реализованы. Список ниже сохранён как исторический список открытых вопросов на момент создания документа. Sync, AI providers, plugins и encryption по-прежнему не имеют production implementation.
 
 Следующие решения пока остаются открытыми:
 

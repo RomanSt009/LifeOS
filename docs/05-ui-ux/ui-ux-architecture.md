@@ -1422,7 +1422,7 @@ AI suggests → User decides → LifeOS executes.
 
 # 62. MVP UI
 
-> **Уточнение:** это целевая product-wide UI boundary, а не перечень текущих экранов. Сейчас реализованы desktop shell с Home placeholder, Tasks, Task-specific Search и Settings для Backup / Export / Restore. Today, Projects, Notes, Entity View, Capture Bar, Relationships и Dark Mode ещё не реализованы.
+> **Уточнение:** это целевая product-wide UI boundary, а не перечень текущих экранов. Сейчас реализованы desktop shell с Home placeholder, Tasks, Notes с explicit-save plain-text editor, Task-specific Search и Settings для Backup / Export / Restore. Today, Projects, Note/unified Search, Entity View, Capture Bar, Relationships и Dark Mode ещё не реализованы.
 
 Первая версия интерфейса должна содержать:
 

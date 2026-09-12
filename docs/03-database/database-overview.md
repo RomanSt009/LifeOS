@@ -130,7 +130,7 @@ Domain Layer не должен напрямую зависеть от SQL-зап
 
 # 7. Предварительная структура базы
 
-> **Conceptual vs production:** схема ниже является целевой концептуальной моделью. Текущая production schema v1 содержит только `entities`, `tasks` и `outbox`. Relationships, files, search indexes, tombstones, sync state и conflicts ещё не являются production tables.
+> **Conceptual vs production:** схема ниже является целевой концептуальной моделью. Текущая production schema v2 содержит `entities`, `tasks`, `notes` и `outbox`. Relationships, files, search indexes, tombstones, sync state и conflicts ещё не являются production tables.
 
 Предполагаемая структура:
 
@@ -915,7 +915,7 @@ AI-кэш, поисковый индекс и синхронизационный
 
 # 37. Открытые вопросы
 
-> **Историческая сверка:** Drift/SQLite выбран ADR-0021; текущая schema v1 и Entity/Task/Outbox layout уточнены ADR-0023; production database lifecycle — ADR-0024; local device/change identity — ADR-0025; Backup/Export/Restore v1 — ADR-0028. Полная future schema, FTS/vector search, files, encryption, remote Sync/backend и conflict resolution остаются нерешёнными.
+> **Историческая сверка:** Drift/SQLite выбран ADR-0021; исходная schema v1 и Entity/Task/Outbox layout уточнены ADR-0023; production database lifecycle — ADR-0024; local device/change identity — ADR-0025; schema v2 и migration foundation — ADR-0029; Note Domain model — ADR-0030; Backup/Export v2 и Restore v1/v2 — ADR-0031. FTS/vector search, files, encryption, remote Sync/backend и conflict resolution остаются нерешёнными.
 
 Остаются нерешёнными:
 

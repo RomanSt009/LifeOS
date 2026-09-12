@@ -845,7 +845,7 @@ Workspace является контекстом, а не контейнером-
 
 # 29. Открытые вопросы
 
-> **Историческая сверка:** SQLite/Drift и текущая physical schema v1 уже определены ADR-0021 и ADR-0023; Backup/Restore v1 определён ADR-0028. Документ остаётся логической future model: кроме Task, перечисленные Entity и Relationships ещё не реализованы. Metadata для будущих Entity, indexing/FTS, files, encryption, Sync и AI permissions остаются открытыми.
+> **Историческая сверка:** SQLite/Drift и исходная physical schema v1 определены ADR-0021 и ADR-0023; текущая schema v2 с Notes и migration foundation — ADR-0029; Note Domain model — ADR-0030; Backup/Export v2 и Restore v1/v2 — ADR-0031. Документ остаётся логической future model: кроме Task и Note, перечисленные Entity и Relationships ещё не реализованы. Note/unified Search, indexing/FTS, files, encryption, Sync и AI permissions остаются открытыми.
 
 Следующие вопросы пока не решены:
 

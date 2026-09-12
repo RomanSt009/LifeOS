@@ -24,7 +24,7 @@ related:
 
 > **LifeOS — это не приложение. Это цифровая операционная система человеческой жизни.**
 
-> **Уточнение текущего состояния:** этот документ описывает долгосрочную концепцию. В production repository сейчас реализована только Task Entity и связанные desktop/local-first сценарии; Workspace, knowledge graph, Relationships и AI ещё не реализованы, а точная Domain-семантика Workspace не определена принятым ADR.
+> **Уточнение текущего состояния:** этот документ описывает долгосрочную концепцию. В production repository сейчас реализованы Task и Note Entity и связанные desktop/local-first сценарии; Workspace, knowledge graph, Relationships и AI ещё не реализованы, а точная Domain-семантика Workspace не определена принятым ADR.
 
 ---
 
