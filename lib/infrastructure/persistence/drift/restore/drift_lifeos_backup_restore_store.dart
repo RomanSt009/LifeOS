@@ -25,6 +25,7 @@ class DriftLifeOsBackupRestoreStore implements LifeOsBackupRestoreStore {
       await _database.transaction(() async {
         await _database.delete(_database.outboxEntries).go();
         await _database.delete(_database.taskRecords).go();
+        await _database.delete(_database.noteRecords).go();
         await _database.delete(_database.entities).go();
 
         for (final task in snapshot.tasks) {
@@ -48,6 +49,30 @@ class DriftLifeOsBackupRestoreStore implements LifeOsBackupRestoreStore {
                   entityId: task.id.value,
                   title: task.title,
                   isCompleted: task.isCompleted,
+                ),
+              );
+        }
+        for (final note in snapshot.notes) {
+          await _database
+              .into(_database.entities)
+              .insert(
+                EntitiesCompanion.insert(
+                  id: note.id.value,
+                  entityType: note.entityType.name,
+                  createdAt: note.createdAt,
+                  updatedAt: note.updatedAt,
+                  lifecycle: note.lifecycle.name,
+                  version: note.version,
+                  source: note.source.name,
+                ),
+              );
+          await _database
+              .into(_database.noteRecords)
+              .insert(
+                NoteRecordsCompanion.insert(
+                  entityId: note.id.value,
+                  title: note.title,
+                  content: note.content,
                 ),
               );
         }

@@ -8,6 +8,7 @@ import 'package:path/path.dart' as path;
 
 import '../../../application/backup/lifeos_backup_export_contracts.dart';
 import '../formats/backup_export_format_v1.dart';
+import '../formats/backup_export_format_v2.dart';
 
 enum LifeOsArtifactWriteErrorCode {
   invalidDestination,
@@ -44,15 +45,29 @@ class LifeOsBackupFileWriter {
     required String destinationPath,
   }) async {
     final dataBytes = utf8.encode(draft.dataJson);
-    final manifestJson = LifeOsDataFormatV1.encodeBackupManifest(
-      BackupManifestV1(
-        createdAt: draft.createdAt,
-        applicationVersion: draft.applicationVersion,
-        sourceDatabaseSchemaVersion: sourceDatabaseSchemaVersion,
-        requiredSections: const [lifeOsBackupDataFileName],
-        dataSha256: sha256.convert(dataBytes).toString(),
+    final manifestJson = switch (draft.formatVersion) {
+      2 => LifeOsDataFormatV2.encodeManifest(
+        BackupManifestV2(
+          createdAt: draft.createdAt,
+          applicationVersion: draft.applicationVersion,
+          sourceDatabaseSchemaVersion: sourceDatabaseSchemaVersion,
+          dataSha256: sha256.convert(dataBytes).toString(),
+        ),
       ),
-    );
+      1 => LifeOsDataFormatV1.encodeBackupManifest(
+        BackupManifestV1(
+          createdAt: draft.createdAt,
+          applicationVersion: draft.applicationVersion,
+          sourceDatabaseSchemaVersion: sourceDatabaseSchemaVersion,
+          requiredSections: const [lifeOsBackupDataFileName],
+          dataSha256: sha256.convert(dataBytes).toString(),
+        ),
+      ),
+      _ => throw const LifeOsArtifactWriteException(
+        code: LifeOsArtifactWriteErrorCode.validationFailed,
+        message: 'The Backup format version is not supported.',
+      ),
+    };
     final manifestBytes = utf8.encode(manifestJson);
     final archive = Archive()
       ..addFile(
@@ -292,16 +307,43 @@ Future<void> _validateBackupArtifact(
     entries[lifeOsBackupManifestFileName]!,
   );
   final dataBytes = _archiveEntryBytes(entries[lifeOsBackupDataFileName]!);
-  final manifest = LifeOsDataFormatV1.decodeBackupManifest(
-    utf8.decode(manifestBytes),
-  );
-  LifeOsDataFormatV1.decodeBackupData(utf8.decode(dataBytes));
+  final DateTime manifestCreatedAt;
+  final String manifestApplicationVersion;
+  final int manifestDatabaseVersion;
+  final String manifestChecksum;
+  switch (expectedDraft.formatVersion) {
+    case 2:
+      final manifest = LifeOsDataFormatV2.decodeManifest(
+        utf8.decode(manifestBytes),
+      );
+      manifestCreatedAt = manifest.createdAt;
+      manifestApplicationVersion = manifest.applicationVersion;
+      manifestDatabaseVersion = manifest.sourceDatabaseSchemaVersion;
+      manifestChecksum = manifest.dataSha256;
+    case 1:
+      final manifest = LifeOsDataFormatV1.decodeBackupManifest(
+        utf8.decode(manifestBytes),
+      );
+      manifestCreatedAt = manifest.createdAt;
+      manifestApplicationVersion = manifest.applicationVersion;
+      manifestDatabaseVersion = manifest.sourceDatabaseSchemaVersion;
+      manifestChecksum = manifest.dataSha256;
+    default:
+      throw const FormatException('Unsupported Backup format version.');
+  }
+  switch (expectedDraft.formatVersion) {
+    case 2:
+      LifeOsDataFormatV2.decodeBackupData(utf8.decode(dataBytes));
+    case 1:
+      LifeOsDataFormatV1.decodeBackupData(utf8.decode(dataBytes));
+    default:
+      throw const FormatException('Unsupported Backup format version.');
+  }
 
-  if (manifest.createdAt != expectedDraft.createdAt ||
-      manifest.applicationVersion != expectedDraft.applicationVersion ||
-      manifest.sourceDatabaseSchemaVersion !=
-          expectedSourceDatabaseSchemaVersion ||
-      manifest.dataSha256 != sha256.convert(dataBytes).toString() ||
+  if (manifestCreatedAt != expectedDraft.createdAt ||
+      manifestApplicationVersion != expectedDraft.applicationVersion ||
+      manifestDatabaseVersion != expectedSourceDatabaseSchemaVersion ||
+      manifestChecksum != sha256.convert(dataBytes).toString() ||
       !_bytesEqual(dataBytes, utf8.encode(expectedDraft.dataJson))) {
     throw const FormatException(
       'Backup ZIP v1 content does not match the source draft.',
@@ -314,7 +356,19 @@ Future<void> _validateExportArtifact(
   required List<int> expectedBytes,
 }) async {
   final actualBytes = await file.readAsBytes();
-  LifeOsDataFormatV1.decodeExport(utf8.decode(actualBytes));
+  final decoded = utf8.decode(actualBytes);
+  final document = jsonDecode(decoded);
+  if (document is! Map<String, dynamic> || document['formatVersion'] is! int) {
+    throw const FormatException('Invalid Export format version.');
+  }
+  switch (document['formatVersion'] as int) {
+    case 2:
+      LifeOsDataFormatV2.validateExport(decoded);
+    case 1:
+      LifeOsDataFormatV1.decodeExport(decoded);
+    default:
+      throw const FormatException('Unsupported Export format version.');
+  }
   if (!_bytesEqual(actualBytes, expectedBytes)) {
     throw const FormatException(
       'The Export artifact does not match the source document.',

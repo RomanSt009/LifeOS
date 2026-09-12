@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
+import 'package:lifeos/application/use_cases/create_lifeos_note.dart';
+import 'package:lifeos/application/use_cases/edit_lifeos_note.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
+import 'package:lifeos/domain/entities/lifeos_note.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
+import 'package:lifeos/domain/repositories/lifeos_note_repository.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/navigation/lifeos_destination.dart';
+import 'package:lifeos/presentation/notes/note_providers.dart';
 import 'package:lifeos/presentation/shell/lifeos_shell_page.dart';
 import 'package:lifeos/presentation/search/task_search_page.dart';
 import 'package:lifeos/presentation/search/task_search_providers.dart';
@@ -96,13 +101,15 @@ void main() {
     expect(LifeOsDestination.values, [
       LifeOsDestination.home,
       LifeOsDestination.tasks,
+      LifeOsDestination.notes,
       LifeOsDestination.search,
       LifeOsDestination.settings,
     ]);
-    expect(navigationRail.destinations, hasLength(4));
+    expect(navigationRail.destinations, hasLength(5));
     expect(destinationLabels(navigationRail), [
       'Home',
       'Tasks',
+      'Notes',
       'Search',
       'Settings',
     ]);
@@ -123,6 +130,7 @@ void main() {
     expect(destinationLabels(navigationRail), [
       'Home',
       'Tasks',
+      'Notes',
       'Search',
       'Settings',
     ]);
@@ -258,6 +266,32 @@ void main() {
     expect(repository.getAllCallCount, 1);
   });
 
+  testWidgets('opens Notes and preserves its editor state in IndexedStack', (
+    tester,
+  ) async {
+    await tester.pumpWidget(testApp(const Locale('en')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Notes'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-title-field')),
+      'Unsaved Note',
+    );
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Notes'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-title-field')))
+          .controller
+          ?.text,
+      'Unsaved Note',
+    );
+  });
+
   testWidgets('localizes shell navigation labels in Russian', (tester) async {
     await tester.pumpWidget(testApp(const Locale('ru')));
     await tester.pumpAndSettle();
@@ -269,6 +303,7 @@ void main() {
     expect(destinationLabels(navigationRail), [
       'Главная',
       'Задачи',
+      'Заметки',
       'Поиск',
       'Настройки',
     ]);
@@ -284,10 +319,25 @@ List<String> destinationLabels(NavigationRail navigationRail) {
 
 Widget testApp(Locale locale, {EmptyLifeOsTaskRepository? repository}) {
   final taskRepository = repository ?? EmptyLifeOsTaskRepository();
+  final noteRepository = EmptyLifeOsNoteRepository();
 
   return ProviderScope(
     overrides: [
       lifeOsTaskRepositoryProvider.overrideWithValue(taskRepository),
+      lifeOsNoteRepositoryProvider.overrideWithValue(noteRepository),
+      createLifeOsNoteProvider.overrideWithValue(
+        CreateLifeOsNote(
+          repository: noteRepository,
+          entityIdGenerator: () => 'note-test',
+          utcClock: () => DateTime.utc(2026, 9, 12),
+        ),
+      ),
+      editLifeOsNoteProvider.overrideWithValue(
+        EditLifeOsNote(
+          repository: noteRepository,
+          utcClock: () => DateTime.utc(2026, 9, 12, 1),
+        ),
+      ),
       searchLifeOsTasksProvider.overrideWithValue(
         SearchLifeOsTasks(taskRepository),
       ),
@@ -299,6 +349,17 @@ Widget testApp(Locale locale, {EmptyLifeOsTaskRepository? repository}) {
       home: const LifeosShellPage(),
     ),
   );
+}
+
+class EmptyLifeOsNoteRepository implements LifeOsNoteRepository {
+  @override
+  Future<List<LifeOsNote>> getAll() async => [];
+
+  @override
+  Future<LifeOsNote?> getById(LifeOsEntityId id) async => null;
+
+  @override
+  Future<void> save(LifeOsNote note) async {}
 }
 
 class EmptyLifeOsTaskRepository implements LifeOsTaskRepository {

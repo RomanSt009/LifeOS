@@ -4,6 +4,7 @@
   "appDescription": "Персональная операционная система",
   "navigationHome": "Главная",
   "navigationTasks": "Задачи",
+  "navigationNotes": "Заметки",
   "navigationSearch": "Поиск",
   "navigationSettings": "Настройки",
   "settingsTitle": "Настройки",
@@ -45,5 +46,15 @@
   "taskTitleFieldLabel": "Название задачи",
   "taskTitleRequired": "Введите название задачи",
   "taskCreateError": "Не удалось создать задачу",
-  "taskCreateAction": "Добавить задачу"
+  "taskCreateAction": "Добавить задачу",
+  "noteListTitle": "Заметки",
+  "noteListEmpty": "Заметок пока нет",
+  "noteLoadError": "Не удалось загрузить заметки",
+  "noteUntitled": "Заметка без названия",
+  "noteCreateAction": "Новая заметка",
+  "noteTitleFieldLabel": "Название заметки",
+  "noteContentFieldLabel": "Текст заметки",
+  "noteContentRequired": "Введите название или текст",
+  "noteSaveAction": "Сохранить заметку",
+  "noteSaveError": "Не удалось сохранить заметку"
 }

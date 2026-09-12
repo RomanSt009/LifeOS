@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 import '../../../application/backup/lifeos_backup_export_contracts.dart';
 import '../../../application/backup/lifeos_backup_restore_contracts.dart';
 import '../formats/backup_export_format_v1.dart';
+import '../formats/backup_export_format_v2.dart';
 
 class LifeOsBackupFileReader implements LifeOsBackupReader {
   const LifeOsBackupFileReader();
@@ -42,11 +43,24 @@ class LifeOsBackupFileReader implements LifeOsBackupReader {
     final manifestBytes = _entryBytes(entries[lifeOsBackupManifestFileName]!);
     final dataBytes = _entryBytes(entries[lifeOsBackupDataFileName]!);
 
-    late final BackupManifestV1 manifest;
+    late final dynamic manifest;
+    late final int formatVersion;
     try {
-      manifest = LifeOsDataFormatV1.decodeBackupManifest(
-        utf8.decode(manifestBytes),
-      );
+      final manifestSource = utf8.decode(manifestBytes);
+      final manifestJson = jsonDecode(manifestSource);
+      if (manifestJson is! Map<String, dynamic> ||
+          manifestJson['formatVersion'] is! int) {
+        throw const FormatException('Invalid format version.');
+      }
+      formatVersion = manifestJson['formatVersion'] as int;
+      manifest = switch (formatVersion) {
+        1 => LifeOsDataFormatV1.decodeBackupManifest(manifestSource),
+        2 => LifeOsDataFormatV2.decodeManifest(manifestSource),
+        _ => throw const LifeOsDataFormatException(
+          code: LifeOsDataFormatErrorCode.unsupportedVersion,
+          message: 'Unsupported Backup format version.',
+        ),
+      };
     } on LifeOsDataFormatException catch (error) {
       throw _mapFormatError(error);
     } on FormatException {
@@ -64,11 +78,17 @@ class LifeOsBackupFileReader implements LifeOsBackupReader {
     }
 
     try {
-      final backup = LifeOsDataFormatV1.decodeBackupData(
-        utf8.decode(dataBytes),
-      );
+      final source = utf8.decode(dataBytes);
+      if (formatVersion == 1) {
+        final backup = LifeOsDataFormatV1.decodeBackupData(source);
+        return LifeOsDataSnapshot(
+          tasks: backup.tasks.map((record) => record.toDomain()),
+        );
+      }
+      final backup = LifeOsDataFormatV2.decodeBackupData(source);
       return LifeOsDataSnapshot(
         tasks: backup.tasks.map((record) => record.toDomain()),
+        notes: backup.notes.map((record) => record.toDomain()),
       );
     } on LifeOsDataFormatException catch (error) {
       throw _mapFormatError(error);

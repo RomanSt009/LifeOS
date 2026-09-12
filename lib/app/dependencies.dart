@@ -1,17 +1,21 @@
 import '../application/use_cases/create_lifeos_backup.dart';
+import '../application/use_cases/create_lifeos_note.dart';
 import '../application/use_cases/create_lifeos_task.dart';
+import '../application/use_cases/edit_lifeos_note.dart';
 import '../application/use_cases/export_lifeos_data.dart';
 import '../application/use_cases/restore_lifeos_backup.dart';
 import '../application/use_cases/search_lifeos_tasks.dart';
 import '../application/backup/lifeos_backup_operations.dart';
 import '../domain/repositories/lifeos_task_repository.dart';
+import '../domain/repositories/lifeos_note_repository.dart';
 import '../infrastructure/backup/files/lifeos_backup_file_reader.dart';
-import '../infrastructure/backup/formats/v1_backup_export_encoder.dart';
+import '../infrastructure/backup/formats/v2_backup_export_encoder.dart';
 import '../infrastructure/identity/file_device_identity_store.dart';
 import '../infrastructure/identity/uuid_v4_generator.dart';
 import '../infrastructure/persistence/drift/lifeos_database.dart';
 import '../infrastructure/persistence/drift/production_database.dart';
 import '../infrastructure/persistence/drift/repositories/drift_lifeos_task_repository.dart';
+import '../infrastructure/persistence/drift/repositories/drift_lifeos_note_repository.dart';
 import '../infrastructure/persistence/drift/restore/drift_lifeos_backup_restore_store.dart';
 import 'backup_operations.dart';
 
@@ -19,7 +23,10 @@ class LifeOsAppDependencies {
   LifeOsAppDependencies({
     required this.database,
     required this.taskRepository,
+    required this.noteRepository,
     required this.createTask,
+    required this.createNote,
+    required this.editNote,
     required this.searchTasks,
     required this.createBackup,
     required this.exportData,
@@ -29,7 +36,10 @@ class LifeOsAppDependencies {
 
   final LifeOsDatabase database;
   final LifeOsTaskRepository taskRepository;
+  final LifeOsNoteRepository noteRepository;
   final CreateLifeOsTask createTask;
+  final CreateLifeOsNote createNote;
+  final EditLifeOsNote editNote;
   final SearchLifeOsTasks searchTasks;
   final CreateLifeOsBackup createBackup;
   final ExportLifeOsData exportData;
@@ -60,21 +70,38 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     identifierGenerator,
     deviceId,
   );
+  final noteRepository = DriftLifeOsNoteRepository(
+    database,
+    identifierGenerator,
+    deviceId,
+  );
   final createTask = CreateLifeOsTask(
     repository: taskRepository,
     entityIdGenerator: entityIdGenerator,
     utcClock: utcClock,
   );
   final searchTasks = SearchLifeOsTasks(taskRepository);
-  const backupExportEncoder = V1BackupExportEncoder();
+  final createNote = CreateLifeOsNote(
+    repository: noteRepository,
+    entityIdGenerator: entityIdGenerator,
+    utcClock: utcClock,
+  );
+  final editNote = EditLifeOsNote(
+    repository: noteRepository,
+    utcClock: utcClock,
+  );
+  const backupExportEncoder = V2BackupExportEncoder();
   final createBackup = CreateLifeOsBackup(
     taskRepository: taskRepository,
+    noteRepository: noteRepository,
     encoder: backupExportEncoder,
     utcClock: utcClock,
     applicationVersion: applicationVersion,
+    backupFormatVersion: 2,
   );
   final exportData = ExportLifeOsData(
     taskRepository: taskRepository,
+    noteRepository: noteRepository,
     encoder: backupExportEncoder,
     utcClock: utcClock,
     applicationVersion: applicationVersion,
@@ -93,7 +120,10 @@ Future<LifeOsAppDependencies> createProductionDependencies({
   return LifeOsAppDependencies(
     database: database,
     taskRepository: taskRepository,
+    noteRepository: noteRepository,
     createTask: createTask,
+    createNote: createNote,
+    editNote: editNote,
     searchTasks: searchTasks,
     createBackup: createBackup,
     exportData: exportData,

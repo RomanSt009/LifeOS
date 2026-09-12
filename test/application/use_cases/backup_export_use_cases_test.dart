@@ -3,7 +3,9 @@ import 'package:lifeos/application/backup/lifeos_backup_export_contracts.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_backup.dart';
 import 'package:lifeos/application/use_cases/export_lifeos_data.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
+import 'package:lifeos/domain/entities/lifeos_note.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
+import 'package:lifeos/domain/repositories/lifeos_note_repository.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
 
 void main() {
@@ -23,47 +25,53 @@ void main() {
     isCompleted: false,
   );
 
-  test('creates a deterministic logical Backup draft from every Task', () async {
-    final repository = FakeLifeOsTaskRepository([laterIdTask, earlierIdTask]);
-    final encoder = RecordingBackupExportEncoder();
-    var clockReads = 0;
-    final createBackup = CreateLifeOsBackup(
-      taskRepository: repository,
-      encoder: encoder,
-      utcClock: () {
-        clockReads += 1;
-        return timestamp;
-      },
-      applicationVersion: '1.0.0+1',
-    );
+  test(
+    'creates a deterministic logical Backup draft from every Task',
+    () async {
+      final repository = FakeLifeOsTaskRepository([laterIdTask, earlierIdTask]);
+      final encoder = RecordingBackupExportEncoder();
+      var clockReads = 0;
+      final createBackup = CreateLifeOsBackup(
+        taskRepository: repository,
+        encoder: encoder,
+        utcClock: () {
+          clockReads += 1;
+          return timestamp;
+        },
+        applicationVersion: '1.0.0+1',
+      );
 
-    final result = await createBackup();
+      final result = await createBackup();
 
-    expect(repository.getAllCalls, 1);
-    expect(clockReads, 1);
-    expect(result.createdAt, timestamp);
-    expect(result.applicationVersion, '1.0.0+1');
-    expect(result.dataJson, 'backup-data');
-    expect(encoder.backupSnapshots.single.tasks, [
-      earlierIdTask,
-      laterIdTask,
-    ]);
-    expect(encoder.backupSnapshots.single.tasks.first, same(earlierIdTask));
-    expect(encoder.backupSnapshots.single.tasks.last, same(laterIdTask));
-  });
+      expect(repository.getAllCalls, 1);
+      expect(clockReads, 1);
+      expect(result.createdAt, timestamp);
+      expect(result.applicationVersion, '1.0.0+1');
+      expect(result.dataJson, 'backup-data');
+      expect(encoder.backupSnapshots.single.tasks, [
+        earlierIdTask,
+        laterIdTask,
+      ]);
+      expect(encoder.backupSnapshots.single.tasks.first, same(earlierIdTask));
+      expect(encoder.backupSnapshots.single.tasks.last, same(laterIdTask));
+    },
+  );
 
-  test('creates a valid logical Backup draft for an empty repository', () async {
-    final encoder = RecordingBackupExportEncoder();
-    final result = await CreateLifeOsBackup(
-      taskRepository: FakeLifeOsTaskRepository([]),
-      encoder: encoder,
-      utcClock: () => timestamp,
-      applicationVersion: '1.0.0+1',
-    )();
+  test(
+    'creates a valid logical Backup draft for an empty repository',
+    () async {
+      final encoder = RecordingBackupExportEncoder();
+      final result = await CreateLifeOsBackup(
+        taskRepository: FakeLifeOsTaskRepository([]),
+        encoder: encoder,
+        utcClock: () => timestamp,
+        applicationVersion: '1.0.0+1',
+      )();
 
-    expect(result.dataJson, 'backup-data');
-    expect(encoder.backupSnapshots.single.tasks, isEmpty);
-  });
+      expect(result.dataJson, 'backup-data');
+      expect(encoder.backupSnapshots.single.tasks, isEmpty);
+    },
+  );
 
   test('exports every lifecycle and preserves Domain metadata', () async {
     final repository = FakeLifeOsTaskRepository([laterIdTask, earlierIdTask]);
@@ -86,10 +94,7 @@ void main() {
     expect(clockReads, 1);
     expect(encoder.exportCreatedAt, timestamp);
     expect(encoder.exportApplicationVersion, '1.0.0+1');
-    expect(encoder.exportSnapshots.single.tasks, [
-      earlierIdTask,
-      laterIdTask,
-    ]);
+    expect(encoder.exportSnapshots.single.tasks, [earlierIdTask, laterIdTask]);
     expect(
       encoder.exportSnapshots.single.tasks.first.lifecycle,
       LifeOsEntityLifecycle.archived,
@@ -100,6 +105,41 @@ void main() {
       LifeOsEntitySource.import,
     );
     expect(encoder.exportSnapshots.single.tasks.first.isCompleted, isTrue);
+  });
+
+  test('includes Notes in current Backup and Export snapshots', () async {
+    final note = LifeOsNote.createUserNote(
+      id: const LifeOsEntityId(
+        value: '00000000-0000-4000-8000-000000000003',
+        entityType: LifeOsEntityType.note,
+      ),
+      title: 'Note',
+      content: ' exact content ',
+      timestamp: timestamp,
+    );
+    final noteRepository = FakeLifeOsNoteRepository([note]);
+    final encoder = RecordingBackupExportEncoder();
+
+    final backup = await CreateLifeOsBackup(
+      taskRepository: FakeLifeOsTaskRepository([earlierIdTask]),
+      noteRepository: noteRepository,
+      encoder: encoder,
+      utcClock: () => timestamp,
+      applicationVersion: '1.0.0+1',
+      backupFormatVersion: 2,
+    )();
+    await ExportLifeOsData(
+      taskRepository: FakeLifeOsTaskRepository([earlierIdTask]),
+      noteRepository: noteRepository,
+      encoder: encoder,
+      utcClock: () => timestamp,
+      applicationVersion: '1.0.0+1',
+    )();
+
+    expect(backup.formatVersion, 2);
+    expect(encoder.backupSnapshots.single.notes, [note]);
+    expect(encoder.exportSnapshots.single.notes, [note]);
+    expect(noteRepository.getAllCalls, 2);
   });
 
   test('propagates repository errors without invoking serialization', () async {
@@ -176,6 +216,25 @@ class FakeLifeOsTaskRepository implements LifeOsTaskRepository {
 
   @override
   Future<void> save(LifeOsTask task) async {}
+}
+
+class FakeLifeOsNoteRepository implements LifeOsNoteRepository {
+  FakeLifeOsNoteRepository(this.notes);
+
+  final List<LifeOsNote> notes;
+  int getAllCalls = 0;
+
+  @override
+  Future<List<LifeOsNote>> getAll() async {
+    getAllCalls += 1;
+    return notes;
+  }
+
+  @override
+  Future<LifeOsNote?> getById(LifeOsEntityId id) async => null;
+
+  @override
+  Future<void> save(LifeOsNote note) async {}
 }
 
 class RecordingBackupExportEncoder implements LifeOsBackupExportEncoder {

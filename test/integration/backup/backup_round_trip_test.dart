@@ -6,8 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/app/dependencies.dart';
 import 'package:lifeos/application/backup/lifeos_backup_operations.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
+import 'package:lifeos/domain/entities/lifeos_note.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/infrastructure/backup/formats/backup_export_format_v1.dart';
+import 'package:lifeos/infrastructure/backup/formats/backup_export_format_v2.dart';
 import 'package:lifeos/infrastructure/identity/file_device_identity_store.dart';
 import 'package:path/path.dart' as path;
 
@@ -85,11 +87,26 @@ void main() {
       for (final task in sourceTasks) {
         await source.taskRepository.save(task);
       }
+      final sourceNote = LifeOsNote(
+        id: const LifeOsEntityId(
+          value: '00000000-0000-4000-8000-000000000004',
+          entityType: LifeOsEntityType.note,
+        ),
+        title: 'Imported Note',
+        content: '  exact\r\nNote content  ',
+        createdAt: DateTime.utc(2025, 6, 7, 8, 9, 10),
+        updatedAt: DateTime.utc(2026, 7, 8, 9, 10, 11),
+        lifecycle: LifeOsEntityLifecycle.archived,
+        version: 5,
+        source: LifeOsEntitySource.import,
+      );
+      await source.noteRepository.save(sourceNote);
       expect(
         await source.taskRepository.getAll(),
         unorderedEquals(sourceTasks),
       );
-      expect(await _outbox(source), hasLength(3));
+      expect(await source.noteRepository.getAll(), [sourceNote]);
+      expect(await _outbox(source), hasLength(4));
       await source.close();
 
       final persistedSource = await openInstallation(
@@ -100,7 +117,8 @@ void main() {
         await persistedSource.taskRepository.getAll(),
         unorderedEquals(sourceTasks),
       );
-      expect(await _outbox(persistedSource), hasLength(3));
+      expect(await persistedSource.noteRepository.getAll(), [sourceNote]);
+      expect(await _outbox(persistedSource), hasLength(4));
       expect(await _deviceId(root, 'source'), 'source-device');
 
       final backupPath = path.join(root.path, 'cross-installation.zip');
@@ -143,6 +161,7 @@ void main() {
         await target.taskRepository.getAll(),
         unorderedEquals(sourceTasks),
       );
+      expect(await target.noteRepository.getAll(), [sourceNote]);
       expect(await _outbox(target), isEmpty);
       expect(await _deviceId(root, 'target'), 'target-device');
       expect(await _deviceId(root, 'target'), isNot('source-device'));
@@ -153,6 +172,7 @@ void main() {
         await reopened.taskRepository.getAll(),
         unorderedEquals(sourceTasks),
       );
+      expect(await reopened.noteRepository.getAll(), [sourceNote]);
       expect(await _outbox(reopened), isEmpty);
       expect(await _deviceId(root, 'target'), 'target-device');
     },
@@ -255,6 +275,16 @@ void main() {
     for (final task in tasks) {
       await installation.taskRepository.save(task);
     }
+    final note = LifeOsNote.createUserNote(
+      id: const LifeOsEntityId(
+        value: '00000000-0000-4000-8000-000000000033',
+        entityType: LifeOsEntityType.note,
+      ),
+      title: 'Exported Note',
+      content: ' exact export content ',
+      timestamp: DateTime.utc(2026, 9, 11, 11),
+    );
+    await installation.noteRepository.save(note);
     final firstPath = path.join(root.path, 'export-1.json');
     final secondPath = path.join(root.path, 'export-2.json');
     await installation.backupOperations.exportDataAt(firstPath);
@@ -264,9 +294,9 @@ void main() {
     expect(await File(secondPath).readAsBytes(), firstBytes);
     final source = utf8.decode(firstBytes);
     final json = jsonDecode(source) as Map<String, dynamic>;
-    final document = LifeOsDataFormatV1.decodeExport(source);
+    final document = LifeOsDataFormatV2.decodeExport(source);
     expect(json['format'], lifeOsExportFormatKind);
-    expect(json['formatVersion'], lifeOsExportFormatVersion);
+    expect(json['formatVersion'], lifeOsExportFormatVersionV2);
     expect(document.tasks.map((task) => task.id), [
       '00000000-0000-4000-8000-000000000031',
       '00000000-0000-4000-8000-000000000032',
@@ -275,10 +305,11 @@ void main() {
       document.tasks.map((record) => record.toDomain()),
       orderedEquals([tasks[1], tasks[0]]),
     );
+    expect(document.notes.map((record) => record.toDomain()), [note]);
     expect(source, isNot(contains('outbox')));
     expect(source, isNot(contains('changeId')));
     expect(source, isNot(contains('deviceId')));
-    expect(await _outbox(installation), hasLength(2));
+    expect(await _outbox(installation), hasLength(3));
 
     final originalBytes = List<int>.from(firstBytes);
     await expectLater(

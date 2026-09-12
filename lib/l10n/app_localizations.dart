@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'Tasks'**
   String get navigationTasks;
 
+  /// No description provided for @navigationNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get navigationNotes;
+
   /// No description provided for @navigationSearch.
   ///
   /// In en, this message translates to:
@@ -373,6 +379,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add Task'**
   String get taskCreateAction;
+
+  /// No description provided for @noteListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get noteListTitle;
+
+  /// No description provided for @noteListEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No Notes yet'**
+  String get noteListEmpty;
+
+  /// No description provided for @noteLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load Notes'**
+  String get noteLoadError;
+
+  /// No description provided for @noteUntitled.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled Note'**
+  String get noteUntitled;
+
+  /// No description provided for @noteCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New Note'**
+  String get noteCreateAction;
+
+  /// No description provided for @noteTitleFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note title'**
+  String get noteTitleFieldLabel;
+
+  /// No description provided for @noteContentFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note content'**
+  String get noteContentFieldLabel;
+
+  /// No description provided for @noteContentRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a title or content'**
+  String get noteContentRequired;
+
+  /// No description provided for @noteSaveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Note'**
+  String get noteSaveAction;
+
+  /// No description provided for @noteSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save Note'**
+  String get noteSaveError;
 }
 
 class _AppLocalizationsDelegate

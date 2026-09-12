@@ -20,10 +20,7 @@ enum LifeOsDataFormatErrorCode {
 }
 
 class LifeOsDataFormatException implements Exception {
-  const LifeOsDataFormatException({
-    required this.code,
-    required this.message,
-  });
+  const LifeOsDataFormatException({required this.code, required this.message});
 
   final LifeOsDataFormatErrorCode code;
   final String message;
@@ -251,13 +248,15 @@ List<BackupTaskRecordV1> _requireTasks(
     throw _invalidField(field, 'must be a JSON array');
   }
 
-  return value.indexed.map((entry) {
-    final (index, item) = entry;
-    if (item is! Map<String, dynamic>) {
-      throw _invalidField('$field[$index]', 'must be a JSON object');
-    }
-    return _decodeTask(item, '$field[$index]');
-  }).toList(growable: false);
+  return value.indexed
+      .map((entry) {
+        final (index, item) = entry;
+        if (item is! Map<String, dynamic>) {
+          throw _invalidField('$field[$index]', 'must be a JSON object');
+        }
+        return _decodeTask(item, '$field[$index]');
+      })
+      .toList(growable: false);
 }
 
 BackupTaskRecordV1 _decodeTask(Map<String, Object?> json, String path) {
@@ -300,10 +299,7 @@ List<BackupTaskRecordV1> _validatedSortedTasks(
 }
 
 void _validateBackupManifest(BackupManifestV1 manifest) {
-  _requireSupportedVersion(
-    manifest.formatVersion,
-    lifeOsBackupFormatVersion,
-  );
+  _requireSupportedVersion(manifest.formatVersion, lifeOsBackupFormatVersion);
   _validateUtcTimestamp(manifest.createdAt, 'createdAt');
   _validateApplicationMetadata(
     applicationId: manifest.applicationId,
@@ -323,18 +319,12 @@ void _validateBackupManifest(BackupManifestV1 manifest) {
     );
   }
   if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(manifest.dataSha256)) {
-    throw _invalidField(
-      'dataSha256',
-      'must be a lowercase SHA-256 hex digest',
-    );
+    throw _invalidField('dataSha256', 'must be a lowercase SHA-256 hex digest');
   }
 }
 
 void _validateExportDocument(ExportDocumentV1 document) {
-  _requireSupportedVersion(
-    document.formatVersion,
-    lifeOsExportFormatVersion,
-  );
+  _requireSupportedVersion(document.formatVersion, lifeOsExportFormatVersion);
   _validateUtcTimestamp(document.createdAt, 'createdAt');
   _validateApplicationMetadata(
     applicationId: document.applicationId,
@@ -347,10 +337,7 @@ void _validateApplicationMetadata({
   required String applicationVersion,
 }) {
   if (applicationId != lifeOsApplicationId) {
-    throw _invalidField(
-      'applicationId',
-      'must be "$lifeOsApplicationId"',
-    );
+    throw _invalidField('applicationId', 'must be "$lifeOsApplicationId"');
   }
   if (applicationVersion.trim().isEmpty) {
     throw _invalidField('applicationVersion', 'must not be empty');
@@ -381,11 +368,7 @@ final RegExp _uuidPattern = RegExp(
   r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
 );
 
-Object? _requireField(
-  Map<String, Object?> json,
-  String field, {
-  String? path,
-}) {
+Object? _requireField(Map<String, Object?> json, String field, {String? path}) {
   if (!json.containsKey(field) || json[field] == null) {
     throw LifeOsDataFormatException(
       code: LifeOsDataFormatErrorCode.missingField,
@@ -395,11 +378,7 @@ Object? _requireField(
   return json[field];
 }
 
-String _requireString(
-  Map<String, Object?> json,
-  String field, {
-  String? path,
-}) {
+String _requireString(Map<String, Object?> json, String field, {String? path}) {
   final value = _requireField(json, field, path: path);
   if (value is! String) {
     throw _invalidField(_fieldPath(path, field), 'must be a string');
@@ -407,11 +386,7 @@ String _requireString(
   return value;
 }
 
-int _requireInt(
-  Map<String, Object?> json,
-  String field, {
-  String? path,
-}) {
+int _requireInt(Map<String, Object?> json, String field, {String? path}) {
   final value = _requireField(json, field, path: path);
   if (value is! int) {
     throw _invalidField(_fieldPath(path, field), 'must be an integer');
@@ -419,11 +394,7 @@ int _requireInt(
   return value;
 }
 
-bool _requireBool(
-  Map<String, Object?> json,
-  String field, {
-  String? path,
-}) {
+bool _requireBool(Map<String, Object?> json, String field, {String? path}) {
   final value = _requireField(json, field, path: path);
   if (value is! bool) {
     throw _invalidField(_fieldPath(path, field), 'must be a boolean');
@@ -431,10 +402,7 @@ bool _requireBool(
   return value;
 }
 
-List<String> _requireStringList(
-  Map<String, Object?> json,
-  String field,
-) {
+List<String> _requireStringList(Map<String, Object?> json, String field) {
   final value = _requireField(json, field);
   if (value is! List<Object?> || value.any((item) => item is! String)) {
     throw _invalidField(field, 'must be an array of strings');
@@ -494,12 +462,15 @@ String _writeUtcTimestamp(DateTime timestamp, String field) {
 
 String _writeEntityType(LifeOsEntityType type) => switch (type) {
   LifeOsEntityType.task => 'task',
+  LifeOsEntityType.note => 'note',
 };
 
-LifeOsEntityType _parseEntityType(String value, String field) => switch (value) {
-  'task' => LifeOsEntityType.task,
-  _ => throw _invalidField(field, 'contains an unknown Entity type'),
-};
+LifeOsEntityType _parseEntityType(String value, String field) =>
+    switch (value) {
+      'task' => LifeOsEntityType.task,
+      'note' => LifeOsEntityType.note,
+      _ => throw _invalidField(field, 'contains an unknown Entity type'),
+    };
 
 String _writeLifecycle(LifeOsEntityLifecycle lifecycle) => switch (lifecycle) {
   LifeOsEntityLifecycle.active => 'active',

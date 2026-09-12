@@ -154,7 +154,7 @@ void main() {
     ]);
     final unsupportedManifest = jsonEncode({
       'format': lifeOsBackupFormatKind,
-      'formatVersion': 2,
+      'formatVersion': 99,
       'createdAt': '2026-09-11T12:00:00.000Z',
       'applicationId': lifeOsApplicationId,
       'applicationVersion': '1.0.0+1',

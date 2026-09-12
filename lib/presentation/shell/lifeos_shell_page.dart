@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../home/home_placeholder.dart';
 import '../navigation/lifeos_destination.dart';
+import '../notes/note_page.dart';
 import '../search/task_search_page.dart';
 import '../settings/backup_settings_page.dart';
 import '../tasks/task_page.dart';
@@ -45,6 +46,11 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
                 label: Text(localizations.navigationTasks),
               ),
               NavigationRailDestination(
+                icon: const Icon(Icons.notes_outlined),
+                selectedIcon: const Icon(Icons.notes),
+                label: Text(localizations.navigationNotes),
+              ),
+              NavigationRailDestination(
                 icon: const Icon(Icons.search_outlined),
                 selectedIcon: const Icon(Icons.search),
                 label: Text(localizations.navigationSearch),
@@ -66,6 +72,7 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
                   child: HomePlaceholder(),
                 ),
                 const TaskPage(),
+                const NotePage(),
                 const TaskSearchPage(),
                 const BackupSettingsPage(),
               ],

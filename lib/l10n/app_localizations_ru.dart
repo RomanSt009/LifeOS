@@ -22,6 +22,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navigationTasks => 'Задачи';
 
   @override
+  String get navigationNotes => 'Заметки';
+
+  @override
   String get navigationSearch => 'Поиск';
 
   @override
@@ -155,4 +158,34 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get taskCreateAction => 'Добавить задачу';
+
+  @override
+  String get noteListTitle => 'Заметки';
+
+  @override
+  String get noteListEmpty => 'Заметок пока нет';
+
+  @override
+  String get noteLoadError => 'Не удалось загрузить заметки';
+
+  @override
+  String get noteUntitled => 'Заметка без названия';
+
+  @override
+  String get noteCreateAction => 'Новая заметка';
+
+  @override
+  String get noteTitleFieldLabel => 'Название заметки';
+
+  @override
+  String get noteContentFieldLabel => 'Текст заметки';
+
+  @override
+  String get noteContentRequired => 'Введите название или текст';
+
+  @override
+  String get noteSaveAction => 'Сохранить заметку';
+
+  @override
+  String get noteSaveError => 'Не удалось сохранить заметку';
 }

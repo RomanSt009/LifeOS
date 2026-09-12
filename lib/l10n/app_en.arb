@@ -4,6 +4,7 @@
   "appDescription": "Personal Operating System",
   "navigationHome": "Home",
   "navigationTasks": "Tasks",
+  "navigationNotes": "Notes",
   "navigationSearch": "Search",
   "navigationSettings": "Settings",
   "settingsTitle": "Settings",
@@ -45,5 +46,15 @@
   "taskTitleFieldLabel": "Task title",
   "taskTitleRequired": "Enter a Task title",
   "taskCreateError": "Unable to create Task",
-  "taskCreateAction": "Add Task"
+  "taskCreateAction": "Add Task",
+  "noteListTitle": "Notes",
+  "noteListEmpty": "No Notes yet",
+  "noteLoadError": "Unable to load Notes",
+  "noteUntitled": "Untitled Note",
+  "noteCreateAction": "New Note",
+  "noteTitleFieldLabel": "Note title",
+  "noteContentFieldLabel": "Note content",
+  "noteContentRequired": "Enter a title or content",
+  "noteSaveAction": "Save Note",
+  "noteSaveError": "Unable to save Note"
 }

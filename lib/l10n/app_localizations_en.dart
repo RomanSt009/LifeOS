@@ -22,6 +22,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationTasks => 'Tasks';
 
   @override
+  String get navigationNotes => 'Notes';
+
+  @override
   String get navigationSearch => 'Search';
 
   @override
@@ -152,4 +155,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taskCreateAction => 'Add Task';
+
+  @override
+  String get noteListTitle => 'Notes';
+
+  @override
+  String get noteListEmpty => 'No Notes yet';
+
+  @override
+  String get noteLoadError => 'Unable to load Notes';
+
+  @override
+  String get noteUntitled => 'Untitled Note';
+
+  @override
+  String get noteCreateAction => 'New Note';
+
+  @override
+  String get noteTitleFieldLabel => 'Note title';
+
+  @override
+  String get noteContentFieldLabel => 'Note content';
+
+  @override
+  String get noteContentRequired => 'Enter a title or content';
+
+  @override
+  String get noteSaveAction => 'Save Note';
+
+  @override
+  String get noteSaveError => 'Unable to save Note';
 }
