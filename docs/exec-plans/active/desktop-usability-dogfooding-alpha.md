@@ -2,7 +2,7 @@
 
 Статус плана: active
 
-Точная точка возобновления: `DU-02 — Task edit and Task/Note lifecycle architecture gate` (`pending`, не начат).
+Точная точка возобновления: `DU-03 — Task editing vertical slice` (`pending`, не начат). Перед implementation перечитать ADR-0033 и сверить план с Git.
 
 ## Goal
 
@@ -229,6 +229,8 @@ No explicit `Shortcuts`/`Actions` or feature focus strategy exists. Shortcuts sh
 
 ### Lifecycle / delete architecture gate conclusion
 
+Ниже сохранён вывод DU-01 на момент аудита; выявленная неопределённость впоследствии разрешена принятым ADR-0033 в DU-02.
+
 1. **Task delete:** not yet unambiguous. Common soft delete exists, but Task mutation, allowed source states, no-op/error semantics and active-list behavior are absent.
 2. **Note delete:** not yet unambiguous and explicitly deferred by ADR-0030.
 3. **Meaning of delete:** ADR-0016 prefers logical `lifecycle -> deleted`; exact typed transition still requires acceptance. Hard delete is not justified for ordinary UI.
@@ -307,7 +309,7 @@ Completed. Baseline is green (analyze PASS; 184 tests PASS). The audit found fiv
 
 ## DU-02 — Task edit and Task/Note lifecycle architecture gate
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -315,7 +317,7 @@ Produce an architecture-ready decision proposal for Task title editing and Task/
 
 ### Relevant ADRs
 
-ADR-0016, ADR-0023, ADR-0026, ADR-0028, ADR-0030, ADR-0031, ADR-0032 and current repositories/search/backup contracts.
+ADR-0016, ADR-0019, ADR-0023, ADR-0026, ADR-0028, ADR-0030, ADR-0031, ADR-0032 and current repositories/search/backup contracts.
 
 ### Allowed scope
 
@@ -339,7 +341,199 @@ Read-only import/code/ADR consistency checks and `git diff --check` for document
 
 ### Result / evidence
 
-Not started.
+Architecture investigation выполнено; implementation не начиналась.
+
+#### Reconciliation
+
+- DU-01 находится в HEAD и имеет статус `done`; DU-02 до этого запуска был `pending`.
+- Audit revision: `27a4d4e70a222cd69df4f3584457de0a0b0220b3`, branch `main`, divergence с `origin/main` — `0 0`.
+- Исходное рабочее дерево содержало только user-owned `M .obsidian/workspace.json`.
+- ADR-0032 имеет статус `Принято` в HEAD.
+- Baseline DU-01 остаётся применим: production/tests после него не изменены; повторный analyze/test для architecture-only plan delta не требуется.
+
+#### Что уже установлено принятыми решениями и кодом
+
+- Common lifecycle enum физически и в Domain содержит `active`, `archived`, `deleted`, но ADR-0016 прямо не фиксирует точные state machines.
+- ADR-0016 различает Archive и Delete, предпочитает soft delete, исключает deleted из обычного Search и оставляет endpoint Relationship policy отдельному решению.
+- ADR-0030 полностью определяет Note create/edit, но явно откладывает Note archive/delete/restore до lifecycle gate.
+- ADR-0032 запрещает автоматические cascade mutations Relationship при lifecycle change endpoint. Relationship unlink — собственная `active -> deleted` mutation Relationship, не модель удаления endpoint.
+- Normal local material mutation должна атомарно сохранить Domain state и Outbox full snapshot по ADR-0023. Current repositories используют `CREATE` или `UPDATE`; Relationship unlink использует `UPDATE`.
+- `Task` сейчас имеет только `title`, `isCompleted` и common metadata. Creation trims/rejects empty title; единственная mutation — completion toggle. Title edit и inactive-state restrictions не определены.
+- `Note.edit` является atomic immutable title/content mutation: title trim, exact content, external UTC timestamp, `updatedAt >= previous`, version +1 только для material change, no-op возвращает тот же instance.
+- Task/Note `getAll()` сейчас возвращают все lifecycle states; Presentation и Backup/Export используют один и тот же метод. Task Search уже фильтрует только active. `getById()` возвращает Entity независимо от lifecycle.
+- Relationship `getForEntity()` фильтрует lifecycle самой Relationship как active, но не lifecycle endpoints. Relationship creation проверяет existence/type, но не active lifecycle endpoint.
+- Backup/Export v3 получает Task/Note/Relationship через all-state `getAll()` и сериализует lifecycle каждого record. Restore v3 проверяет existence/type/canonical Relationship endpoints, но не требует active endpoints, и восстанавливает lifecycle exactly.
+- SQLite schema v3 уже хранит lifecycle/version/timestamps. FK используют `NO ACTION`; physical cascade отсутствует.
+
+#### Task edit semantics — принято ADR-0033
+
+1. В Alpha пользователь редактирует только `title`; `isCompleted` остаётся отдельной completion mutation.
+2. Domain API — узкий `editTitle(title, updatedAt)`, а не generic `edit`, чтобы не смешивать независимые actions.
+3. Title сохраняется после `trim()`; empty/whitespace-only запрещены; arbitrary maximum length не вводится.
+4. Material edit создаёт новую immutable `LifeOsTask`, сохраняет identity/creation/source/lifecycle/completion, увеличивает version на 1 и ставит supplied UTC `updatedAt`.
+5. Monotonic rule — `updatedAt >= current.updatedAt`, не strict `>`. Равенство допустимо при coarse/deterministic clock и остаётся material versioned mutation.
+6. Same normalized title — no-op: тот же instance, прежние version/updatedAt, без repository save и Outbox.
+7. Timestamp validation выполняется до no-op: UTC обязателен, движение назад запрещено.
+8. Edit title разрешён только active Task. Archived/deleted Task сначала должна вернуться в active соответствующей lifecycle operation.
+9. Completion toggle также разрешён только active Task; completed Task остаётся lifecycle-active.
+10. Hydrated Task должна проверять typed non-empty ID, normalized non-empty title, UTC timestamps, `updatedAt >= createdAt` и positive version, аналогично остальным typed Entity, без зависимости от persistence.
+11. Material edit сохраняется текущим `save()` как Outbox `UPDATE`: `baseVersion = previous.version`, `newVersion = previous + 1`, full Task snapshot включая lifecycle.
+12. Schema change не требуется: `tasks.title` и common metadata уже существуют.
+13. Mutation repository method не требуется: `save()` остаётся persistence boundary. Для visibility потребуется один новый typed read contract, описанный ниже.
+14. Application получает отдельный `EditLifeOsTaskTitle`: load by ID, Domain mutation, skip save for no-op, save material result; clock внедряется через текущую boundary.
+
+#### Common Task/Note lifecycle state machine — принято ADR-0033
+
+| Transition | Proposal | User meaning | Outbox |
+|---|---|---|---|
+| `active -> archived` | allow | Archive, скрыть из ordinary work | material UPDATE |
+| `active -> deleted` | allow | Move to Trash | material UPDATE |
+| `archived -> active` | allow | Unarchive | material UPDATE |
+| `archived -> deleted` | allow | Move archived item to Trash | material UPDATE |
+| `deleted -> active` | allow | Restore deleted Entity | material UPDATE |
+| `deleted -> archived` | forbid | Restore сначала возвращает в active; скрытый compound transition не нужен | none/error |
+| повтор целевого action (`archive` archived, `delete` deleted, `restore` active, `unarchive` active) | no-op | idempotent retry | none |
+
+Rules for every material lifecycle transition:
+
+- immutable typed Entity result; Entity typed state, ID, `createdAt` и `source` сохраняются;
+- Task completion и Note title/content сохраняются exactly;
+- supplied time must be UTC and `>= current.updatedAt`;
+- `version += 1`, `updatedAt = supplied timestamp`;
+- forbidden cross-state action is rejected, not silently coerced;
+- ordinary edit/completion is forbidden while archived/deleted;
+- no hard delete, physical row removal or new lifecycle enum value.
+
+Предлагаемые explicit Domain names: `archive`, `unarchive`, `delete`, `restore`. `restore` означает только `deleted -> active`; `unarchive` отдельно означает `archived -> active`.
+
+#### Archive vs Delete and minimal Alpha UX — принято ADR-0033
+
+- Archive — сохранённое, не удалённое состояние для исключения из ordinary context.
+- Delete — soft lifecycle transition в `deleted`, пользовательски формулируемый как Move to Trash.
+- Наличие enum `archived` не обязывает немедленно exposing Archive UI.
+
+Option comparison:
+
+- **A — Delete + per-feature Trash + Restore; Archive UI deferred:** минимальный безопасный CRUD loop и ясное recovery; existing archived records сохраняются, но не создаются обычным Alpha UI. Recommended.
+- **B — Archive + Delete + Trash + Restore:** наиболее полный lifecycle UX, но удваивает actions/filters и не нужен для устранения текущего blocker.
+- **C — Delete/Restore без discoverable Trash surface:** меньше кода, но Restore трудно обнаружить; не является coherent daily-use UX.
+
+Recommendation: Option A. Trash реализуется как явно доступный secondary view/filter внутри Tasks и Notes, без нового NavigationRail destination. Archive/unarchive semantics фиксируются для совместимости, но user-facing Archive action откладывается.
+
+#### Visibility policy — принято ADR-0033
+
+| Consumer | active | archived | deleted |
+|---|---:|---:|---:|
+| Ordinary Task list | include, including completed | exclude | exclude |
+| Ordinary Note list | include | exclude | exclude |
+| Task Search | include | exclude | exclude |
+| Relationship picker | selectable | exclude | exclude |
+| Contextual Related section | show only if Relationship and both endpoints are active | hide | hide |
+| Per-feature Trash | exclude | exclude | include |
+| Backup v3 | include | include | include |
+| Human-readable Export v3 | include | include | include |
+| Backup Restore | restore exact state | restore exact state | restore exact state |
+
+`getById()` остаётся all-state internal read, чтобы lifecycle use cases могли загрузить deleted/archived Entity. Inactive Entity не становится missing на repository boundary; visibility задаётся explicit collection reads/use cases.
+
+#### Relationship endpoint policy — принято ADR-0033
+
+- Lifecycle change Task/Note **не мутирует** связанную Relationship, не меняет её version/updatedAt и не создаёт Relationship Outbox record.
+- Relationship и typed row остаются в database; FK `NO ACTION` подходит, потому что endpoint row soft-deleted, а не физически удалён.
+- Ordinary Related скрывает active Relationship, если любой endpoint не active. После Restore/Unarchive endpoint та же Relationship автоматически снова видима.
+- Picker показывает только active Tasks/Notes и не позволяет создать новую Relationship к inactive endpoint.
+- Application creation проверяет не только existence/type, но и active lifecycle; Infrastructure может повторить это как persistence integrity guard, не перенося business rule в widget.
+- Скрытая из-за inactive endpoint Relationship продолжает участвовать в uniqueness; новая duplicate pair не создаётся. После Restore появляется исходная identity, а не новая edge.
+- Unlink скрытой Relationship для Alpha не нужен: после endpoint Restore она снова доступна для обычного unlink. Explicitly unlinked Relationship остаётся deleted по ADR-0032; re-link/undo такой Relationship остаётся отдельным будущим lifecycle UX gate.
+- Cascade unlink/delete, automatic Relationship lifecycle mutation и physical cleanup отклоняются.
+
+#### Entity restore terminology — принято ADR-0033
+
+- Domain `restore()` означает restore deleted Task/Note to active.
+- Domain `unarchive()` означает archived to active; generic `reactivate()` отклоняется как скрывающий исходное состояние.
+- Presentation всегда использует contextual text: `Restore task` / `Restore note` и отдельно существующее `Restore backup`; общий неоднозначный label `Restore` не используется без контекста.
+- Entity Restore сохраняет ID, typed state, completion, timestamps history fields и source; material transition изменяет только lifecycle, updatedAt и version.
+
+#### Outbox mutation matrix — принято ADR-0033
+
+| Mutation | operation | baseVersion | newVersion | payload | atomic |
+|---|---|---:|---:|---|---|
+| Task title material edit | `UPDATE` | previous | previous + 1 | full Task snapshot | yes |
+| Task archive/delete/restore/unarchive | `UPDATE` | previous | previous + 1 | full Task snapshot with lifecycle | yes |
+| Note archive/delete/restore/unarchive | `UPDATE` | previous | previous + 1 | full Note snapshot with lifecycle/content | yes |
+| Repeated/no-op action | none | unchanged | unchanged | none | no persistence call |
+
+Current local soft delete does not use Outbox `DELETE`: no row is physically deleted, and Relationship unlink already establishes lifecycle removal as `UPDATE`. ADR-0019 conceptual DELETE/tombstone remains a future Sync protocol concern; full deleted snapshot contains stable ID, lifecycle, version and time needed as a tombstone foundation.
+
+#### Repository impact — принято ADR-0033
+
+- Keep typed Task/Note repositories; do not add generic Entity/Lifecycle repository.
+- Preserve current `getAll()` as all-lifecycle snapshot read because Backup/Export must not silently lose inactive user state.
+- Add one typed `getByLifecycle(LifeOsEntityLifecycle lifecycle)` to Task and Note repositories. Ordinary list use cases request `active`; Trash use cases request `deleted`. This is smaller and clearer than three named methods or a generic query language.
+- Keep `getById()` all-state and `save()` as the only normal mutation persistence boundary; no physical `delete()` method.
+- Update `getForEntity()` semantics to return active Relationships only when both endpoints are active. No new Relationship repository method is required.
+- Application adds explicit typed use cases for Task title edit and Task/Note delete/restore. Archive/unarchive use cases may wait with deferred UI; no generic LifecycleService is justified.
+
+#### Backup / Export / Restore impact
+
+- Format v3 already serializes lifecycle for Task, Note and Relationship and can represent inactive endpoints.
+- All-state `getAll()` currently feeds Backup/Export; this behavior must be preserved while ordinary UI switches to lifecycle-filtered reads.
+- BackupSnapshotV3 validates endpoint existence/type/canonical identity, not endpoint activity. Proposed unchanged Relationship policy is representable.
+- Restore v3 reconstructs all Entity rows before Relationship rows, preserves lifecycle exactly and creates no Outbox; no conflict exists.
+- **Backup/Export format v4 is not required.** Historical v1/v2 readers and current v3 writer/reader remain unchanged.
+
+#### Schema and dependency impact
+
+- **Schema v4 is not required.** Existing `entities.lifecycle`, `updated_at`, `version`, typed rows and FK `NO ACTION` represent the proposal.
+- Lifecycle predicates require query changes only. New indexes are not justified without measured data; current Alpha volume does not prove a migration requirement.
+- No package dependency is required.
+
+#### Future Sync compatibility
+
+- Soft-deleted Entity remains a stable-ID, versioned full snapshot and can act as tombstone foundation.
+- Every material transition advances version and emits one atomic Outbox UPDATE; Restore from Trash is a later UPDATE rather than identity recreation.
+- Repeated actions are no-op and do not create duplicate changes.
+- Relationship identity remains stable and is not spuriously versioned by endpoint lifecycle.
+- Future remote operation mapping, conflict resolution, retention/hard purge and deleted-vs-edited concurrency remain explicit Sync gates; proposal does not pre-decide them or create an obvious data-loss dead end.
+
+#### ADR gate
+
+**ADR required and accepted.** Existing ADR deliberately left exact Task mutation, typed lifecycle state machines, visibility, endpoint Relationship policy and Restore semantics unresolved. Эти durable cross-layer rules теперь зафиксированы в `docs/adr/ADR-0033-task-and-note-lifecycle-and-user-mutation-semantics.md` со статусом `Принято`.
+
+Accepted ADR:
+
+`ADR-0033: Task and Note Lifecycle and User Mutation Semantics`
+
+Recorded decision outline:
+
+1. **Context:** current Task/Note/Relationship production state; conceptual lifecycle is insufficient for user-facing mutation.
+2. **Decision scope:** Task title edit plus Task/Note lifecycle only; Relationship endpoint consequences, visibility and Outbox.
+3. **Task invariants/edit:** title-only `editTitle`, trim/non-empty/no max, immutable material/no-op, active-only edit/completion, external monotonic UTC time.
+4. **State transitions:** exact allow/forbid/no-op table above; separate archive/unarchive/delete/restore names; no hard delete.
+5. **Visibility:** ordinary lists/search/picker/related active-only; per-feature Trash deleted-only; `getById` and Backup snapshot all-state.
+6. **Relationship policy:** no cascade mutation; hide when endpoint inactive; reappear on endpoint active; active-only picker/create; uniqueness remains.
+7. **Outbox:** every material action is atomic `UPDATE` with previous baseVersion, version +1 and full snapshot; no-op none; no local DELETE operation.
+8. **Repository/Application boundaries:** typed repositories, `getByLifecycle`, existing `save`, explicit typed use cases, no generic LifecycleService.
+9. **Backup/Restore:** v3 includes all states and restores exactly; distinguish Entity restore from Backup Restore; no v4.
+10. **Schema/dependencies:** schema v3 sufficient, no indexes/migration/package additions.
+11. **Alpha UX:** Option A — Delete + per-feature Trash + Restore; Archive UI deferred.
+12. **Non-goals:** hard purge/retention, autosave, Unified Search, Sync transport/conflict resolution, Relationship re-link/undo, generic lifecycle framework.
+13. **Consequences:** safe recovery and stable identity at cost of retained inactive rows and more explicit filtered reads.
+14. **Rejected alternatives:** hard delete/cascade, Relationship auto-mutation, Archive+Delete maximal Alpha, non-discoverable Restore, generic repository/service, Outbox DELETE now, schema/format bump.
+
+#### Expected implementation scope
+
+- **Domain:** strengthen Task hydration invariants; add `editTitle`; enforce active-only Task edit/toggle and Note edit; add accepted typed lifecycle mutations to Task/Note as required by Alpha.
+- **Application:** add typed Task edit and Task/Note delete/restore use cases with injected UTC clock; skip no-op saves; use active/deleted reads explicitly.
+- **Infrastructure:** add lifecycle-filtered Task/Note queries; preserve all-state reads for Backup; update Relationship active-endpoint filtering/creation guard; retain atomic save + Outbox UPDATE. No migration/codegen expected.
+- **Presentation:** later checkpoints add localized Task edit and per-feature Trash/Restore; no new shell destination at lifecycle checkpoint.
+- **Localization:** add en/ru actions, dialogs, Trash/empty/error labels; regenerate via `flutter gen-l10n`, never hand-edit generated files.
+- **Tests:** Domain transition/edit matrices; Application no-op/clock/save; repository filtering/Outbox/Relationships/reopen; Backup v3 regression; localized widget safety flows.
+- **Docs:** ADR-0033 создан после explicit approval; DU-03 остаётся следующим implementation checkpoint.
+
+#### Architecture gate resolution
+
+Human approval получен. ADR-0033 создан со статусом `Принято` и фиксирует Option A lifecycle UX, active-only mutation policy, endpoint Relationship visibility, Outbox UPDATE, отсутствие schema v4/Backup v4/dependency changes и typed repository/Application boundaries. Architecture blocker resolved; DU-02 завершён. DU-03 не начинался.
 
 ## DU-03 — Task editing vertical slice
 
@@ -349,13 +543,17 @@ Not started.
 
 Implement accepted Task title edit semantics through Domain, Application, repository persistence/Outbox and localized Presentation without changing navigation architecture.
 
+### Relevant ADRs
+
+ADR-0023, ADR-0026 and ADR-0033.
+
 ### Allowed scope
 
-Only accepted title edit contract, focused UI surface and tests.
+Only accepted title edit contract, required Task hydration invariants, active-only edit guard, focused UI surface and tests.
 
 ### Explicit non-goals
 
-Lifecycle implementation, details page, generic entity editor or schema change.
+Lifecycle transitions/Trash/Restore, separate completion lifecycle retrofit, details page, generic entity editor or schema change. Lifecycle implementation remains DU-04 scope.
 
 ### Definition of Done
 
