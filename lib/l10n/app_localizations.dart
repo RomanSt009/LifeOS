@@ -380,6 +380,30 @@ abstract class AppLocalizations {
   /// **'Add Task'**
   String get taskCreateAction;
 
+  /// No description provided for @taskEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Task'**
+  String get taskEditAction;
+
+  /// No description provided for @taskEditDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Task'**
+  String get taskEditDialogTitle;
+
+  /// No description provided for @taskSaveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get taskSaveAction;
+
+  /// No description provided for @taskEditError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save Task'**
+  String get taskEditError;
+
   /// No description provided for @noteListTitle.
   ///
   /// In en, this message translates to:

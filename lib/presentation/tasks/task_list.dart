@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../domain/entities/lifeos_entity.dart';
+import '../../domain/entities/lifeos_task.dart';
 import '../relationships/related_entities_section.dart';
 import 'task_list_providers.dart';
 
@@ -45,7 +47,24 @@ class TaskList extends ConsumerWidget {
                             .toggleCompletion(task.id);
                       },
                     ),
-                    title: Text(task.title),
+                    title: Row(
+                      children: [
+                        Expanded(child: Text(task.title)),
+                        IconButton(
+                          key: ValueKey('edit-task-${task.id.value}'),
+                          tooltip: localizations.taskEditAction,
+                          icon: const Icon(Icons.edit_outlined),
+                          onPressed:
+                              task.lifecycle == LifeOsEntityLifecycle.active
+                              ? () => _showTaskEditDialog(
+                                  context: context,
+                                  ref: ref,
+                                  task: task,
+                                )
+                              : null,
+                        ),
+                      ],
+                    ),
                     children: [RelatedEntitiesSection(entityId: task.id)],
                   );
                 },
@@ -141,3 +160,120 @@ class _TaskCreationFormState extends ConsumerState<TaskCreationForm> {
 }
 
 enum _TaskCreationError { titleRequired, saveFailed }
+
+Future<void> _showTaskEditDialog({
+  required BuildContext context,
+  required WidgetRef ref,
+  required LifeOsTask task,
+}) {
+  return showDialog<void>(
+    context: context,
+    builder: (context) => _TaskEditDialog(
+      task: task,
+      onSave: (title) => ref
+          .read(taskListControllerProvider.notifier)
+          .editTitle(task.id, title),
+    ),
+  );
+}
+
+class _TaskEditDialog extends StatefulWidget {
+  const _TaskEditDialog({required this.task, required this.onSave});
+
+  final LifeOsTask task;
+  final Future<LifeOsTask> Function(String title) onSave;
+
+  @override
+  State<_TaskEditDialog> createState() => _TaskEditDialogState();
+}
+
+class _TaskEditDialogState extends State<_TaskEditDialog> {
+  late final TextEditingController _titleController;
+  bool _isSaving = false;
+  _TaskEditError? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.task.title);
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_isSaving) {
+      return;
+    }
+    if (_titleController.text.trim().isEmpty) {
+      setState(() => _error = _TaskEditError.titleRequired);
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+      _error = null;
+    });
+    try {
+      await widget.onSave(_titleController.text);
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = _TaskEditError.saveFailed);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final errorText = switch (_error) {
+      _TaskEditError.titleRequired => localizations.taskTitleRequired,
+      _TaskEditError.saveFailed => localizations.taskEditError,
+      null => null,
+    };
+
+    return AlertDialog(
+      title: Text(localizations.taskEditDialogTitle),
+      content: TextField(
+        key: const Key('task-edit-title-field'),
+        controller: _titleController,
+        autofocus: true,
+        enabled: !_isSaving,
+        decoration: InputDecoration(
+          labelText: localizations.taskTitleFieldLabel,
+          errorText: errorText,
+        ),
+        onSubmitted: _isSaving ? null : (_) => _save(),
+      ),
+      actions: [
+        TextButton(
+          key: const Key('cancel-task-edit-button'),
+          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+          child: Text(localizations.cancelAction),
+        ),
+        FilledButton(
+          key: const Key('save-task-edit-button'),
+          onPressed: _isSaving ? null : _save,
+          child: _isSaving
+              ? const SizedBox.square(
+                  dimension: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(localizations.taskSaveAction),
+        ),
+      ],
+    );
+  }
+}
+
+enum _TaskEditError { titleRequired, saveFailed }

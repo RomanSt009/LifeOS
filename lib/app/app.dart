@@ -70,6 +70,9 @@ class _LifeOSAppState extends State<LifeOSApp> {
         createLifeOsTaskProvider.overrideWithValue(
           widget.dependencies.createTask,
         ),
+        editLifeOsTaskTitleProvider.overrideWithValue(
+          widget.dependencies.editTaskTitle,
+        ),
         searchLifeOsTasksProvider.overrideWithValue(
           widget.dependencies.searchTasks,
         ),

@@ -10,6 +10,10 @@ void main() {
 
     expect(english.taskListTitle, 'Tasks');
     expect(english.taskCreateAction, 'Add Task');
+    expect(english.taskEditAction, 'Edit Task');
+    expect(english.taskEditDialogTitle, 'Edit Task');
+    expect(english.taskSaveAction, 'Save');
+    expect(english.taskEditError, 'Unable to save Task');
     expect(english.navigationHome, 'Home');
     expect(english.navigationTasks, 'Tasks');
     expect(english.navigationSearch, 'Search');
@@ -21,6 +25,10 @@ void main() {
     expect(english.searchError, 'Unable to search Tasks');
     expect(russian.taskListTitle, 'Задачи');
     expect(russian.taskCreateAction, 'Добавить задачу');
+    expect(russian.taskEditAction, 'Изменить задачу');
+    expect(russian.taskEditDialogTitle, 'Изменить задачу');
+    expect(russian.taskSaveAction, 'Сохранить');
+    expect(russian.taskEditError, 'Не удалось сохранить задачу');
     expect(russian.navigationHome, 'Главная');
     expect(russian.navigationTasks, 'Задачи');
     expect(russian.navigationSearch, 'Поиск');

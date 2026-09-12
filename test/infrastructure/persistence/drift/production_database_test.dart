@@ -10,7 +10,7 @@ import 'package:path/path.dart' as path;
 
 void main() {
   test(
-    'stores lifeos.db in application support and retains data after reopen',
+    'stores an edited Task in lifeos.db and retains it after reopen',
     () async {
       final supportDirectory = await Directory.systemTemp.createTemp(
         'lifeos-production-database-',
@@ -35,13 +35,19 @@ void main() {
       final firstDatabase = await openProductionDatabase(
         applicationSupportDirectoryProvider: () async => supportDirectory,
       );
+      final changeIds = ['change-file-backed-1', 'change-file-backed-2'];
       final firstRepository = DriftLifeOsTaskRepository(
         firstDatabase,
-        () => 'change-file-backed',
+        () => changeIds.removeAt(0),
         'device-test',
       );
 
       await firstRepository.save(task);
+      final edited = task.editTitle(
+        title: 'Edited before database restart',
+        updatedAt: DateTime.utc(2026, 9, 8, 12),
+      );
+      await firstRepository.save(edited);
       await firstDatabase.close();
 
       final databaseFile = File(
@@ -59,10 +65,10 @@ void main() {
         'device-test',
       );
 
-      expect(await reopenedRepository.getById(taskId), task);
+      expect(await reopenedRepository.getById(taskId), edited);
       expect(
         await reopenedDatabase.select(reopenedDatabase.outboxEntries).get(),
-        hasLength(1),
+        hasLength(2),
       );
     },
   );

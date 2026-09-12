@@ -160,6 +160,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taskCreateAction => 'Добавить задачу';
 
   @override
+  String get taskEditAction => 'Изменить задачу';
+
+  @override
+  String get taskEditDialogTitle => 'Изменить задачу';
+
+  @override
+  String get taskSaveAction => 'Сохранить';
+
+  @override
+  String get taskEditError => 'Не удалось сохранить задачу';
+
+  @override
   String get noteListTitle => 'Заметки';
 
   @override

@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
+import 'package:lifeos/application/use_cases/edit_lifeos_task_title.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
@@ -109,6 +111,169 @@ void main() {
     expect(repository.savedTasks.last.isCompleted, isFalse);
     expect(find.byTooltip('Mark complete'), findsOneWidget);
   });
+
+  testWidgets('edits a Task title through the localized dialog', (
+    tester,
+  ) async {
+    final task = createTask('task-1', 'Original title', isCompleted: false);
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('edit-task-task-1')));
+    await tester.pumpAndSettle();
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('task-edit-title-field')),
+    );
+    expect(field.controller?.text, 'Original title');
+
+    await tester.enterText(
+      find.byKey(const Key('task-edit-title-field')),
+      '  Edited title  ',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edited title'), findsOneWidget);
+    expect(repository.savedTasks.single.title, 'Edited title');
+    expect(repository.savedTasks.single.version, 2);
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  testWidgets('validates an empty title and cancels without mutation', (
+    tester,
+  ) async {
+    final task = createTask('task-1', 'Original title', isCompleted: false);
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('edit-task-task-1')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('task-edit-title-field')),
+      '   ',
+    );
+    await tester.tap(find.byKey(const Key('save-task-edit-button')));
+    await tester.pump();
+
+    expect(find.text('Enter a Task title'), findsOneWidget);
+    expect(repository.savedTasks, isEmpty);
+    await tester.tap(find.byKey(const Key('cancel-task-edit-button')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Original title'), findsOneWidget);
+  });
+
+  testWidgets('keeps the dialog open on failure and allows retry', (
+    tester,
+  ) async {
+    final task = createTask('task-1', 'Original title', isCompleted: false);
+    var attempts = 0;
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+      beforeSave: (_) async {
+        attempts++;
+        if (attempts == 1) {
+          throw StateError('write failed');
+        }
+      },
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('edit-task-task-1')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('task-edit-title-field')),
+      'Recovered title',
+    );
+    await tester.tap(find.byKey(const Key('save-task-edit-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to save Task'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(repository.savedTasks, isEmpty);
+
+    await tester.tap(find.byKey(const Key('save-task-edit-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Recovered title'), findsOneWidget);
+    expect(repository.savedTasks, hasLength(1));
+  });
+
+  testWidgets('Escape closes Task edit without mutation', (tester) async {
+    final task = createTask('task-1', 'Original title', isCompleted: false);
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('edit-task-task-1')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('task-edit-title-field')),
+      'Unsaved title',
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Original title'), findsOneWidget);
+    expect(repository.savedTasks, isEmpty);
+  });
+
+  testWidgets('disables edit actions while one save is in flight', (
+    tester,
+  ) async {
+    final task = createTask('task-1', 'Original title', isCompleted: false);
+    final saveStarted = Completer<void>();
+    final releaseSave = Completer<void>();
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+      beforeSave: (_) async {
+        saveStarted.complete();
+        await releaseSave.future;
+      },
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('edit-task-task-1')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('task-edit-title-field')),
+      'Only once',
+    );
+    await tester.tap(find.byKey(const Key('save-task-edit-button')));
+    await tester.pump();
+    await saveStarted.future;
+
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('save-task-edit-button')))
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<TextButton>(find.byKey(const Key('cancel-task-edit-button')))
+          .onPressed,
+      isNull,
+    );
+    releaseSave.complete();
+    await tester.pumpAndSettle();
+    expect(repository.savedTasks, hasLength(1));
+  });
 }
 
 Widget testApp(LifeOsTaskRepository repository) {
@@ -117,11 +282,16 @@ Widget testApp(LifeOsTaskRepository repository) {
     entityIdGenerator: () => 'task-created',
     utcClock: () => DateTime.utc(2026, 9, 9, 16),
   );
+  final editTaskTitle = EditLifeOsTaskTitle(
+    repository: repository,
+    utcClock: () => DateTime.utc(2026, 9, 9, 17),
+  );
 
   return ProviderScope(
     overrides: [
       lifeOsTaskRepositoryProvider.overrideWithValue(repository),
       createLifeOsTaskProvider.overrideWithValue(createTask),
+      editLifeOsTaskTitleProvider.overrideWithValue(editTaskTitle),
     ],
     child: const MaterialApp(
       locale: Locale('en'),
@@ -146,10 +316,11 @@ LifeOsTask createTask(String id, String title, {required bool isCompleted}) {
 }
 
 class FakeLifeOsTaskRepository implements LifeOsTaskRepository {
-  FakeLifeOsTaskRepository(this._loadTasks, {this.storedTask});
+  FakeLifeOsTaskRepository(this._loadTasks, {this.storedTask, this.beforeSave});
 
   final Future<List<LifeOsTask>> Function() _loadTasks;
   LifeOsTask? storedTask;
+  final Future<void> Function(LifeOsTask task)? beforeSave;
   final List<LifeOsTask> savedTasks = [];
 
   @override
@@ -165,6 +336,7 @@ class FakeLifeOsTaskRepository implements LifeOsTaskRepository {
 
   @override
   Future<void> save(LifeOsTask task) async {
+    await beforeSave?.call(task);
     storedTask = task;
     savedTasks.add(task);
   }

@@ -157,6 +157,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskCreateAction => 'Add Task';
 
   @override
+  String get taskEditAction => 'Edit Task';
+
+  @override
+  String get taskEditDialogTitle => 'Edit Task';
+
+  @override
+  String get taskSaveAction => 'Save';
+
+  @override
+  String get taskEditError => 'Unable to save Task';
+
+  @override
   String get noteListTitle => 'Notes';
 
   @override

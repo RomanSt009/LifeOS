@@ -3,6 +3,7 @@ import '../application/use_cases/create_lifeos_note.dart';
 import '../application/use_cases/create_lifeos_relationship.dart';
 import '../application/use_cases/create_lifeos_task.dart';
 import '../application/use_cases/edit_lifeos_note.dart';
+import '../application/use_cases/edit_lifeos_task_title.dart';
 import '../application/use_cases/unlink_lifeos_relationship.dart';
 import '../application/use_cases/export_lifeos_data.dart';
 import '../application/use_cases/restore_lifeos_backup.dart';
@@ -30,6 +31,7 @@ class LifeOsAppDependencies {
     required this.noteRepository,
     required this.relationshipRepository,
     required this.createTask,
+    required this.editTaskTitle,
     required this.createNote,
     required this.editNote,
     required this.createRelationship,
@@ -46,6 +48,7 @@ class LifeOsAppDependencies {
   final LifeOsNoteRepository noteRepository;
   final LifeOsRelationshipRepository relationshipRepository;
   final CreateLifeOsTask createTask;
+  final EditLifeOsTaskTitle editTaskTitle;
   final CreateLifeOsNote createNote;
   final EditLifeOsNote editNote;
   final CreateLifeOsRelationship createRelationship;
@@ -96,6 +99,10 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     utcClock: utcClock,
   );
   final searchTasks = SearchLifeOsTasks(taskRepository);
+  final editTaskTitle = EditLifeOsTaskTitle(
+    repository: taskRepository,
+    utcClock: utcClock,
+  );
   final createNote = CreateLifeOsNote(
     repository: noteRepository,
     entityIdGenerator: entityIdGenerator,
@@ -151,6 +158,7 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     noteRepository: noteRepository,
     relationshipRepository: relationshipRepository,
     createTask: createTask,
+    editTaskTitle: editTaskTitle,
     createNote: createNote,
     editNote: editNote,
     createRelationship: createRelationship,

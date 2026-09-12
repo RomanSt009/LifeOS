@@ -2,7 +2,7 @@
 
 Статус плана: active
 
-Точная точка возобновления: `DU-03 — Task editing vertical slice` (`pending`, не начат). Перед implementation перечитать ADR-0033 и сверить план с Git.
+Точная точка возобновления: `DU-04 — Safe Task and Note lifecycle vertical slice` (`pending`, не начат). DU-03 завершён и проверен; перед implementation перечитать ADR-0033 и сверить план с Git.
 
 ## Goal
 
@@ -537,7 +537,7 @@ Human approval получен. ADR-0033 создан со статусом `Пр
 
 ## DU-03 — Task editing vertical slice
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -565,7 +565,15 @@ Focused Domain/Application/repository/widget tests, `flutter analyze`, full `flu
 
 ### Result / evidence
 
-Not started; depends on DU-02 accepted decision.
+Architecture gate пройден: ADR-0033 принят и присутствует в HEAD. Baseline перед implementation: `flutter analyze` PASS; полный `flutter test` PASS (184 теста).
+
+Реализован полный Task title edit path: `LifeOsTask.editTitle` нормализует title, отклоняет empty/non-UTC/backward-time/inactive mutations, сохраняет identity/creation/source/lifecycle/completion и выполняет immutable versioned material edit; normalized no-op возвращает исходный Task. Public hydration теперь проверяет Task identity/type, normalized non-empty title, UTC/ordered timestamps и positive version; Drift mapper преобразует corrupt persistence state в typed `LifeOsTaskMappingException`.
+
+`EditLifeOsTaskTitle` владеет load/clock/Domain mutation/save orchestration и не вызывает repository для no-op; composition root предоставляет use case через существующий Riverpod boundary. Существующий repository `save` атомарно сохраняет Entity + Task + полный Outbox `UPDATE` snapshot с `baseVersion = 1`, `newVersion = 2`; no-op не создаёт Outbox, а существующий rollback contract подтверждён. File-backed reopen сохраняет отредактированный title.
+
+Presentation получила mouse-discoverable edit action и локализованный dialog с prefilled title, autofocus, Enter/Save, Cancel/Escape, empty validation, busy/double-submit protection, bounded error и retry; successful result заменяет строку в текущем provider state. Edit action доступен только для active Task. Новые EN/RU строки добавлены в ARB, generated localization обновлена только через `flutter gen-l10n`.
+
+Validation: focused DU-03 suite PASS (47 тестов); focused Backup v3 regression PASS (10 тестов); `flutter gen-l10n` PASS; `flutter analyze` PASS; полный `flutter test` PASS (202 теста); Domain/Application и Presentation import-boundary scans PASS; localization boundary scan PASS; `git diff --check` PASS. `schemaVersion` остаётся 3; schema v4/migration отсутствуют; `pubspec.yaml`/`pubspec.lock` и Backup v3 production code не изменены. `.obsidian/workspace.json` остаётся отдельным pre-existing user change и не изменялся в DU-03.
 
 ## DU-04 — Safe Task and Note lifecycle vertical slice
 
@@ -777,4 +785,4 @@ Not started.
 
 ## Exact resume point
 
-Resume with **DU-02 only**. Reconcile this plan with Git and production state; re-read ADR-0016, ADR-0023, ADR-0026, ADR-0028, ADR-0030, ADR-0031 and ADR-0032 plus Task/Note/Relationship repositories and list/search behavior. Mark DU-02 active, perform the read-only architecture gate, and stop with the smallest explicit decision/ADR proposal needed. Do not implement DU-03 and do not create ADR-0033 without user confirmation.
+Resume with **DU-04 — Safe Task and Note lifecycle vertical slice only**. Reconcile this plan with Git and production state, re-read ADR-0033 and every ADR referenced by DU-04, then mark DU-04 active before implementation. Do not begin DU-05.
