@@ -1,6 +1,6 @@
 # ADR-0032: Relationship Domain Model and Mutation Semantics
 
-**Статус:** Proposed  
+**Статус:** Принято
 **Дата:** 2026-09-12
 
 ## Контекст
