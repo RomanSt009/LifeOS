@@ -32,5 +32,15 @@ Future<LifeOsDatabase> openProductionDatabaseIn(
     path.join(supportDirectory.path, productionDatabaseFileName),
   );
 
-  return LifeOsDatabase(NativeDatabase.createInBackground(databaseFile));
+  final database = LifeOsDatabase(
+    NativeDatabase.createInBackground(databaseFile),
+  );
+
+  try {
+    await database.customSelect('SELECT 1').get();
+    return database;
+  } on Object {
+    await database.close();
+    rethrow;
+  }
 }

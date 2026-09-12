@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart';
 
+import 'migrations/lifeos_migration_strategy.dart';
+
 part 'lifeos_database.g.dart';
 
 @DataClassName('EntityRecord')
@@ -29,6 +31,19 @@ class TaskRecords extends Table {
   Set<Column<Object>> get primaryKey => {entityId};
 }
 
+@DataClassName('NoteRecord')
+class NoteRecords extends Table {
+  @override
+  String get tableName => 'notes';
+
+  TextColumn get entityId => text().references(Entities, #id)();
+  TextColumn get title => text()();
+  TextColumn get content => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {entityId};
+}
+
 @DataClassName('OutboxEntryRecord')
 class OutboxEntries extends Table {
   @override
@@ -51,20 +66,14 @@ class OutboxEntries extends Table {
   Set<Column<Object>> get primaryKey => {changeId};
 }
 
-@DriftDatabase(tables: [Entities, TaskRecords, OutboxEntries])
+@DriftDatabase(tables: [Entities, TaskRecords, NoteRecords, OutboxEntries])
 class LifeOsDatabase extends _$LifeOsDatabase {
   LifeOsDatabase(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
-  MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (migrator) async {
-      await migrator.createAll();
-    },
-    beforeOpen: (details) async {
-      await customStatement('PRAGMA foreign_keys = ON');
-    },
-  );
+  MigrationStrategy get migration =>
+      createLifeOsMigrationStrategy(database: this, notesTable: noteRecords);
 }

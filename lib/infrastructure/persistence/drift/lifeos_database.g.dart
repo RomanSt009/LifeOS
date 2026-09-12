@@ -742,6 +742,273 @@ class TaskRecordsCompanion extends UpdateCompanion<TaskRecord> {
   }
 }
 
+class $NoteRecordsTable extends NoteRecords
+    with TableInfo<$NoteRecordsTable, NoteRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $NoteRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entityIdMeta = const VerificationMeta(
+    'entityId',
+  );
+  @override
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+    'entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES entities (id)',
+    ),
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'content',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [entityId, title, content];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'notes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<NoteRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entity_id')) {
+      context.handle(
+        _entityIdMeta,
+        entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityIdMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('content')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entityId};
+  @override
+  NoteRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return NoteRecord(
+      entityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content'],
+      )!,
+    );
+  }
+
+  @override
+  $NoteRecordsTable createAlias(String alias) {
+    return $NoteRecordsTable(attachedDatabase, alias);
+  }
+}
+
+class NoteRecord extends DataClass implements Insertable<NoteRecord> {
+  final String entityId;
+  final String title;
+  final String content;
+  const NoteRecord({
+    required this.entityId,
+    required this.title,
+    required this.content,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entity_id'] = Variable<String>(entityId);
+    map['title'] = Variable<String>(title);
+    map['content'] = Variable<String>(content);
+    return map;
+  }
+
+  NoteRecordsCompanion toCompanion(bool nullToAbsent) {
+    return NoteRecordsCompanion(
+      entityId: Value(entityId),
+      title: Value(title),
+      content: Value(content),
+    );
+  }
+
+  factory NoteRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return NoteRecord(
+      entityId: serializer.fromJson<String>(json['entityId']),
+      title: serializer.fromJson<String>(json['title']),
+      content: serializer.fromJson<String>(json['content']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entityId': serializer.toJson<String>(entityId),
+      'title': serializer.toJson<String>(title),
+      'content': serializer.toJson<String>(content),
+    };
+  }
+
+  NoteRecord copyWith({String? entityId, String? title, String? content}) =>
+      NoteRecord(
+        entityId: entityId ?? this.entityId,
+        title: title ?? this.title,
+        content: content ?? this.content,
+      );
+  NoteRecord copyWithCompanion(NoteRecordsCompanion data) {
+    return NoteRecord(
+      entityId: data.entityId.present ? data.entityId.value : this.entityId,
+      title: data.title.present ? data.title.value : this.title,
+      content: data.content.present ? data.content.value : this.content,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NoteRecord(')
+          ..write('entityId: $entityId, ')
+          ..write('title: $title, ')
+          ..write('content: $content')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(entityId, title, content);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is NoteRecord &&
+          other.entityId == this.entityId &&
+          other.title == this.title &&
+          other.content == this.content);
+}
+
+class NoteRecordsCompanion extends UpdateCompanion<NoteRecord> {
+  final Value<String> entityId;
+  final Value<String> title;
+  final Value<String> content;
+  final Value<int> rowid;
+  const NoteRecordsCompanion({
+    this.entityId = const Value.absent(),
+    this.title = const Value.absent(),
+    this.content = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  NoteRecordsCompanion.insert({
+    required String entityId,
+    required String title,
+    required String content,
+    this.rowid = const Value.absent(),
+  }) : entityId = Value(entityId),
+       title = Value(title),
+       content = Value(content);
+  static Insertable<NoteRecord> custom({
+    Expression<String>? entityId,
+    Expression<String>? title,
+    Expression<String>? content,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entityId != null) 'entity_id': entityId,
+      if (title != null) 'title': title,
+      if (content != null) 'content': content,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  NoteRecordsCompanion copyWith({
+    Value<String>? entityId,
+    Value<String>? title,
+    Value<String>? content,
+    Value<int>? rowid,
+  }) {
+    return NoteRecordsCompanion(
+      entityId: entityId ?? this.entityId,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entityId.present) {
+      map['entity_id'] = Variable<String>(entityId.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (content.present) {
+      map['content'] = Variable<String>(content.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NoteRecordsCompanion(')
+          ..write('entityId: $entityId, ')
+          ..write('title: $title, ')
+          ..write('content: $content, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $OutboxEntriesTable extends OutboxEntries
     with TableInfo<$OutboxEntriesTable, OutboxEntryRecord> {
   @override
@@ -1485,6 +1752,7 @@ abstract class _$LifeOsDatabase extends GeneratedDatabase {
   $LifeOsDatabaseManager get managers => $LifeOsDatabaseManager(this);
   late final $EntitiesTable entities = $EntitiesTable(this);
   late final $TaskRecordsTable taskRecords = $TaskRecordsTable(this);
+  late final $NoteRecordsTable noteRecords = $NoteRecordsTable(this);
   late final $OutboxEntriesTable outboxEntries = $OutboxEntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -1493,6 +1761,7 @@ abstract class _$LifeOsDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     entities,
     taskRecords,
+    noteRecords,
     outboxEntries,
   ];
 }
@@ -1535,6 +1804,24 @@ final class $$EntitiesTableReferences
     ).filter((f) => f.entityId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_taskRecordsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$NoteRecordsTable, List<NoteRecord>>
+  _noteRecordsRefsTable(_$LifeOsDatabase db) => MultiTypedResultKey.fromTable(
+    db.noteRecords,
+    aliasName: 'entities__id__notes__entity_id',
+  );
+
+  $$NoteRecordsTableProcessedTableManager get noteRecordsRefs {
+    final manager = $$NoteRecordsTableTableManager(
+      $_db,
+      $_db.noteRecords,
+    ).filter((f) => f.entityId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_noteRecordsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -1619,6 +1906,31 @@ class $$EntitiesTableFilterComposer
           }) => $$TaskRecordsTableFilterComposer(
             $db: $db,
             $table: $db.taskRecords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> noteRecordsRefs(
+    Expression<bool> Function($$NoteRecordsTableFilterComposer f) f,
+  ) {
+    final $$NoteRecordsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.noteRecords,
+      getReferencedColumn: (t) => t.entityId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NoteRecordsTableFilterComposer(
+            $db: $db,
+            $table: $db.noteRecords,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1756,6 +2068,31 @@ class $$EntitiesTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> noteRecordsRefs<T extends Object>(
+    Expression<T> Function($$NoteRecordsTableAnnotationComposer a) f,
+  ) {
+    final $$NoteRecordsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.noteRecords,
+      getReferencedColumn: (t) => t.entityId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NoteRecordsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.noteRecords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> outboxEntriesRefs<T extends Object>(
     Expression<T> Function($$OutboxEntriesTableAnnotationComposer a) f,
   ) {
@@ -1795,7 +2132,11 @@ class $$EntitiesTableTableManager
           $$EntitiesTableUpdateCompanionBuilder,
           (EntityRecord, $$EntitiesTableReferences),
           EntityRecord,
-          PrefetchHooks Function({bool taskRecordsRefs, bool outboxEntriesRefs})
+          PrefetchHooks Function({
+            bool taskRecordsRefs,
+            bool noteRecordsRefs,
+            bool outboxEntriesRefs,
+          })
         > {
   $$EntitiesTableTableManager(_$LifeOsDatabase db, $EntitiesTable table)
     : super(
@@ -1857,11 +2198,16 @@ class $$EntitiesTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({taskRecordsRefs = false, outboxEntriesRefs = false}) {
+              ({
+                taskRecordsRefs = false,
+                noteRecordsRefs = false,
+                outboxEntriesRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (taskRecordsRefs) db.taskRecords,
+                    if (noteRecordsRefs) db.noteRecords,
                     if (outboxEntriesRefs) db.outboxEntries,
                   ],
                   addJoins: null,
@@ -1882,6 +2228,27 @@ class $$EntitiesTableTableManager
                                 table,
                                 p0,
                               ).taskRecordsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.entityId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (noteRecordsRefs)
+                        await $_getPrefetchedData<
+                          EntityRecord,
+                          $EntitiesTable,
+                          NoteRecord
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EntitiesTableReferences
+                              ._noteRecordsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EntitiesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).noteRecordsRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.entityId == item.id,
@@ -1929,7 +2296,11 @@ typedef $$EntitiesTableProcessedTableManager =
       $$EntitiesTableUpdateCompanionBuilder,
       (EntityRecord, $$EntitiesTableReferences),
       EntityRecord,
-      PrefetchHooks Function({bool taskRecordsRefs, bool outboxEntriesRefs})
+      PrefetchHooks Function({
+        bool taskRecordsRefs,
+        bool noteRecordsRefs,
+        bool outboxEntriesRefs,
+      })
     >;
 typedef $$TaskRecordsTableCreateCompanionBuilder =
     TaskRecordsCompanion Function({
@@ -2208,6 +2579,283 @@ typedef $$TaskRecordsTableProcessedTableManager =
       $$TaskRecordsTableUpdateCompanionBuilder,
       (TaskRecord, $$TaskRecordsTableReferences),
       TaskRecord,
+      PrefetchHooks Function({bool entityId})
+    >;
+typedef $$NoteRecordsTableCreateCompanionBuilder =
+    NoteRecordsCompanion Function({
+      required String entityId,
+      required String title,
+      required String content,
+      Value<int> rowid,
+    });
+typedef $$NoteRecordsTableUpdateCompanionBuilder =
+    NoteRecordsCompanion Function({
+      Value<String> entityId,
+      Value<String> title,
+      Value<String> content,
+      Value<int> rowid,
+    });
+
+final class $$NoteRecordsTableReferences
+    extends BaseReferences<_$LifeOsDatabase, $NoteRecordsTable, NoteRecord> {
+  $$NoteRecordsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $EntitiesTable _entityIdTable(_$LifeOsDatabase db) =>
+      db.entities.createAlias('notes__entity_id__entities__id');
+
+  $$EntitiesTableProcessedTableManager get entityId {
+    final $_column = $_itemColumn<String>('entity_id')!;
+
+    final manager = $$EntitiesTableTableManager(
+      $_db,
+      $_db.entities,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_entityIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$NoteRecordsTableFilterComposer
+    extends Composer<_$LifeOsDatabase, $NoteRecordsTable> {
+  $$NoteRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$EntitiesTableFilterComposer get entityId {
+    final $$EntitiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableFilterComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$NoteRecordsTableOrderingComposer
+    extends Composer<_$LifeOsDatabase, $NoteRecordsTable> {
+  $$NoteRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$EntitiesTableOrderingComposer get entityId {
+    final $$EntitiesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableOrderingComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$NoteRecordsTableAnnotationComposer
+    extends Composer<_$LifeOsDatabase, $NoteRecordsTable> {
+  $$NoteRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  $$EntitiesTableAnnotationComposer get entityId {
+    final $$EntitiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$NoteRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$LifeOsDatabase,
+          $NoteRecordsTable,
+          NoteRecord,
+          $$NoteRecordsTableFilterComposer,
+          $$NoteRecordsTableOrderingComposer,
+          $$NoteRecordsTableAnnotationComposer,
+          $$NoteRecordsTableCreateCompanionBuilder,
+          $$NoteRecordsTableUpdateCompanionBuilder,
+          (NoteRecord, $$NoteRecordsTableReferences),
+          NoteRecord,
+          PrefetchHooks Function({bool entityId})
+        > {
+  $$NoteRecordsTableTableManager(_$LifeOsDatabase db, $NoteRecordsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$NoteRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$NoteRecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$NoteRecordsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> entityId = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> content = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => NoteRecordsCompanion(
+                entityId: entityId,
+                title: title,
+                content: content,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String entityId,
+                required String title,
+                required String content,
+                Value<int> rowid = const Value.absent(),
+              }) => NoteRecordsCompanion.insert(
+                entityId: entityId,
+                title: title,
+                content: content,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$NoteRecordsTable, NoteRecord>(table),
+                  $$NoteRecordsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({entityId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (entityId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.entityId,
+                        referencedTable: $$NoteRecordsTableReferences
+                            ._entityIdTable(db),
+                        referencedColumn: $$NoteRecordsTableReferences
+                            ._entityIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$NoteRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LifeOsDatabase,
+      $NoteRecordsTable,
+      NoteRecord,
+      $$NoteRecordsTableFilterComposer,
+      $$NoteRecordsTableOrderingComposer,
+      $$NoteRecordsTableAnnotationComposer,
+      $$NoteRecordsTableCreateCompanionBuilder,
+      $$NoteRecordsTableUpdateCompanionBuilder,
+      (NoteRecord, $$NoteRecordsTableReferences),
+      NoteRecord,
       PrefetchHooks Function({bool entityId})
     >;
 typedef $$OutboxEntriesTableCreateCompanionBuilder =
@@ -2687,6 +3335,8 @@ class $LifeOsDatabaseManager {
       $$EntitiesTableTableManager(_db, _db.entities);
   $$TaskRecordsTableTableManager get taskRecords =>
       $$TaskRecordsTableTableManager(_db, _db.taskRecords);
+  $$NoteRecordsTableTableManager get noteRecords =>
+      $$NoteRecordsTableTableManager(_db, _db.noteRecords);
   $$OutboxEntriesTableTableManager get outboxEntries =>
       $$OutboxEntriesTableTableManager(_db, _db.outboxEntries);
 }
