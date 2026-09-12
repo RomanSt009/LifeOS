@@ -1009,6 +1009,345 @@ class NoteRecordsCompanion extends UpdateCompanion<NoteRecord> {
   }
 }
 
+class $RelationshipRecordsTable extends RelationshipRecords
+    with TableInfo<$RelationshipRecordsTable, RelationshipRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RelationshipRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entityIdMeta = const VerificationMeta(
+    'entityId',
+  );
+  @override
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+    'entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES entities (id)',
+    ),
+  );
+  static const VerificationMeta _firstEntityIdMeta = const VerificationMeta(
+    'firstEntityId',
+  );
+  @override
+  late final GeneratedColumn<String> firstEntityId = GeneratedColumn<String>(
+    'first_entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES entities (id)',
+    ),
+  );
+  static const VerificationMeta _secondEntityIdMeta = const VerificationMeta(
+    'secondEntityId',
+  );
+  @override
+  late final GeneratedColumn<String> secondEntityId = GeneratedColumn<String>(
+    'second_entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES entities (id)',
+    ),
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    entityId,
+    firstEntityId,
+    secondEntityId,
+    kind,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'relationships';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RelationshipRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entity_id')) {
+      context.handle(
+        _entityIdMeta,
+        entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityIdMeta);
+    }
+    if (data.containsKey('first_entity_id')) {
+      context.handle(
+        _firstEntityIdMeta,
+        firstEntityId.isAcceptableOrUnknown(
+          data['first_entity_id']!,
+          _firstEntityIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_firstEntityIdMeta);
+    }
+    if (data.containsKey('second_entity_id')) {
+      context.handle(
+        _secondEntityIdMeta,
+        secondEntityId.isAcceptableOrUnknown(
+          data['second_entity_id']!,
+          _secondEntityIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_secondEntityIdMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entityId};
+  @override
+  RelationshipRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RelationshipRecord(
+      entityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_id'],
+      )!,
+      firstEntityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}first_entity_id'],
+      )!,
+      secondEntityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}second_entity_id'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+    );
+  }
+
+  @override
+  $RelationshipRecordsTable createAlias(String alias) {
+    return $RelationshipRecordsTable(attachedDatabase, alias);
+  }
+}
+
+class RelationshipRecord extends DataClass
+    implements Insertable<RelationshipRecord> {
+  final String entityId;
+  final String firstEntityId;
+  final String secondEntityId;
+  final String kind;
+  const RelationshipRecord({
+    required this.entityId,
+    required this.firstEntityId,
+    required this.secondEntityId,
+    required this.kind,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entity_id'] = Variable<String>(entityId);
+    map['first_entity_id'] = Variable<String>(firstEntityId);
+    map['second_entity_id'] = Variable<String>(secondEntityId);
+    map['kind'] = Variable<String>(kind);
+    return map;
+  }
+
+  RelationshipRecordsCompanion toCompanion(bool nullToAbsent) {
+    return RelationshipRecordsCompanion(
+      entityId: Value(entityId),
+      firstEntityId: Value(firstEntityId),
+      secondEntityId: Value(secondEntityId),
+      kind: Value(kind),
+    );
+  }
+
+  factory RelationshipRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RelationshipRecord(
+      entityId: serializer.fromJson<String>(json['entityId']),
+      firstEntityId: serializer.fromJson<String>(json['firstEntityId']),
+      secondEntityId: serializer.fromJson<String>(json['secondEntityId']),
+      kind: serializer.fromJson<String>(json['kind']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entityId': serializer.toJson<String>(entityId),
+      'firstEntityId': serializer.toJson<String>(firstEntityId),
+      'secondEntityId': serializer.toJson<String>(secondEntityId),
+      'kind': serializer.toJson<String>(kind),
+    };
+  }
+
+  RelationshipRecord copyWith({
+    String? entityId,
+    String? firstEntityId,
+    String? secondEntityId,
+    String? kind,
+  }) => RelationshipRecord(
+    entityId: entityId ?? this.entityId,
+    firstEntityId: firstEntityId ?? this.firstEntityId,
+    secondEntityId: secondEntityId ?? this.secondEntityId,
+    kind: kind ?? this.kind,
+  );
+  RelationshipRecord copyWithCompanion(RelationshipRecordsCompanion data) {
+    return RelationshipRecord(
+      entityId: data.entityId.present ? data.entityId.value : this.entityId,
+      firstEntityId: data.firstEntityId.present
+          ? data.firstEntityId.value
+          : this.firstEntityId,
+      secondEntityId: data.secondEntityId.present
+          ? data.secondEntityId.value
+          : this.secondEntityId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RelationshipRecord(')
+          ..write('entityId: $entityId, ')
+          ..write('firstEntityId: $firstEntityId, ')
+          ..write('secondEntityId: $secondEntityId, ')
+          ..write('kind: $kind')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(entityId, firstEntityId, secondEntityId, kind);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RelationshipRecord &&
+          other.entityId == this.entityId &&
+          other.firstEntityId == this.firstEntityId &&
+          other.secondEntityId == this.secondEntityId &&
+          other.kind == this.kind);
+}
+
+class RelationshipRecordsCompanion extends UpdateCompanion<RelationshipRecord> {
+  final Value<String> entityId;
+  final Value<String> firstEntityId;
+  final Value<String> secondEntityId;
+  final Value<String> kind;
+  final Value<int> rowid;
+  const RelationshipRecordsCompanion({
+    this.entityId = const Value.absent(),
+    this.firstEntityId = const Value.absent(),
+    this.secondEntityId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RelationshipRecordsCompanion.insert({
+    required String entityId,
+    required String firstEntityId,
+    required String secondEntityId,
+    required String kind,
+    this.rowid = const Value.absent(),
+  }) : entityId = Value(entityId),
+       firstEntityId = Value(firstEntityId),
+       secondEntityId = Value(secondEntityId),
+       kind = Value(kind);
+  static Insertable<RelationshipRecord> custom({
+    Expression<String>? entityId,
+    Expression<String>? firstEntityId,
+    Expression<String>? secondEntityId,
+    Expression<String>? kind,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entityId != null) 'entity_id': entityId,
+      if (firstEntityId != null) 'first_entity_id': firstEntityId,
+      if (secondEntityId != null) 'second_entity_id': secondEntityId,
+      if (kind != null) 'kind': kind,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RelationshipRecordsCompanion copyWith({
+    Value<String>? entityId,
+    Value<String>? firstEntityId,
+    Value<String>? secondEntityId,
+    Value<String>? kind,
+    Value<int>? rowid,
+  }) {
+    return RelationshipRecordsCompanion(
+      entityId: entityId ?? this.entityId,
+      firstEntityId: firstEntityId ?? this.firstEntityId,
+      secondEntityId: secondEntityId ?? this.secondEntityId,
+      kind: kind ?? this.kind,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entityId.present) {
+      map['entity_id'] = Variable<String>(entityId.value);
+    }
+    if (firstEntityId.present) {
+      map['first_entity_id'] = Variable<String>(firstEntityId.value);
+    }
+    if (secondEntityId.present) {
+      map['second_entity_id'] = Variable<String>(secondEntityId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RelationshipRecordsCompanion(')
+          ..write('entityId: $entityId, ')
+          ..write('firstEntityId: $firstEntityId, ')
+          ..write('secondEntityId: $secondEntityId, ')
+          ..write('kind: $kind, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $OutboxEntriesTable extends OutboxEntries
     with TableInfo<$OutboxEntriesTable, OutboxEntryRecord> {
   @override
@@ -1753,7 +2092,13 @@ abstract class _$LifeOsDatabase extends GeneratedDatabase {
   late final $EntitiesTable entities = $EntitiesTable(this);
   late final $TaskRecordsTable taskRecords = $TaskRecordsTable(this);
   late final $NoteRecordsTable noteRecords = $NoteRecordsTable(this);
+  late final $RelationshipRecordsTable relationshipRecords =
+      $RelationshipRecordsTable(this);
   late final $OutboxEntriesTable outboxEntries = $OutboxEntriesTable(this);
+  late final Index relationshipsSecondEntityIdIdx = Index(
+    'relationships_second_entity_id_idx',
+    'CREATE INDEX relationships_second_entity_id_idx ON relationships (second_entity_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1762,7 +2107,9 @@ abstract class _$LifeOsDatabase extends GeneratedDatabase {
     entities,
     taskRecords,
     noteRecords,
+    relationshipRecords,
     outboxEntries,
+    relationshipsSecondEntityIdIdx,
   ];
 }
 
@@ -1822,6 +2169,80 @@ final class $$EntitiesTableReferences
     ).filter((f) => f.entityId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_noteRecordsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $RelationshipRecordsTable,
+    List<RelationshipRecord>
+  >
+  _relationshipIdentityTable(_$LifeOsDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.relationshipRecords,
+        aliasName: 'entities__id__relationships__entity_id',
+      );
+
+  $$RelationshipRecordsTableProcessedTableManager get relationshipIdentity {
+    final manager = $$RelationshipRecordsTableTableManager(
+      $_db,
+      $_db.relationshipRecords,
+    ).filter((f) => f.entityId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _relationshipIdentityTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $RelationshipRecordsTable,
+    List<RelationshipRecord>
+  >
+  _firstEndpointRelationshipsTable(_$LifeOsDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.relationshipRecords,
+        aliasName: 'entities__id__relationships__first_entity_id',
+      );
+
+  $$RelationshipRecordsTableProcessedTableManager
+  get firstEndpointRelationships {
+    final manager = $$RelationshipRecordsTableTableManager(
+      $_db,
+      $_db.relationshipRecords,
+    ).filter((f) => f.firstEntityId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _firstEndpointRelationshipsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $RelationshipRecordsTable,
+    List<RelationshipRecord>
+  >
+  _secondEndpointRelationshipsTable(_$LifeOsDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.relationshipRecords,
+        aliasName: 'entities__id__relationships__second_entity_id',
+      );
+
+  $$RelationshipRecordsTableProcessedTableManager
+  get secondEndpointRelationships {
+    final manager = $$RelationshipRecordsTableTableManager(
+      $_db,
+      $_db.relationshipRecords,
+    ).filter((f) => f.secondEntityId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _secondEndpointRelationshipsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -1931,6 +2352,81 @@ class $$EntitiesTableFilterComposer
           }) => $$NoteRecordsTableFilterComposer(
             $db: $db,
             $table: $db.noteRecords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> relationshipIdentity(
+    Expression<bool> Function($$RelationshipRecordsTableFilterComposer f) f,
+  ) {
+    final $$RelationshipRecordsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.relationshipRecords,
+      getReferencedColumn: (t) => t.entityId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RelationshipRecordsTableFilterComposer(
+            $db: $db,
+            $table: $db.relationshipRecords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> firstEndpointRelationships(
+    Expression<bool> Function($$RelationshipRecordsTableFilterComposer f) f,
+  ) {
+    final $$RelationshipRecordsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.relationshipRecords,
+      getReferencedColumn: (t) => t.firstEntityId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RelationshipRecordsTableFilterComposer(
+            $db: $db,
+            $table: $db.relationshipRecords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> secondEndpointRelationships(
+    Expression<bool> Function($$RelationshipRecordsTableFilterComposer f) f,
+  ) {
+    final $$RelationshipRecordsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.relationshipRecords,
+      getReferencedColumn: (t) => t.secondEntityId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$RelationshipRecordsTableFilterComposer(
+            $db: $db,
+            $table: $db.relationshipRecords,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2093,6 +2589,84 @@ class $$EntitiesTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> relationshipIdentity<T extends Object>(
+    Expression<T> Function($$RelationshipRecordsTableAnnotationComposer a) f,
+  ) {
+    final $$RelationshipRecordsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.relationshipRecords,
+          getReferencedColumn: (t) => t.entityId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RelationshipRecordsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.relationshipRecords,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<T> firstEndpointRelationships<T extends Object>(
+    Expression<T> Function($$RelationshipRecordsTableAnnotationComposer a) f,
+  ) {
+    final $$RelationshipRecordsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.relationshipRecords,
+          getReferencedColumn: (t) => t.firstEntityId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RelationshipRecordsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.relationshipRecords,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<T> secondEndpointRelationships<T extends Object>(
+    Expression<T> Function($$RelationshipRecordsTableAnnotationComposer a) f,
+  ) {
+    final $$RelationshipRecordsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.relationshipRecords,
+          getReferencedColumn: (t) => t.secondEntityId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RelationshipRecordsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.relationshipRecords,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> outboxEntriesRefs<T extends Object>(
     Expression<T> Function($$OutboxEntriesTableAnnotationComposer a) f,
   ) {
@@ -2135,6 +2709,9 @@ class $$EntitiesTableTableManager
           PrefetchHooks Function({
             bool taskRecordsRefs,
             bool noteRecordsRefs,
+            bool relationshipIdentity,
+            bool firstEndpointRelationships,
+            bool secondEndpointRelationships,
             bool outboxEntriesRefs,
           })
         > {
@@ -2201,6 +2778,9 @@ class $$EntitiesTableTableManager
               ({
                 taskRecordsRefs = false,
                 noteRecordsRefs = false,
+                relationshipIdentity = false,
+                firstEndpointRelationships = false,
+                secondEndpointRelationships = false,
                 outboxEntriesRefs = false,
               }) {
                 return PrefetchHooks(
@@ -2208,6 +2788,9 @@ class $$EntitiesTableTableManager
                   explicitlyWatchedTables: [
                     if (taskRecordsRefs) db.taskRecords,
                     if (noteRecordsRefs) db.noteRecords,
+                    if (relationshipIdentity) db.relationshipRecords,
+                    if (firstEndpointRelationships) db.relationshipRecords,
+                    if (secondEndpointRelationships) db.relationshipRecords,
                     if (outboxEntriesRefs) db.outboxEntries,
                   ],
                   addJoins: null,
@@ -2255,6 +2838,69 @@ class $$EntitiesTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (relationshipIdentity)
+                        await $_getPrefetchedData<
+                          EntityRecord,
+                          $EntitiesTable,
+                          RelationshipRecord
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EntitiesTableReferences
+                              ._relationshipIdentityTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EntitiesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).relationshipIdentity,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.entityId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (firstEndpointRelationships)
+                        await $_getPrefetchedData<
+                          EntityRecord,
+                          $EntitiesTable,
+                          RelationshipRecord
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EntitiesTableReferences
+                              ._firstEndpointRelationshipsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EntitiesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).firstEndpointRelationships,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.firstEntityId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (secondEndpointRelationships)
+                        await $_getPrefetchedData<
+                          EntityRecord,
+                          $EntitiesTable,
+                          RelationshipRecord
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EntitiesTableReferences
+                              ._secondEndpointRelationshipsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EntitiesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).secondEndpointRelationships,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.secondEntityId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (outboxEntriesRefs)
                         await $_getPrefetchedData<
                           EntityRecord,
@@ -2299,6 +2945,9 @@ typedef $$EntitiesTableProcessedTableManager =
       PrefetchHooks Function({
         bool taskRecordsRefs,
         bool noteRecordsRefs,
+        bool relationshipIdentity,
+        bool firstEndpointRelationships,
+        bool secondEndpointRelationships,
         bool outboxEntriesRefs,
       })
     >;
@@ -2858,6 +3507,508 @@ typedef $$NoteRecordsTableProcessedTableManager =
       NoteRecord,
       PrefetchHooks Function({bool entityId})
     >;
+typedef $$RelationshipRecordsTableCreateCompanionBuilder =
+    RelationshipRecordsCompanion Function({
+      required String entityId,
+      required String firstEntityId,
+      required String secondEntityId,
+      required String kind,
+      Value<int> rowid,
+    });
+typedef $$RelationshipRecordsTableUpdateCompanionBuilder =
+    RelationshipRecordsCompanion Function({
+      Value<String> entityId,
+      Value<String> firstEntityId,
+      Value<String> secondEntityId,
+      Value<String> kind,
+      Value<int> rowid,
+    });
+
+final class $$RelationshipRecordsTableReferences
+    extends
+        BaseReferences<
+          _$LifeOsDatabase,
+          $RelationshipRecordsTable,
+          RelationshipRecord
+        > {
+  $$RelationshipRecordsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $EntitiesTable _entityIdTable(_$LifeOsDatabase db) =>
+      db.entities.createAlias('relationships__entity_id__entities__id');
+
+  $$EntitiesTableProcessedTableManager get entityId {
+    final $_column = $_itemColumn<String>('entity_id')!;
+
+    final manager = $$EntitiesTableTableManager(
+      $_db,
+      $_db.entities,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_entityIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $EntitiesTable _firstEntityIdTable(_$LifeOsDatabase db) =>
+      db.entities.createAlias('relationships__first_entity_id__entities__id');
+
+  $$EntitiesTableProcessedTableManager get firstEntityId {
+    final $_column = $_itemColumn<String>('first_entity_id')!;
+
+    final manager = $$EntitiesTableTableManager(
+      $_db,
+      $_db.entities,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_firstEntityIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $EntitiesTable _secondEntityIdTable(_$LifeOsDatabase db) =>
+      db.entities.createAlias('relationships__second_entity_id__entities__id');
+
+  $$EntitiesTableProcessedTableManager get secondEntityId {
+    final $_column = $_itemColumn<String>('second_entity_id')!;
+
+    final manager = $$EntitiesTableTableManager(
+      $_db,
+      $_db.entities,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_secondEntityIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RelationshipRecordsTableFilterComposer
+    extends Composer<_$LifeOsDatabase, $RelationshipRecordsTable> {
+  $$RelationshipRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$EntitiesTableFilterComposer get entityId {
+    final $$EntitiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableFilterComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableFilterComposer get firstEntityId {
+    final $$EntitiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.firstEntityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableFilterComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableFilterComposer get secondEntityId {
+    final $$EntitiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.secondEntityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableFilterComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RelationshipRecordsTableOrderingComposer
+    extends Composer<_$LifeOsDatabase, $RelationshipRecordsTable> {
+  $$RelationshipRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$EntitiesTableOrderingComposer get entityId {
+    final $$EntitiesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableOrderingComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableOrderingComposer get firstEntityId {
+    final $$EntitiesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.firstEntityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableOrderingComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableOrderingComposer get secondEntityId {
+    final $$EntitiesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.secondEntityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableOrderingComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RelationshipRecordsTableAnnotationComposer
+    extends Composer<_$LifeOsDatabase, $RelationshipRecordsTable> {
+  $$RelationshipRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  $$EntitiesTableAnnotationComposer get entityId {
+    final $$EntitiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableAnnotationComposer get firstEntityId {
+    final $$EntitiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.firstEntityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableAnnotationComposer get secondEntityId {
+    final $$EntitiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.secondEntityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RelationshipRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$LifeOsDatabase,
+          $RelationshipRecordsTable,
+          RelationshipRecord,
+          $$RelationshipRecordsTableFilterComposer,
+          $$RelationshipRecordsTableOrderingComposer,
+          $$RelationshipRecordsTableAnnotationComposer,
+          $$RelationshipRecordsTableCreateCompanionBuilder,
+          $$RelationshipRecordsTableUpdateCompanionBuilder,
+          (RelationshipRecord, $$RelationshipRecordsTableReferences),
+          RelationshipRecord,
+          PrefetchHooks Function({
+            bool entityId,
+            bool firstEntityId,
+            bool secondEntityId,
+          })
+        > {
+  $$RelationshipRecordsTableTableManager(
+    _$LifeOsDatabase db,
+    $RelationshipRecordsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RelationshipRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RelationshipRecordsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RelationshipRecordsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> entityId = const Value.absent(),
+                Value<String> firstEntityId = const Value.absent(),
+                Value<String> secondEntityId = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RelationshipRecordsCompanion(
+                entityId: entityId,
+                firstEntityId: firstEntityId,
+                secondEntityId: secondEntityId,
+                kind: kind,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String entityId,
+                required String firstEntityId,
+                required String secondEntityId,
+                required String kind,
+                Value<int> rowid = const Value.absent(),
+              }) => RelationshipRecordsCompanion.insert(
+                entityId: entityId,
+                firstEntityId: firstEntityId,
+                secondEntityId: secondEntityId,
+                kind: kind,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$RelationshipRecordsTable, RelationshipRecord>(
+                    table,
+                  ),
+                  $$RelationshipRecordsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({
+                entityId = false,
+                firstEntityId = false,
+                secondEntityId = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (entityId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.entityId,
+                            referencedTable:
+                                $$RelationshipRecordsTableReferences
+                                    ._entityIdTable(db),
+                            referencedColumn:
+                                $$RelationshipRecordsTableReferences
+                                    ._entityIdTable(db)
+                                    .id,
+                          ) as T;
+                        }
+                        if (firstEntityId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.firstEntityId,
+                            referencedTable:
+                                $$RelationshipRecordsTableReferences
+                                    ._firstEntityIdTable(db),
+                            referencedColumn:
+                                $$RelationshipRecordsTableReferences
+                                    ._firstEntityIdTable(db)
+                                    .id,
+                          ) as T;
+                        }
+                        if (secondEntityId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.secondEntityId,
+                            referencedTable:
+                                $$RelationshipRecordsTableReferences
+                                    ._secondEntityIdTable(db),
+                            referencedColumn:
+                                $$RelationshipRecordsTableReferences
+                                    ._secondEntityIdTable(db)
+                                    .id,
+                          ) as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$RelationshipRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LifeOsDatabase,
+      $RelationshipRecordsTable,
+      RelationshipRecord,
+      $$RelationshipRecordsTableFilterComposer,
+      $$RelationshipRecordsTableOrderingComposer,
+      $$RelationshipRecordsTableAnnotationComposer,
+      $$RelationshipRecordsTableCreateCompanionBuilder,
+      $$RelationshipRecordsTableUpdateCompanionBuilder,
+      (RelationshipRecord, $$RelationshipRecordsTableReferences),
+      RelationshipRecord,
+      PrefetchHooks Function({
+        bool entityId,
+        bool firstEntityId,
+        bool secondEntityId,
+      })
+    >;
 typedef $$OutboxEntriesTableCreateCompanionBuilder =
     OutboxEntriesCompanion Function({
       required String changeId,
@@ -3337,6 +4488,8 @@ class $LifeOsDatabaseManager {
       $$TaskRecordsTableTableManager(_db, _db.taskRecords);
   $$NoteRecordsTableTableManager get noteRecords =>
       $$NoteRecordsTableTableManager(_db, _db.noteRecords);
+  $$RelationshipRecordsTableTableManager get relationshipRecords =>
+      $$RelationshipRecordsTableTableManager(_db, _db.relationshipRecords);
   $$OutboxEntriesTableTableManager get outboxEntries =>
       $$OutboxEntriesTableTableManager(_db, _db.outboxEntries);
 }

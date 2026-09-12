@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import 'lifeos_migration_validation.dart';
 import 'v1_to_v2.dart';
+import 'v2_to_v3.dart';
 
 typedef LifeOsMigrationStep = Future<void> Function(Migrator migrator);
 
@@ -23,6 +24,8 @@ final class LifeOsUnsupportedSchemaException implements Exception {
 MigrationStrategy createLifeOsMigrationStrategy({
   required GeneratedDatabase database,
   required DatabaseSchemaEntity notesTable,
+  required DatabaseSchemaEntity relationshipsTable,
+  required DatabaseSchemaEntity relationshipsSecondEntityIdIndex,
 }) {
   return MigrationStrategy(
     onCreate: (migrator) => migrator.createAll(),
@@ -31,7 +34,14 @@ MigrationStrategy createLifeOsMigrationStrategy({
       migrator: migrator,
       from: from,
       to: to,
-      steps: {1: (migrator) => migrateV1ToV2(migrator, notesTable)},
+      steps: {
+        1: (migrator) => migrateV1ToV2(migrator, notesTable),
+        2: (migrator) => migrateV2ToV3(
+          migrator,
+          relationshipsTable,
+          relationshipsSecondEntityIdIndex,
+        ),
+      },
     ),
     beforeOpen: (_) async {
       await database.customStatement('PRAGMA foreign_keys = ON');

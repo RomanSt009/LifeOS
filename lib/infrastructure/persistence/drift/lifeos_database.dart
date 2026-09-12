@@ -44,6 +44,36 @@ class NoteRecords extends Table {
   Set<Column<Object>> get primaryKey => {entityId};
 }
 
+@DataClassName('RelationshipRecord')
+@TableIndex(
+  name: 'relationships_second_entity_id_idx',
+  columns: {#secondEntityId},
+)
+class RelationshipRecords extends Table {
+  @override
+  String get tableName => 'relationships';
+
+  @ReferenceName('relationshipIdentity')
+  TextColumn get entityId => text().references(Entities, #id)();
+
+  @ReferenceName('firstEndpointRelationships')
+  TextColumn get firstEntityId => text().references(Entities, #id)();
+
+  @ReferenceName('secondEndpointRelationships')
+  TextColumn get secondEntityId => text().references(Entities, #id)();
+  TextColumn get kind => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {entityId};
+
+  @override
+  List<String> get customConstraints => [
+    'CHECK (first_entity_id <> second_entity_id)',
+    'CHECK (first_entity_id < second_entity_id)',
+    'UNIQUE (first_entity_id, second_entity_id, kind)',
+  ];
+}
+
 @DataClassName('OutboxEntryRecord')
 class OutboxEntries extends Table {
   @override
@@ -66,14 +96,26 @@ class OutboxEntries extends Table {
   Set<Column<Object>> get primaryKey => {changeId};
 }
 
-@DriftDatabase(tables: [Entities, TaskRecords, NoteRecords, OutboxEntries])
+@DriftDatabase(
+  tables: [
+    Entities,
+    TaskRecords,
+    NoteRecords,
+    RelationshipRecords,
+    OutboxEntries,
+  ],
+)
 class LifeOsDatabase extends _$LifeOsDatabase {
   LifeOsDatabase(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
-  MigrationStrategy get migration =>
-      createLifeOsMigrationStrategy(database: this, notesTable: noteRecords);
+  MigrationStrategy get migration => createLifeOsMigrationStrategy(
+    database: this,
+    notesTable: noteRecords,
+    relationshipsTable: relationshipRecords,
+    relationshipsSecondEntityIdIndex: relationshipsSecondEntityIdIdx,
+  );
 }

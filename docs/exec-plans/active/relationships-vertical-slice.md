@@ -14,7 +14,7 @@ Milestone добавляет первую production Relationship Entity пов�
 
 Результат: принят ADR-0032. Relationship является first-class typed Entity с одним kind `related`, ненаправленными canonical endpoints, запретом self-link и duplicate active link, общими metadata/lifecycle/version semantics, atomic Outbox и обязательным будущим Backup/Export representation.
 
-## Текущий checkpoint
+## Завершённые checkpoints
 
 ### RL-02 — Persistence + Schema v3 Design Gate
 
@@ -276,13 +276,32 @@ Validation evidence:
 - `git diff --check`: PASS; отдельная whitespace-проверка нового untracked plan: PASS.
 - Итоговый `git status --short`: pre-existing `M .obsidian/workspace.json`; новый `?? docs/exec-plans/active/relationships-vertical-slice.md` (Git сокращает его до untracked directory при обычном status).
 
-## Следующие checkpoints
+## Оставшиеся checkpoints
 
 ### RL-03 — Schema v3 Migration
 
-Статус: pending
+Статус: done
 
 Цель: реализовать только schema v3 table/indexes, `v2 -> v3` migration, generated artifacts и migration validation согласно RL-02.
+
+Result / evidence:
+
+- `LifeOsDatabase.schemaVersion` повышен с `2` до `3`; это остаётся единственным source latest SQLite schema version.
+- Drift declaration добавляет только `relationships(entity_id, first_entity_id, second_entity_id, kind)` и `relationships_second_entity_id_idx`. Existing `entities`, `tasks`, `notes`, `outbox` declarations и physical structure не изменены.
+- `entity_id` является PK/FK на `entities.id`; оба endpoint columns являются FK на `entities.id`; все FK используют default `NO ACTION`. SQL defaults, cascades, triggers, generated columns и duplicated endpoint types отсутствуют.
+- DB-level constraints реализованы точно по RL-02: `CHECK(first_entity_id <> second_entity_id)`, `CHECK(first_entity_id < second_entity_id)`, `UNIQUE(first_entity_id, second_entity_id, kind)`. Отдельного first-endpoint index и `CHECK kind='related'` нет; разные `kind` разрешены physical schema.
+- Composite UNIQUE покрывает first-endpoint prefix lookup; добавлен только отдельный non-unique index `relationships_second_entity_id_idx`.
+- Добавлен отдельный `v2_to_v3.dart`; existing orchestrator выполняет steps `1: v1 -> v2`, затем `2: v2 -> v3` в одной общей transaction. Step создаёт table/index без backfill и nested transaction; existing `foreign_key_check` и `quick_check` validation сохраняются.
+- `v1 -> v3` реально проходит sequential chain. File-backed `v2 -> v3` сохраняет Task, Note (включая точный content whitespace), Entity metadata и Outbox без нормализации/новых Changes; reopen проходит.
+- Migration failure после создания Relationship schema objects полностью откатывает v2 database: `user_version = 2`, partial/Relationship tables отсутствуют. Future `user_version = 4` отклоняется без mutation. Production startup barrier продолжает отклонять future schema до публикации database; Relationship repository не добавлен.
+- Штатным Drift tooling созданы `drift_schema_v3.json`, generated `schema_v3.dart` и обновлён version dispatch helper `[1, 2, 3]`. Frozen v1/v2 snapshots и versioned helpers не изменены. `lifeos_database.g.dart` обновлён только code generator; generated files вручную не редактировались.
+- Constraint/index test доказывает три FK с `NO ACTION`, PK, self-link rejection, non-canonical rejection, duplicate rejection, coexistence разных kinds, наличие second-endpoint index, `foreign_key_check` и `quick_check`.
+- Focused migration/schema suite: 7 tests passed.
+- Focused Task/Note/production persistence regression: 17 tests passed.
+- `flutter analyze`: no issues found.
+- Full `flutter test`: 158 tests passed.
+- Existing table SQL comparison, frozen v1/v2 artifact diff и `git diff --check`: PASS.
+- Dependencies, Backup/Export format v2, Search, Domain/Application/Presentation и `.obsidian/workspace.json` не изменялись этим checkpoint.
 
 ### RL-04 — Domain + Persistence
 
@@ -316,4 +335,4 @@ Validation evidence:
 
 ## Resume point
 
-RL-03 — Schema v3 Migration. Не начинать без отдельного запроса.
+RL-04 — Relationship Domain + Persistence. Не начинать без отдельного запроса.
