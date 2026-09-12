@@ -7,9 +7,10 @@ import 'package:lifeos/app/dependencies.dart';
 import 'package:lifeos/application/backup/lifeos_backup_operations.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_note.dart';
+import 'package:lifeos/domain/entities/lifeos_relationship.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/infrastructure/backup/formats/backup_export_format_v1.dart';
-import 'package:lifeos/infrastructure/backup/formats/backup_export_format_v2.dart';
+import 'package:lifeos/infrastructure/backup/formats/backup_export_format_v3.dart';
 import 'package:lifeos/infrastructure/identity/file_device_identity_store.dart';
 import 'package:path/path.dart' as path;
 
@@ -101,12 +102,29 @@ void main() {
         source: LifeOsEntitySource.import,
       );
       await source.noteRepository.save(sourceNote);
+      final createdRelationship = LifeOsRelationship.createUserRelationship(
+        id: const LifeOsEntityId(
+          value: '00000000-0000-4000-8000-000000000005',
+          entityType: LifeOsEntityType.relationship,
+        ),
+        firstEndpoint: sourceTasks[1].id,
+        secondEndpoint: sourceNote.id,
+        timestamp: DateTime.utc(2025, 7, 8, 9, 10, 11),
+      );
+      await source.relationshipRepository.save(createdRelationship);
+      final sourceRelationship = createdRelationship.unlink(
+        updatedAt: DateTime.utc(2026, 8, 9, 10, 11, 12),
+      );
+      await source.relationshipRepository.save(sourceRelationship);
       expect(
         await source.taskRepository.getAll(),
         unorderedEquals(sourceTasks),
       );
       expect(await source.noteRepository.getAll(), [sourceNote]);
-      expect(await _outbox(source), hasLength(4));
+      expect(await source.relationshipRepository.getAll(), [
+        sourceRelationship,
+      ]);
+      expect(await _outbox(source), hasLength(6));
       await source.close();
 
       final persistedSource = await openInstallation(
@@ -118,7 +136,10 @@ void main() {
         unorderedEquals(sourceTasks),
       );
       expect(await persistedSource.noteRepository.getAll(), [sourceNote]);
-      expect(await _outbox(persistedSource), hasLength(4));
+      expect(await persistedSource.relationshipRepository.getAll(), [
+        sourceRelationship,
+      ]);
+      expect(await _outbox(persistedSource), hasLength(6));
       expect(await _deviceId(root, 'source'), 'source-device');
 
       final backupPath = path.join(root.path, 'cross-installation.zip');
@@ -141,6 +162,7 @@ void main() {
       expect(artifactText, isNot(contains('source-device')));
       expect(artifactText, isNot(contains('outbox')));
       expect(artifactText, isNot(contains('changeId')));
+      expect(artifactText, contains('relationships'));
       final secondArchive = ZipDecoder().decodeBytes(
         await File(secondBackupPath).readAsBytes(),
         verify: true,
@@ -162,6 +184,9 @@ void main() {
         unorderedEquals(sourceTasks),
       );
       expect(await target.noteRepository.getAll(), [sourceNote]);
+      expect(await target.relationshipRepository.getAll(), [
+        sourceRelationship,
+      ]);
       expect(await _outbox(target), isEmpty);
       expect(await _deviceId(root, 'target'), 'target-device');
       expect(await _deviceId(root, 'target'), isNot('source-device'));
@@ -173,6 +198,9 @@ void main() {
         unorderedEquals(sourceTasks),
       );
       expect(await reopened.noteRepository.getAll(), [sourceNote]);
+      expect(await reopened.relationshipRepository.getAll(), [
+        sourceRelationship,
+      ]);
       expect(await _outbox(reopened), isEmpty);
       expect(await _deviceId(root, 'target'), 'target-device');
     },
@@ -294,9 +322,9 @@ void main() {
     expect(await File(secondPath).readAsBytes(), firstBytes);
     final source = utf8.decode(firstBytes);
     final json = jsonDecode(source) as Map<String, dynamic>;
-    final document = LifeOsDataFormatV2.decodeExport(source);
+    final document = LifeOsDataFormatV3.decodeExport(source);
     expect(json['format'], lifeOsExportFormatKind);
-    expect(json['formatVersion'], lifeOsExportFormatVersionV2);
+    expect(json['formatVersion'], lifeOsExportFormatVersionV3);
     expect(document.tasks.map((task) => task.id), [
       '00000000-0000-4000-8000-000000000031',
       '00000000-0000-4000-8000-000000000032',

@@ -1,5 +1,6 @@
 import '../../../../application/backup/lifeos_backup_export_contracts.dart';
 import '../../../../application/backup/lifeos_backup_restore_contracts.dart';
+import '../../../../domain/entities/lifeos_entity.dart';
 import '../lifeos_database.dart';
 
 class DriftLifeOsBackupRestoreStore implements LifeOsBackupRestoreStore {
@@ -24,24 +25,31 @@ class DriftLifeOsBackupRestoreStore implements LifeOsBackupRestoreStore {
     try {
       await _database.transaction(() async {
         await _database.delete(_database.outboxEntries).go();
+        await _database.delete(_database.relationshipRecords).go();
         await _database.delete(_database.taskRecords).go();
         await _database.delete(_database.noteRecords).go();
         await _database.delete(_database.entities).go();
 
-        for (final task in snapshot.tasks) {
+        for (final entity in <LifeOsEntity>[
+          ...snapshot.tasks,
+          ...snapshot.notes,
+          ...snapshot.relationships,
+        ]) {
           await _database
               .into(_database.entities)
               .insert(
                 EntitiesCompanion.insert(
-                  id: task.id.value,
-                  entityType: task.entityType.name,
-                  createdAt: task.createdAt,
-                  updatedAt: task.updatedAt,
-                  lifecycle: task.lifecycle.name,
-                  version: task.version,
-                  source: task.source.name,
+                  id: entity.id.value,
+                  entityType: entity.entityType.name,
+                  createdAt: entity.createdAt,
+                  updatedAt: entity.updatedAt,
+                  lifecycle: entity.lifecycle.name,
+                  version: entity.version,
+                  source: entity.source.name,
                 ),
               );
+        }
+        for (final task in snapshot.tasks) {
           await _database
               .into(_database.taskRecords)
               .insert(
@@ -54,25 +62,24 @@ class DriftLifeOsBackupRestoreStore implements LifeOsBackupRestoreStore {
         }
         for (final note in snapshot.notes) {
           await _database
-              .into(_database.entities)
-              .insert(
-                EntitiesCompanion.insert(
-                  id: note.id.value,
-                  entityType: note.entityType.name,
-                  createdAt: note.createdAt,
-                  updatedAt: note.updatedAt,
-                  lifecycle: note.lifecycle.name,
-                  version: note.version,
-                  source: note.source.name,
-                ),
-              );
-          await _database
               .into(_database.noteRecords)
               .insert(
                 NoteRecordsCompanion.insert(
                   entityId: note.id.value,
                   title: note.title,
                   content: note.content,
+                ),
+              );
+        }
+        for (final relationship in snapshot.relationships) {
+          await _database
+              .into(_database.relationshipRecords)
+              .insert(
+                RelationshipRecordsCompanion.insert(
+                  entityId: relationship.id.value,
+                  firstEntityId: relationship.firstEntityId.value,
+                  secondEntityId: relationship.secondEntityId.value,
+                  kind: relationship.kind.name,
                 ),
               );
         }

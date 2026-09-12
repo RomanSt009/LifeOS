@@ -1,5 +1,6 @@
 import '../../domain/repositories/lifeos_task_repository.dart';
 import '../../domain/repositories/lifeos_note_repository.dart';
+import '../../domain/repositories/lifeos_relationship_repository.dart';
 import '../backup/lifeos_backup_export_contracts.dart';
 
 typedef BackupUtcClock = DateTime Function();
@@ -11,6 +12,7 @@ class CreateLifeOsBackup {
     required this.utcClock,
     required this.applicationVersion,
     this.noteRepository,
+    this.relationshipRepository,
     this.backupFormatVersion = 1,
   });
 
@@ -19,6 +21,7 @@ class CreateLifeOsBackup {
   final BackupUtcClock utcClock;
   final String applicationVersion;
   final LifeOsNoteRepository? noteRepository;
+  final LifeOsRelationshipRepository? relationshipRepository;
   final int backupFormatVersion;
 
   Future<LifeOsBackupDraft> call() async {
@@ -27,6 +30,7 @@ class CreateLifeOsBackup {
     final snapshot = LifeOsDataSnapshot(
       tasks: await taskRepository.getAll(),
       notes: await noteRepository?.getAll() ?? const [],
+      relationships: await relationshipRepository?.getAll() ?? const [],
     );
 
     return LifeOsBackupDraft(

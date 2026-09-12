@@ -1,15 +1,19 @@
 import '../../domain/entities/lifeos_task.dart';
 import '../../domain/entities/lifeos_note.dart';
+import '../../domain/entities/lifeos_relationship.dart';
 
 class LifeOsDataSnapshot {
   LifeOsDataSnapshot({
     required Iterable<LifeOsTask> tasks,
     Iterable<LifeOsNote> notes = const [],
+    Iterable<LifeOsRelationship> relationships = const [],
   }) : tasks = _sortTasks(tasks),
-       notes = _sortNotes(notes);
+       notes = _sortNotes(notes),
+       relationships = _sortRelationships(relationships);
 
   final List<LifeOsTask> tasks;
   final List<LifeOsNote> notes;
+  final List<LifeOsRelationship> relationships;
 
   static List<LifeOsTask> _sortTasks(Iterable<LifeOsTask> tasks) {
     final sortedTasks = tasks.toList(growable: false)
@@ -19,6 +23,14 @@ class LifeOsDataSnapshot {
 
   static List<LifeOsNote> _sortNotes(Iterable<LifeOsNote> notes) {
     final sorted = notes.toList(growable: false)
+      ..sort((a, b) => a.id.value.compareTo(b.id.value));
+    return List.unmodifiable(sorted);
+  }
+
+  static List<LifeOsRelationship> _sortRelationships(
+    Iterable<LifeOsRelationship> relationships,
+  ) {
+    final sorted = relationships.toList(growable: false)
       ..sort((a, b) => a.id.value.compareTo(b.id.value));
     return List.unmodifiable(sorted);
   }

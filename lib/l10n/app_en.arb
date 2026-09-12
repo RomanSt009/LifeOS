@@ -56,5 +56,23 @@
   "noteContentFieldLabel": "Note content",
   "noteContentRequired": "Enter a title or content",
   "noteSaveAction": "Save Note",
-  "noteSaveError": "Unable to save Note"
+  "noteSaveError": "Unable to save Note",
+  "relationshipSectionTitle": "Related",
+  "relationshipAddAction": "Add relationship",
+  "relationshipUnlinkAction": "Remove relationship",
+  "relationshipEmpty": "No related Tasks or Notes",
+  "relationshipLoading": "Loading related item…",
+  "relationshipLoadError": "Unable to load relationships",
+  "relationshipSaveError": "Unable to update relationships",
+  "relationshipUnavailable": "Related item unavailable",
+  "relationshipPickerTitle": "Choose a Task or Note",
+  "relationshipPickerEmpty": "No other Tasks or Notes are available",
+  "relationshipTaskLabel": "Task: {title}",
+  "@relationshipTaskLabel": {
+    "placeholders": {"title": {"type": "String"}}
+  },
+  "relationshipNoteLabel": "Note: {title}",
+  "@relationshipNoteLabel": {
+    "placeholders": {"title": {"type": "String"}}
+  }
 }

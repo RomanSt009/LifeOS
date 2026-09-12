@@ -6,17 +6,20 @@ import 'package:lifeos/app/app.dart';
 import 'package:lifeos/app/dependencies.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_backup.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_note.dart';
+import 'package:lifeos/application/use_cases/create_lifeos_relationship.dart';
 import 'package:lifeos/application/backup/lifeos_backup_operations.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
 import 'package:lifeos/application/use_cases/export_lifeos_data.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_backup.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
+import 'package:lifeos/application/use_cases/unlink_lifeos_relationship.dart';
 import 'package:lifeos/infrastructure/backup/files/lifeos_backup_file_reader.dart';
 import 'package:lifeos/infrastructure/backup/formats/v1_backup_export_encoder.dart';
 import 'package:lifeos/infrastructure/persistence/drift/lifeos_database.dart';
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_task_repository.dart';
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_note_repository.dart';
+import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_relationship_repository.dart';
 import 'package:lifeos/infrastructure/persistence/drift/restore/drift_lifeos_backup_restore_store.dart';
 import 'package:lifeos/presentation/search/task_search_providers.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
@@ -36,11 +39,17 @@ void main() {
       () => 'note-change-test',
       'device-test',
     );
+    final relationshipRepository = DriftLifeOsRelationshipRepository(
+      database,
+      () => 'relationship-change-test',
+      'device-test',
+    );
     const backupExportEncoder = V1BackupExportEncoder();
     final dependencies = LifeOsAppDependencies(
       database: database,
       taskRepository: repository,
       noteRepository: noteRepository,
+      relationshipRepository: relationshipRepository,
       createTask: CreateLifeOsTask(
         repository: repository,
         entityIdGenerator: () => 'task-test',
@@ -53,6 +62,17 @@ void main() {
       ),
       editNote: EditLifeOsNote(
         repository: noteRepository,
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
+      createRelationship: CreateLifeOsRelationship(
+        relationshipRepository: relationshipRepository,
+        taskRepository: repository,
+        noteRepository: noteRepository,
+        entityIdGenerator: () => 'relationship-test',
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
+      unlinkRelationship: UnlinkLifeOsRelationship(
+        repository: relationshipRepository,
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),
       searchTasks: SearchLifeOsTasks(repository),
@@ -101,11 +121,17 @@ void main() {
       () => 'note-change-test',
       'device-test',
     );
+    final relationshipRepository = DriftLifeOsRelationshipRepository(
+      database,
+      () => 'relationship-change-test',
+      'device-test',
+    );
     const backupExportEncoder = V1BackupExportEncoder();
     final dependencies = LifeOsAppDependencies(
       database: database,
       taskRepository: repository,
       noteRepository: noteRepository,
+      relationshipRepository: relationshipRepository,
       createTask: CreateLifeOsTask(
         repository: repository,
         entityIdGenerator: () => 'task-test',
@@ -118,6 +144,17 @@ void main() {
       ),
       editNote: EditLifeOsNote(
         repository: noteRepository,
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
+      createRelationship: CreateLifeOsRelationship(
+        relationshipRepository: relationshipRepository,
+        taskRepository: repository,
+        noteRepository: noteRepository,
+        entityIdGenerator: () => 'relationship-test',
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
+      unlinkRelationship: UnlinkLifeOsRelationship(
+        repository: relationshipRepository,
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),
       searchTasks: SearchLifeOsTasks(repository),

@@ -1,10 +1,10 @@
 # Relationships Vertical Slice + Schema v3
 
-Статус: active
+Статус: completed
 
 ## Контекст
 
-Milestone добавляет первую production Relationship Entity поверх существующих Task и Note. Domain-семантика принята в ADR-0032; SQLite/Drift migration discipline определяется ADR-0029. Текущая production schema имеет версию `2`, а текущий Backup/Export writer использует format v2.
+Milestone добавил первую production Relationship Entity поверх существующих Task и Note. Domain-семантика принята в ADR-0032; SQLite/Drift migration discipline определяется ADR-0029. Итоговая production schema имеет версию `3`, текущий Backup/Export writer использует format v3, а Reader/Restore поддерживает v1/v2/v3.
 
 ## История checkpoint
 
@@ -305,34 +305,53 @@ Result / evidence:
 
 ### RL-04 — Domain + Persistence
 
-Статус: pending
+Статус: done
 
 Цель: реализовать `LifeOsRelationship`, typed repository, mapper и atomic Outbox persistence поверх schema v3.
 
+Результат: добавлены typed Relationship Entity/kind/repository, canonical undirected creation, lifecycle unlink и Drift mapper/repository. Save атомарно пишет Entity + Relationship + Outbox CREATE/UPDATE; endpoints, collisions и duplicates валидируются без schema changes. Focused Domain/persistence suite: 9 tests passed.
+
 ### RL-05 — Application + Presentation
 
-Статус: pending
+Статус: done
 
 Цель: реализовать минимальные use cases и contextual Task/Note Relationship UX без нового top-level destination.
 
+Результат: добавлены Application use cases для чтения, создания и unlink Relationships, production composition и contextual `Related` UI в существующих Task/Note экранах. Duplicate create идемпотентен, no-op unlink не сохраняется; picker использует существующие bounded Task/Note reads. `gen_l10n` выполнен; focused Application/Presentation/shell suite: 16 tests passed.
+
 ### RL-06 — Backup/Export/Restore
 
-Статус: pending
+Статус: done
 
 Цель: добавить Backup/Export format v3 и atomic Relationship-aware Restore с сохранением v1/v2 compatibility.
 
+Результат: добавлен отдельный format/encoder v3 (`Tasks + Notes + Relationships`), production writer переведён на v3, reader сохраняет поддержку v1/v2/v3. До mutation валидируются Relationship metadata, endpoints, canonical order и uniqueness; Restore удаляет/вставляет данные в FK-safe order одной транзакцией, не создаёт Outbox. Focused v1/v2/v3 writer/reader/restore suite: 29 tests passed.
+
 ### RL-07 — Cross-Entity UX/Search Gate
 
-Статус: pending
+Статус: done
 
 Цель: проверить usable endpoint selection и необходимость Search changes без автоматического введения unified Search.
 
+Результат: decision gate завершён предпочтительным минимальным исходом. Relationship picker использует bounded Task/Note read lists; текущий Task-specific Search остаётся без изменений. Unified Search, FTS, graph search, новые schema/indexes и Search abstractions не требуются. Focused Search/Relationship picker/persistence regression suite: 20 tests passed.
+
+Общая validation RL-04—RL-07: `flutter analyze` — no issues; полный `flutter test` — 179 tests passed; `flutter gen-l10n` — PASS; import-boundary, routing dependency, schema/version и dependency-diff scans — PASS; `git diff --check` — PASS. `schemaVersion` остаётся 3, dependencies не изменены, `.obsidian/workspace.json` оставлен как pre-existing user-owned change.
+
 ### RL-08 — Final Audit
 
-Статус: pending
+Статус: done
 
 Цель: провести финальный архитектурный, migration, persistence, Backup/Restore и UX audit milestone.
 
+Результат / evidence:
+
+- Архитектурный аудит подтвердил слои Domain → Application и Infrastructure/Presentation через принятые abstractions; concrete persistence и lifecycle остаются в composition root. Import-boundary, routing и Search-scope scans не обнаружили нарушений. Task-specific Search не изменён; unified Search и graph capabilities остаются отдельным будущим architecture gate.
+- Усилена defensive validation hydrated `LifeOsRelationship` и typed mapper corruption coverage. Repository теперь отвергает создание с недопустимым initial state и любые update, кроме канонического lifecycle unlink; точный повторный `save` является no-op без новой Outbox записи. CREATE/UPDATE Outbox payload, version semantics, atomic rollback, duplicate/endpoint/collision protection и close/reopen подтверждены тестами.
+- Production file-backed Backup v3 round trip теперь доказывает точное сохранение Task, Note и deleted Relationship metadata после Restore и reopen, пустой Outbox и неизменный installation `device_id`. Historical v1/v2 read/restore compatibility, v3 pre-mutation validation, transactional restore и FK-safe ordering сохранены.
+- Contextual Task/Note UI, picker, add/unlink/rebuild behavior и EN/RU localization проверены; ошибки bounded endpoint reads теперь отображаются существующим локализованным error state. Отдельный Relationships destination и generic Graph/Search UI не добавлялись.
+- Документация текущего состояния согласована с production Entity types `Task`/`Note`/`Relationship`, SQLite schema v3, Backup writer v3 и Reader/Restore v1/v2/v3; исторические ADR и frozen v1/v2 schema artifacts не изменялись.
+- Focused final audit: 67 tests passed. `flutter gen-l10n`: PASS. `flutter analyze`: no issues. Полный `flutter test`: 184 tests passed. `git diff --check`, including untracked files: PASS. Dependencies unchanged; `schemaVersion == 3`; schema v4 отсутствует; `.obsidian/workspace.json` оставлен как pre-existing user-owned change.
+
 ## Resume point
 
-RL-04 — Relationship Domain + Persistence. Не начинать без отдельного запроса.
+Milestone completed. Следующий execution plan не создавался; продолжение только после отдельного решения пользователя.

@@ -1,4 +1,4 @@
-enum LifeOsEntityType { task, note }
+enum LifeOsEntityType { task, note, relationship }
 
 enum LifeOsEntityLifecycle { active, archived, deleted }
 

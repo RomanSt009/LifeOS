@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/lifeos_entity.dart';
 import '../../domain/entities/lifeos_note.dart';
 import '../../l10n/app_localizations.dart';
+import '../relationships/related_entities_section.dart';
 import 'note_providers.dart';
 
 class NotePage extends ConsumerStatefulWidget {
@@ -172,6 +173,10 @@ class _NotePageState extends ConsumerState<NotePage> {
                       ),
                     ),
                   ),
+                  if (_selectedId case final selectedId?) ...[
+                    const SizedBox(height: 8),
+                    RelatedEntitiesSection(entityId: selectedId),
+                  ],
                   if (_error != null) ...[
                     const SizedBox(height: 8),
                     Text(

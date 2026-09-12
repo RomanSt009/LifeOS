@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import '../presentation/shell/lifeos_shell_page.dart';
 import '../presentation/notes/note_providers.dart';
+import '../presentation/relationships/relationship_providers.dart';
 import '../presentation/search/task_search_providers.dart';
 import '../presentation/settings/backup_settings_providers.dart';
 import '../presentation/tasks/task_completion_providers.dart';
@@ -53,10 +54,19 @@ class _LifeOSAppState extends State<LifeOSApp> {
         lifeOsNoteRepositoryProvider.overrideWithValue(
           widget.dependencies.noteRepository,
         ),
+        lifeOsRelationshipRepositoryProvider.overrideWithValue(
+          widget.dependencies.relationshipRepository,
+        ),
         createLifeOsNoteProvider.overrideWithValue(
           widget.dependencies.createNote,
         ),
         editLifeOsNoteProvider.overrideWithValue(widget.dependencies.editNote),
+        createLifeOsRelationshipProvider.overrideWithValue(
+          widget.dependencies.createRelationship,
+        ),
+        unlinkLifeOsRelationshipProvider.overrideWithValue(
+          widget.dependencies.unlinkRelationship,
+        ),
         createLifeOsTaskProvider.overrideWithValue(
           widget.dependencies.createTask,
         ),

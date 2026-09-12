@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../relationships/related_entities_section.dart';
 import 'task_list_providers.dart';
 
 class TaskList extends ConsumerWidget {
@@ -27,7 +28,8 @@ class TaskList extends ConsumerWidget {
                 itemCount: tasks.length,
                 itemBuilder: (context, index) {
                   final task = tasks[index];
-                  return ListTile(
+                  return ExpansionTile(
+                    key: ValueKey('task-${task.id.value}'),
                     leading: IconButton(
                       tooltip: task.isCompleted
                           ? localizations.taskCompletionMarkIncomplete
@@ -44,6 +46,7 @@ class TaskList extends ConsumerWidget {
                       },
                     ),
                     title: Text(task.title),
+                    children: [RelatedEntitiesSection(entityId: task.id)],
                   );
                 },
               );

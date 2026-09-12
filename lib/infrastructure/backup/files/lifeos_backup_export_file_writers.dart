@@ -9,6 +9,7 @@ import 'package:path/path.dart' as path;
 import '../../../application/backup/lifeos_backup_export_contracts.dart';
 import '../formats/backup_export_format_v1.dart';
 import '../formats/backup_export_format_v2.dart';
+import '../formats/backup_export_format_v3.dart';
 
 enum LifeOsArtifactWriteErrorCode {
   invalidDestination,
@@ -46,6 +47,14 @@ class LifeOsBackupFileWriter {
   }) async {
     final dataBytes = utf8.encode(draft.dataJson);
     final manifestJson = switch (draft.formatVersion) {
+      3 => LifeOsDataFormatV3.encodeManifest(
+        BackupManifestV3(
+          createdAt: draft.createdAt,
+          applicationVersion: draft.applicationVersion,
+          sourceDatabaseSchemaVersion: sourceDatabaseSchemaVersion,
+          dataSha256: sha256.convert(dataBytes).toString(),
+        ),
+      ),
       2 => LifeOsDataFormatV2.encodeManifest(
         BackupManifestV2(
           createdAt: draft.createdAt,
@@ -312,6 +321,14 @@ Future<void> _validateBackupArtifact(
   final int manifestDatabaseVersion;
   final String manifestChecksum;
   switch (expectedDraft.formatVersion) {
+    case 3:
+      final manifest = LifeOsDataFormatV3.decodeManifest(
+        utf8.decode(manifestBytes),
+      );
+      manifestCreatedAt = manifest.createdAt;
+      manifestApplicationVersion = manifest.applicationVersion;
+      manifestDatabaseVersion = manifest.sourceDatabaseSchemaVersion;
+      manifestChecksum = manifest.dataSha256;
     case 2:
       final manifest = LifeOsDataFormatV2.decodeManifest(
         utf8.decode(manifestBytes),
@@ -332,6 +349,8 @@ Future<void> _validateBackupArtifact(
       throw const FormatException('Unsupported Backup format version.');
   }
   switch (expectedDraft.formatVersion) {
+    case 3:
+      LifeOsDataFormatV3.decodeBackupData(utf8.decode(dataBytes));
     case 2:
       LifeOsDataFormatV2.decodeBackupData(utf8.decode(dataBytes));
     case 1:
@@ -362,6 +381,8 @@ Future<void> _validateExportArtifact(
     throw const FormatException('Invalid Export format version.');
   }
   switch (document['formatVersion'] as int) {
+    case 3:
+      LifeOsDataFormatV3.validateExport(decoded);
     case 2:
       LifeOsDataFormatV2.validateExport(decoded);
     case 1:

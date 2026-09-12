@@ -188,4 +188,44 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noteSaveError => 'Не удалось сохранить заметку';
+
+  @override
+  String get relationshipSectionTitle => 'Связанные';
+
+  @override
+  String get relationshipAddAction => 'Добавить связь';
+
+  @override
+  String get relationshipUnlinkAction => 'Удалить связь';
+
+  @override
+  String get relationshipEmpty => 'Нет связанных задач или заметок';
+
+  @override
+  String get relationshipLoading => 'Загрузка связанного объекта…';
+
+  @override
+  String get relationshipLoadError => 'Не удалось загрузить связи';
+
+  @override
+  String get relationshipSaveError => 'Не удалось обновить связи';
+
+  @override
+  String get relationshipUnavailable => 'Связанный объект недоступен';
+
+  @override
+  String get relationshipPickerTitle => 'Выберите задачу или заметку';
+
+  @override
+  String get relationshipPickerEmpty => 'Нет других задач или заметок';
+
+  @override
+  String relationshipTaskLabel(String title) {
+    return 'Задача: $title';
+  }
+
+  @override
+  String relationshipNoteLabel(String title) {
+    return 'Заметка: $title';
+  }
 }

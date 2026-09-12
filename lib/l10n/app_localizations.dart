@@ -439,6 +439,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to save Note'**
   String get noteSaveError;
+
+  /// No description provided for @relationshipSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Related'**
+  String get relationshipSectionTitle;
+
+  /// No description provided for @relationshipAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add relationship'**
+  String get relationshipAddAction;
+
+  /// No description provided for @relationshipUnlinkAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove relationship'**
+  String get relationshipUnlinkAction;
+
+  /// No description provided for @relationshipEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No related Tasks or Notes'**
+  String get relationshipEmpty;
+
+  /// No description provided for @relationshipLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading related item…'**
+  String get relationshipLoading;
+
+  /// No description provided for @relationshipLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load relationships'**
+  String get relationshipLoadError;
+
+  /// No description provided for @relationshipSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to update relationships'**
+  String get relationshipSaveError;
+
+  /// No description provided for @relationshipUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Related item unavailable'**
+  String get relationshipUnavailable;
+
+  /// No description provided for @relationshipPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a Task or Note'**
+  String get relationshipPickerTitle;
+
+  /// No description provided for @relationshipPickerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No other Tasks or Notes are available'**
+  String get relationshipPickerEmpty;
+
+  /// No description provided for @relationshipTaskLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Task: {title}'**
+  String relationshipTaskLabel(String title);
+
+  /// No description provided for @relationshipNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: {title}'**
+  String relationshipNoteLabel(String title);
 }
 
 class _AppLocalizationsDelegate

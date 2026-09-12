@@ -185,4 +185,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noteSaveError => 'Unable to save Note';
+
+  @override
+  String get relationshipSectionTitle => 'Related';
+
+  @override
+  String get relationshipAddAction => 'Add relationship';
+
+  @override
+  String get relationshipUnlinkAction => 'Remove relationship';
+
+  @override
+  String get relationshipEmpty => 'No related Tasks or Notes';
+
+  @override
+  String get relationshipLoading => 'Loading related item…';
+
+  @override
+  String get relationshipLoadError => 'Unable to load relationships';
+
+  @override
+  String get relationshipSaveError => 'Unable to update relationships';
+
+  @override
+  String get relationshipUnavailable => 'Related item unavailable';
+
+  @override
+  String get relationshipPickerTitle => 'Choose a Task or Note';
+
+  @override
+  String get relationshipPickerEmpty => 'No other Tasks or Notes are available';
+
+  @override
+  String relationshipTaskLabel(String title) {
+    return 'Task: $title';
+  }
+
+  @override
+  String relationshipNoteLabel(String title) {
+    return 'Note: $title';
+  }
 }

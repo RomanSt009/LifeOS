@@ -1476,7 +1476,7 @@ SQLite implementation
 
 # 58. MVP Boundary
 
-> **Уточнение:** этот раздел описывает широкую будущую границу product MVP. Он не равен завершённому execution milestone первого Task vertical slice в `docs/exec-plans/completed/lifeos-mvp.md`; Relationships, Basic Logging и полноценная migration evolution из списка ниже ещё не реализованы.
+> **Уточнение:** этот раздел описывает широкую будущую границу product MVP. Он не равен завершённому execution milestone первого Task vertical slice в `docs/exec-plans/completed/lifeos-mvp.md`. Базовая Relationship vertical slice и последовательные migrations до schema v3 уже реализованы; Basic Logging, расширенная graph functionality и дальнейшая migration evolution из списка ниже ещё не реализованы.
 
 Первая рабочая версия должна содержать:
 

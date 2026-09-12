@@ -8,6 +8,7 @@ import '../../../application/backup/lifeos_backup_export_contracts.dart';
 import '../../../application/backup/lifeos_backup_restore_contracts.dart';
 import '../formats/backup_export_format_v1.dart';
 import '../formats/backup_export_format_v2.dart';
+import '../formats/backup_export_format_v3.dart';
 
 class LifeOsBackupFileReader implements LifeOsBackupReader {
   const LifeOsBackupFileReader();
@@ -56,6 +57,7 @@ class LifeOsBackupFileReader implements LifeOsBackupReader {
       manifest = switch (formatVersion) {
         1 => LifeOsDataFormatV1.decodeBackupManifest(manifestSource),
         2 => LifeOsDataFormatV2.decodeManifest(manifestSource),
+        3 => LifeOsDataFormatV3.decodeManifest(manifestSource),
         _ => throw const LifeOsDataFormatException(
           code: LifeOsDataFormatErrorCode.unsupportedVersion,
           message: 'Unsupported Backup format version.',
@@ -85,10 +87,23 @@ class LifeOsBackupFileReader implements LifeOsBackupReader {
           tasks: backup.tasks.map((record) => record.toDomain()),
         );
       }
-      final backup = LifeOsDataFormatV2.decodeBackupData(source);
+      if (formatVersion == 2) {
+        final backup = LifeOsDataFormatV2.decodeBackupData(source);
+        return LifeOsDataSnapshot(
+          tasks: backup.tasks.map((record) => record.toDomain()),
+          notes: backup.notes.map((record) => record.toDomain()),
+        );
+      }
+      final backup = LifeOsDataFormatV3.decodeBackupData(source);
       return LifeOsDataSnapshot(
         tasks: backup.tasks.map((record) => record.toDomain()),
         notes: backup.notes.map((record) => record.toDomain()),
+        relationships: backup.relationships.map(
+          (record) => record.toDomain(
+            firstEntityType: backup.entityTypesById[record.firstEntityId]!,
+            secondEntityType: backup.entityTypesById[record.secondEntityId]!,
+          ),
+        ),
       );
     } on LifeOsDataFormatException catch (error) {
       throw _mapFormatError(error);

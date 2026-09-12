@@ -1,5 +1,6 @@
 import '../../domain/repositories/lifeos_task_repository.dart';
 import '../../domain/repositories/lifeos_note_repository.dart';
+import '../../domain/repositories/lifeos_relationship_repository.dart';
 import '../backup/lifeos_backup_export_contracts.dart';
 import 'create_lifeos_backup.dart';
 
@@ -10,6 +11,7 @@ class ExportLifeOsData {
     required this.utcClock,
     required this.applicationVersion,
     this.noteRepository,
+    this.relationshipRepository,
   });
 
   final LifeOsTaskRepository taskRepository;
@@ -17,6 +19,7 @@ class ExportLifeOsData {
   final BackupUtcClock utcClock;
   final String applicationVersion;
   final LifeOsNoteRepository? noteRepository;
+  final LifeOsRelationshipRepository? relationshipRepository;
 
   Future<String> call() async {
     final createdAt = utcClock();
@@ -29,6 +32,7 @@ class ExportLifeOsData {
     final snapshot = LifeOsDataSnapshot(
       tasks: await taskRepository.getAll(),
       notes: await noteRepository?.getAll() ?? const [],
+      relationships: await relationshipRepository?.getAll() ?? const [],
     );
 
     return encoder.encodeExport(

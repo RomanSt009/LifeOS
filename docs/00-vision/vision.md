@@ -106,9 +106,9 @@ LifeOS должна предоставить доступ к соответст�
 
 Vision остаётся долгосрочным направлением проекта, а не описанием уже готового набора функций.
 
-В repository уже существует рабочая Windows-first Flutter implementation: desktop shell, Tasks и Notes с локальным SQLite/Drift persistence, Task-specific Search, en/ru localization, Backup / Export v2 и Restore v1/v2.
+В repository уже существует рабочая Windows-first Flutter implementation: desktop shell, Tasks, Notes и contextual Relationships с локальным SQLite/Drift persistence, Task-specific Search, en/ru localization, Backup / Export v3 и Restore v1/v2/v3.
 
-Notes, Projects, Documents, Relationships, AI, Sync и дополнительные платформы остаются будущими возможностями. Их упоминание выше не означает наличие production implementation.
+Projects, Documents, unified Search, graph visualization, AI, Sync и дополнительные платформы остаются будущими возможностями. Их упоминание выше не означает наличие production implementation.
 
 ## Связанные документы
 

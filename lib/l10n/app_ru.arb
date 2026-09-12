@@ -56,5 +56,23 @@
   "noteContentFieldLabel": "Текст заметки",
   "noteContentRequired": "Введите название или текст",
   "noteSaveAction": "Сохранить заметку",
-  "noteSaveError": "Не удалось сохранить заметку"
+  "noteSaveError": "Не удалось сохранить заметку",
+  "relationshipSectionTitle": "Связанные",
+  "relationshipAddAction": "Добавить связь",
+  "relationshipUnlinkAction": "Удалить связь",
+  "relationshipEmpty": "Нет связанных задач или заметок",
+  "relationshipLoading": "Загрузка связанного объекта…",
+  "relationshipLoadError": "Не удалось загрузить связи",
+  "relationshipSaveError": "Не удалось обновить связи",
+  "relationshipUnavailable": "Связанный объект недоступен",
+  "relationshipPickerTitle": "Выберите задачу или заметку",
+  "relationshipPickerEmpty": "Нет других задач или заметок",
+  "relationshipTaskLabel": "Задача: {title}",
+  "@relationshipTaskLabel": {
+    "placeholders": {"title": {"type": "String"}}
+  },
+  "relationshipNoteLabel": "Заметка: {title}",
+  "@relationshipNoteLabel": {
+    "placeholders": {"title": {"type": "String"}}
+  }
 }
