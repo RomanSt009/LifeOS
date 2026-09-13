@@ -1,8 +1,8 @@
 # Desktop Usability & Dogfooding Alpha
 
-Статус плана: active
+Статус плана: completed
 
-Точная точка возобновления: `DU-09 — Dogfooding Alpha final audit` (`pending`). DU-08 завершён и проверен; DU-09 не начинался.
+Точная точка возобновления: отсутствует. DU-09 завершён; Desktop Usability & Dogfooding Alpha принят. Новый execution plan не создан.
 
 ## Goal
 
@@ -769,7 +769,7 @@ Baseline: `flutter analyze` PASS; полный `flutter test` PASS (248 тест
 
 ## DU-09 — Dogfooding Alpha final audit
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -793,7 +793,31 @@ All relevant focused tests; `flutter analyze`; full `flutter test`; localization
 
 ### Result / evidence
 
-Not started.
+Аудит начат. Pre-flight: `main`, HEAD `59162b8103d38a24192687f36c154a2e0265c9f5`, upstream divergence `0 0`; DU-08 находится в HEAD. Единственное исходное working-tree изменение — user-owned `.obsidian/workspace.json`; оно не затрагивается. Baseline: `flutter analyze` PASS; полный `flutter test` PASS (250 тестов).
+
+Checkpoint reconciliation подтвердил, что DU-01…DU-08 имеют `done`, их production/test evidence находится в HEAD, unresolved milestone blocker нет. ADR-0033 закрывает lifecycle/mutation architecture gate; schema/Backup/dependency expansion не потребовалось.
+
+Acceptance audit не обнаружил blocking regression:
+
+- **Tasks:** create, title edit, completion/reopen, soft delete, feature Trash/Restore, deterministic row/context-menu targeting, `Ctrl+N`, safe `Delete`, visible mutation/list error и retry, persistence after reopen покрыты Domain/Application/repository/widget/file-backed tests.
+- **Notes:** create/select, atomic title/content edit, explicit save, dirty state, Save/Discard/Cancel, `Ctrl+S`/`Ctrl+N`, delete/restore/context menu, delayed-save protection, provider refresh и persistence покрыты tests. In-feature selection/New/Trash/Delete не могут молча потерять dirty draft; shell navigation сохраняет его через `IndexedStack`.
+- **Relationships:** supported Task↔Task/Task↔Note/Note↔Note create, self/duplicate protection, active-endpoint filtering, confirmation-safe unlink, retry/error states и reappearance после endpoint Restore подтверждены. Endpoint lifecycle не мутирует Relationship.
+- **Search:** Task-only Application/Domain path, active-only title substring, literal `%`, `_` и `\`, English/Cyrillic case contract, deterministic ordering, completion freshness, no Outbox mutation, stale success/error race protection, recovery и clear-query UX подтверждены. Open-result, Note Search и Unified Search остаются explicit post-Alpha gates.
+- **Backup/Export/Restore:** current writer v3, v1/v2/v3 Backup readers, v3 Export, validation-before-mutation, replace-style atomic Restore, Outbox clear, installation `device_id` preservation, no archived/deleted data loss, rollback и post-Restore provider refresh подтверждены integration/persistence/widget tests.
+- **Lifecycle/Outbox:** ordinary Task/Note/Search/picker/Related projections следуют ADR-0033; Trash deleted-only; Backup/Export all-state. Material Task/Note/Relationship mutations пишут один atomic full-snapshot Outbox `CREATE`/`UPDATE` с correct base/new version; no-op не пишет Outbox.
+- **Desktop:** `NavigationRail` + shell-local destination + `IndexedStack`, mouse/context-menu actions, feature-scoped shortcuts, dialog/focus safety и wide/moderately-narrow layout остаются устойчивыми. Destructive shortcut не действует в `EditableText`, modal route, Trash или inactive destination.
+- **Persistence/migration:** `schemaVersion == 3`; fresh v3, frozen file-backed v1→v2→v3, v2→v3, sequential chain, rollback/future-version/integrity/reopen tests проходят. Schema v4, migration drift и Backup v4 отсутствуют.
+- **Architecture/localization/dependencies:** Domain/Application/Presentation boundary scans чисты; production database/repository lifecycle создаётся только composition root. EN/RU ARB parity — 108/108 message keys; hardcoded Presentation string scan чистый. Routing package и unexpected Alpha dependencies отсутствуют.
+
+Dogfooding critical path доказан совокупностью existing widget, repository, integration и file-backed tests; manual GUI automation не вводилась. Focused cross-feature acceptance run PASS (200 тестов). Production regression fix не потребовался.
+
+Documentation reconciliation ограничен Task/Note usability bullets в root `README.md`, completed-plan inventory в `docs/exec-plans/README.md` и stale Search open-result acceptance wording в этом плане. ADR semantics не изменялись.
+
+Final validation: `flutter gen-l10n` PASS; generated localization current; `flutter analyze` PASS; полный `flutter test` PASS (250 тестов); focused acceptance suite PASS (200 тестов); Domain/Application/Presentation/localization import-boundary scans PASS; hardcoded Presentation string scan PASS; EN/RU ARB parity PASS (108/108); routing dependency scan PASS; direct `dart.exe pub deps --style=compact` PASS; dependency diff guard PASS; `schemaVersion == 3`; v1→v2/v2→v3 migration guards PASS; generated Drift snapshot guard PASS; `git diff --check` PASS. Handwritten Dart в DU-09 не изменялся, поэтому отдельный `dart format` target отсутствует.
+
+Deferred и не блокирует Alpha: Search open-result; Unified Search; Note Search; `Ctrl+F`; Escape-to-clear; custom Up/Down list navigation; double-click navigation; Archive UI; global Trash; permanent purge; Home Dashboard; AI; Workspace/Projects; Sync. Window-close dirty-draft interception остаётся отдельным platform UX gate; внутри текущего shell/session потеря draft закрыта.
+
+**Acceptance decision: ACCEPTED.** Desktop Usability & Dogfooding Alpha соответствует утверждённым acceptance criteria. Приложение готово к реальному dogfooding; фактические UX observations могут изменить следующий приоритет. Если observations не выявят более важный gap, рекомендуемый следующий milestone — **Unified Local Search: Task + Note**.
 
 ## Validation strategy
 
@@ -817,7 +841,7 @@ Not started.
 - Expected row actions are discoverable with mouse/context menus, and the highest-value contextual keyboard actions work without targeting the wrong item.
 - Focus remains visible and usable through core flows; dialogs have safe cancel/confirm behavior.
 - Home, Tasks, Notes, Search and Settings navigation remains clear and preserves intended in-process state.
-- Task Search remains clearly Task-only, race-safe and can open the relevant Task without a new routing architecture.
+- Task Search remains clearly Task-only, race-safe and has clear/recovery UX; open-result is deferred to a separate post-Alpha navigation/selection gate.
 - Backup, Export and replace-style Restore remain available, localized and understandable; Restore confirmation is explicit.
 - After Restore, every mounted feature shows restored state rather than stale pre-restore projections.
 - Empty/loading/error states never trap the user in indefinite loading or hide a failed core mutation without recovery guidance.
@@ -837,4 +861,4 @@ Not started.
 
 ## Exact resume point
 
-Resume with **DU-09 — Dogfooding Alpha final audit only**. Reconcile this plan with Git and production state, re-read every ADR referenced by DU-09, then mark DU-09 active before audit work. Do not start a new execution plan.
+Execution plan completed. Resume checkpoint отсутствует; новый milestone должен быть обсуждён и принят отдельно.

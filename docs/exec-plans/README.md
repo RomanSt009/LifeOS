@@ -23,7 +23,9 @@ docs/exec-plans/
     ├── desktop-shell-navigation.md
     ├── local-search.md
     ├── lifeos-mvp.md
-    └── notes-vertical-slice.md
+    ├── notes-vertical-slice.md
+    ├── relationships-vertical-slice.md
+    └── desktop-usability-dogfooding-alpha.md
 ```
 
 - `active/` содержит планы, которые Codex может выполнять сейчас;

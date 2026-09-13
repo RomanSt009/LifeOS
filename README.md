@@ -11,8 +11,8 @@ LifeOS уже имеет рабочую local-first реализацию на Fl
 Реализованы:
 
 - desktop shell и навигация Home / Tasks / Notes / Search / Settings;
-- создание, отображение и переключение completion для Tasks;
-- создание, редактирование и локальное хранение Notes с explicit save;
+- создание, редактирование, completion/reopen и recoverable Trash/Restore для Tasks;
+- создание, выбор, редактирование и локальное хранение Notes с explicit save, dirty-draft guard и recoverable Trash/Restore;
 - production schema v3 для Tasks, Notes, Relationships и атомарного Outbox;
 - постоянная identity локальной installation;
 - Task-specific local Search;
