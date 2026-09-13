@@ -193,6 +193,52 @@ void main() {
     expect(find.textContaining('private stale error'), findsNothing);
   });
 
+  testWidgets('clear resets query and results and returns focus to the field', (
+    tester,
+  ) async {
+    final repository = StubLifeOsTaskRepository(
+      results: [task(id: 'task-result', title: 'Clearable result')],
+    );
+    await tester.pumpWidget(searchTestApp(repository));
+
+    expect(find.byKey(const Key('search-clear-button')), findsNothing);
+    await search(tester, 'clearable');
+    await tester.pumpAndSettle();
+    expect(find.text('Clearable result'), findsOneWidget);
+    expect(find.byTooltip('Clear search'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('search-clear-button')));
+    await tester.pump();
+
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('search-query-field')),
+    );
+    expect(field.controller?.text, isEmpty);
+    expect(field.focusNode?.hasFocus, isTrue);
+    expect(find.text('Enter a Task title to search'), findsOneWidget);
+    expect(find.text('Clearable result'), findsNothing);
+    expect(find.byKey(const Key('search-clear-button')), findsNothing);
+  });
+
+  testWidgets('clear invalidates an in-flight search response', (tester) async {
+    final pending = Completer<List<LifeOsTask>>();
+    final repository = StubLifeOsTaskRepository(
+      onSearch: (_) => pending.future,
+    );
+    await tester.pumpWidget(searchTestApp(repository));
+
+    await search(tester, 'pending');
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    await tester.tap(find.byKey(const Key('search-clear-button')));
+    await tester.pump();
+    expect(find.text('Enter a Task title to search'), findsOneWidget);
+
+    pending.complete([task(id: 'stale', title: 'Stale after clear')]);
+    await tester.pumpAndSettle();
+    expect(find.text('Stale after clear'), findsNothing);
+    expect(find.text('Enter a Task title to search'), findsOneWidget);
+  });
+
   testWidgets('localizes the Search Presentation in Russian', (tester) async {
     final repository = StubLifeOsTaskRepository();
     await tester.pumpWidget(

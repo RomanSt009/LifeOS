@@ -31,6 +31,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navigationSettings => 'Настройки';
 
   @override
+  String get homeAlphaDescription =>
+      'Используйте навигацию для работы с задачами и заметками или поиска по названиям задач.';
+
+  @override
   String get settingsTitle => 'Настройки';
 
   @override
@@ -122,6 +126,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get searchAction => 'Найти';
+
+  @override
+  String get searchClearAction => 'Очистить поиск';
 
   @override
   String get searchInitial => 'Введите название задачи для поиска';

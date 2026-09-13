@@ -140,6 +140,12 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get navigationSettings;
 
+  /// No description provided for @homeAlphaDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the navigation to work with Tasks and Notes or search Task titles.'**
+  String get homeAlphaDescription;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
@@ -307,6 +313,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search'**
   String get searchAction;
+
+  /// No description provided for @searchClearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get searchClearAction;
 
   /// No description provided for @searchInitial.
   ///

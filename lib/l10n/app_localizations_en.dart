@@ -31,6 +31,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationSettings => 'Settings';
 
   @override
+  String get homeAlphaDescription =>
+      'Use the navigation to work with Tasks and Notes or search Task titles.';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override
@@ -119,6 +123,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchAction => 'Search';
+
+  @override
+  String get searchClearAction => 'Clear search';
 
   @override
   String get searchInitial => 'Enter a Task title to search';

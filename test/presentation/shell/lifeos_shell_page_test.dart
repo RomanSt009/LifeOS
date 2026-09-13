@@ -217,6 +217,13 @@ void main() {
       LifeOsDestination.home.index,
     );
     expect(find.byKey(const Key('home-placeholder-title')), findsOneWidget);
+    expect(find.byKey(const Key('home-alpha-description')), findsOneWidget);
+    expect(
+      find.text(
+        'Use the navigation to work with Tasks and Notes or search Task titles.',
+      ),
+      findsOneWidget,
+    );
     expect(find.byType(TaskList), findsNothing);
     expect(find.byType(TaskList, skipOffstage: false), findsOneWidget);
 

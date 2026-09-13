@@ -27,6 +27,11 @@ void main() {
     expect(english.navigationHome, 'Home');
     expect(english.navigationTasks, 'Tasks');
     expect(english.navigationSearch, 'Search');
+    expect(english.searchClearAction, 'Clear search');
+    expect(
+      english.homeAlphaDescription,
+      'Use the navigation to work with Tasks and Notes or search Task titles.',
+    );
     expect(english.searchTitle, 'Search');
     expect(english.searchQueryFieldLabel, 'Task title');
     expect(english.searchAction, 'Search');
@@ -55,6 +60,11 @@ void main() {
     expect(russian.navigationHome, 'Главная');
     expect(russian.navigationTasks, 'Задачи');
     expect(russian.navigationSearch, 'Поиск');
+    expect(russian.searchClearAction, 'Очистить поиск');
+    expect(
+      russian.homeAlphaDescription,
+      'Используйте навигацию для работы с задачами и заметками или поиска по названиям задач.',
+    );
     expect(russian.searchTitle, 'Поиск');
     expect(russian.searchQueryFieldLabel, 'Название задачи');
     expect(russian.searchAction, 'Найти');

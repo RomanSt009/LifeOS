@@ -2,7 +2,7 @@
 
 Статус плана: active
 
-Точная точка возобновления: `DU-08 — Search and bounded daily-use polish` (`pending`). DU-07 завершён и проверен; DU-08 не начинался.
+Точная точка возобновления: `DU-09 — Dogfooding Alpha final audit` (`pending`). DU-08 завершён и проверен; DU-09 не начинался.
 
 ## Goal
 
@@ -721,7 +721,7 @@ Focused DU-07 cross-feature suite PASS (94 теста); полный `flutter te
 
 ## DU-08 — Search and bounded daily-use polish
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -745,7 +745,27 @@ Focused widget/navigation/layout/localization tests and standard plan checks.
 
 ### Result / evidence
 
-Not started.
+Architecture gate пройден без нового ADR: все изменения остались в Presentation/localization и не потребовали нового navigation, selection или state contract.
+
+| Remaining Alpha item | DU-08 result |
+|---|---|
+| Search clear, stale async response after clear, focus return | `CLOSED` |
+| Search initial/loading/results/no-results/error distinction | `CLOSED` ранее и повторно проверено |
+| Development-only Home placeholder | `CLOSED` минимальным Alpha landing text |
+| Task/Note selection, Trash, tooltips, context actions, focus | `CLOSED` предыдущими checkpoints; новых дефектов не найдено |
+| Settings Backup/Export/Restore clarity | `CLOSED` ранее; дополнительное изменение не обосновано |
+| Open Search result in Tasks | `DEFERRED AFTER ALPHA` по architecture gate |
+| Ctrl+F, Escape-to-clear, custom Up/Down/double-click navigation | `DEFERRED AFTER ALPHA`; standard focus/traversal достаточен |
+
+Для непустого Task Search query добавлен mouse/keyboard-accessible clear control с localized tooltip. Clear очищает controller и результаты до корректного initial state, увеличивает request generation до очистки и поэтому не допускает возврата stale success/error от in-flight search; фокус возвращается в query field. Существующие Enter submit, loading/results/no-results/error, retry новым запросом, completed styling и `IndexedStack` preservation не менялись.
+
+Search result activation не реализована. `TaskSearchPage` и `TaskList` — sibling destinations с feature-local состоянием; текущая shell API передаёт только destination index. Выделение найденной Task потребовало бы нового cross-feature/global selected-entity contract, Task detail route либо заметного рефакторинга Task page, что прямо запрещено DU-08. Скрытый event bus/navigation repository не создан.
+
+Home больше не показывает только development-like label: он использует `LifeOS` и коротко сообщает, что Tasks, Notes и Task-title Search доступны через существующую navigation. Dashboard, агрегаты, Today, metrics и quick-capture не добавлены. Task, Note и Settings production code не менялись: текущие empty/Trash/action/focus и Backup/Export/Restore surfaces признаны достаточными. Новые controls используют стандартные Material focus/hover/keyboard semantics; clear имеет tooltip/semantic label и focused test.
+
+Baseline: `flutter analyze` PASS; полный `flutter test` PASS (248 тестов). Focused Search/shell/localization suite PASS (27 тестов); focused Task/Note/Relationship/Backup/navigation regression PASS (60 тестов). Финальная validation: `dart format` PASS; `flutter gen-l10n` PASS; EN/RU ARB parity PASS (108/108 message keys); `flutter analyze` PASS; полный `flutter test` PASS (250 тестов); Domain/Application/Presentation/localization import-boundary scans PASS; routing и dependency scans PASS; `git diff --check` PASS.
+
+`schemaVersion` остаётся 3; schema v4/migration, Backup v4, dependency/pubspec, ADR и generated Drift changes отсутствуют. `.obsidian/workspace.json` остаётся отдельным pre-existing user change и в DU-08 не изменялся. Resume point: DU-09 — Dogfooding Alpha final audit; DU-09 не начинался.
 
 ## DU-09 — Dogfooding Alpha final audit
 
@@ -817,4 +837,4 @@ Not started.
 
 ## Exact resume point
 
-Resume with **DU-08 — Search and bounded daily-use polish only**. Reconcile this plan with Git and production state, re-read every ADR referenced by DU-08, then mark DU-08 active before implementation. Do not begin DU-09.
+Resume with **DU-09 — Dogfooding Alpha final audit only**. Reconcile this plan with Git and production state, re-read every ADR referenced by DU-09, then mark DU-09 active before audit work. Do not start a new execution plan.

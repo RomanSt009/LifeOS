@@ -14,13 +14,22 @@ class TaskSearchPage extends ConsumerStatefulWidget {
 
 class _TaskSearchPageState extends ConsumerState<TaskSearchPage> {
   final _queryController = TextEditingController();
+  final _queryFocusNode = FocusNode(debugLabel: 'Task Search query');
   AsyncValue<List<LifeOsTask>>? _searchResult;
   int _latestSearchRequest = 0;
 
   @override
   void dispose() {
     _queryController.dispose();
+    _queryFocusNode.dispose();
     super.dispose();
+  }
+
+  void _clear() {
+    _latestSearchRequest += 1;
+    _queryController.clear();
+    setState(() => _searchResult = null);
+    _queryFocusNode.requestFocus();
   }
 
   Future<void> _search() async {
@@ -60,13 +69,25 @@ class _TaskSearchPageState extends ConsumerState<TaskSearchPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: TextField(
-                  key: const Key('search-query-field'),
-                  controller: _queryController,
-                  decoration: InputDecoration(
-                    labelText: localizations.searchQueryFieldLabel,
+                child: ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _queryController,
+                  builder: (context, value, _) => TextField(
+                    key: const Key('search-query-field'),
+                    controller: _queryController,
+                    focusNode: _queryFocusNode,
+                    decoration: InputDecoration(
+                      labelText: localizations.searchQueryFieldLabel,
+                      suffixIcon: value.text.isEmpty
+                          ? null
+                          : IconButton(
+                              key: const Key('search-clear-button'),
+                              tooltip: localizations.searchClearAction,
+                              onPressed: _clear,
+                              icon: const Icon(Icons.clear),
+                            ),
+                    ),
+                    onSubmitted: (_) => _search(),
                   ),
-                  onSubmitted: (_) => _search(),
                 ),
               ),
               const SizedBox(width: 8),
