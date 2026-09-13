@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -15,9 +16,71 @@ class TaskList extends ConsumerStatefulWidget {
 }
 
 class _TaskListState extends ConsumerState<TaskList> {
+  final _featureFocusNode = FocusNode(debugLabel: 'Task feature actions');
+  final _creationFocusNode = FocusNode(debugLabel: 'Task creation title');
+  final _expansionControllers = <LifeOsEntityId, ExpansibleController>{};
+  final _relationshipKeys = <LifeOsEntityId, GlobalKey>{};
   bool _showTrash = false;
   bool _isMutating = false;
   bool _operationFailed = false;
+  LifeOsEntityId? _selectedTaskId;
+
+  @override
+  void dispose() {
+    _featureFocusNode.dispose();
+    _creationFocusNode.dispose();
+    super.dispose();
+  }
+
+  KeyEventResult _handleFeatureKeyEvent(FocusNode _, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (HardwareKeyboard.instance.isControlPressed &&
+        event.logicalKey == LogicalKeyboardKey.keyN) {
+      if (!_showTrash && !_isMutating) _focusCreation();
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.delete &&
+        !_showTrash &&
+        !_isMutating &&
+        !_hasEditableTextFocus()) {
+      final selected = _selectedTask();
+      if (selected != null) _confirmDeleteTask(selected);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.escape &&
+        _selectedTaskId != null &&
+        !_hasEditableTextFocus()) {
+      setState(() => _selectedTaskId = null);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  bool _hasEditableTextFocus() {
+    final context = FocusManager.instance.primaryFocus?.context;
+    return context?.widget is EditableText ||
+        context?.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+
+  LifeOsTask? _selectedTask() {
+    final selectedId = _selectedTaskId;
+    if (selectedId == null) return null;
+    return ref
+        .read(taskListControllerProvider)
+        .asData
+        ?.value
+        .where((task) => task.id == selectedId)
+        .firstOrNull;
+  }
+
+  void _focusCreation() {
+    _creationFocusNode.requestFocus();
+  }
+
+  void _selectTask(LifeOsEntityId id) {
+    if (_selectedTaskId != id) setState(() => _selectedTaskId = id);
+    _featureFocusNode.requestFocus();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,127 +89,256 @@ class _TaskListState extends ConsumerState<TaskList> {
     );
     final localizations = AppLocalizations.of(context);
 
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            key: const Key('task-trash-toggle'),
-            onPressed: _isMutating
-                ? null
-                : () => setState(() {
-                    _showTrash = !_showTrash;
-                    _operationFailed = false;
-                  }),
-            icon: Icon(_showTrash ? Icons.arrow_back : Icons.delete_outline),
-            label: Text(
-              _showTrash
-                  ? localizations.backToTasksAction
-                  : localizations.trashAction,
+    return Focus(
+      focusNode: _featureFocusNode,
+      autofocus: true,
+      onKeyEvent: _handleFeatureKeyEvent,
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              key: const Key('task-trash-toggle'),
+              onPressed: _isMutating
+                  ? null
+                  : () => setState(() {
+                      _showTrash = !_showTrash;
+                      _selectedTaskId = null;
+                      _operationFailed = false;
+                    }),
+              icon: Icon(_showTrash ? Icons.arrow_back : Icons.delete_outline),
+              label: Text(
+                _showTrash
+                    ? localizations.backToTasksAction
+                    : localizations.trashAction,
+              ),
             ),
           ),
-        ),
-        if (!_showTrash) const TaskCreationForm(),
-        const SizedBox(height: 12),
-        if (_operationFailed)
-          Text(
-            localizations.taskRestoreError,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-        Expanded(
-          child: tasks.when(
-            data: (tasks) {
-              if (tasks.isEmpty) {
-                return Center(
-                  child: Text(
-                    _showTrash
-                        ? localizations.taskTrashEmpty
-                        : localizations.taskListEmpty,
-                  ),
-                );
-              }
+          if (!_showTrash) TaskCreationForm(titleFocusNode: _creationFocusNode),
+          const SizedBox(height: 12),
+          if (_operationFailed)
+            Text(
+              localizations.taskRestoreError,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          Expanded(
+            child: tasks.when(
+              data: (tasks) {
+                if (tasks.isEmpty) {
+                  return Center(
+                    child: Text(
+                      _showTrash
+                          ? localizations.taskTrashEmpty
+                          : localizations.taskListEmpty,
+                    ),
+                  );
+                }
 
-              return ListView.builder(
-                itemCount: tasks.length,
-                itemBuilder: (context, index) {
-                  final task = tasks[index];
-                  if (_showTrash) {
-                    return ListTile(
-                      key: ValueKey('deleted-task-${task.id.value}'),
-                      title: Text(task.title),
-                      trailing: TextButton.icon(
-                        key: ValueKey('restore-task-${task.id.value}'),
-                        onPressed: _isMutating
-                            ? null
-                            : () => _restoreTask(task),
-                        icon: const Icon(Icons.restore),
-                        label: Text(localizations.restoreTaskAction),
+                return ListView.builder(
+                  itemCount: tasks.length,
+                  itemBuilder: (context, index) {
+                    final task = tasks[index];
+                    if (_showTrash) {
+                      return GestureDetector(
+                        onSecondaryTapDown: (details) =>
+                            _showDeletedTaskMenu(task, details.globalPosition),
+                        child: ListTile(
+                          key: ValueKey('deleted-task-${task.id.value}'),
+                          title: Text(task.title),
+                          trailing: TextButton.icon(
+                            key: ValueKey('restore-task-${task.id.value}'),
+                            onPressed: _isMutating
+                                ? null
+                                : () => _restoreTask(task),
+                            icon: const Icon(Icons.restore),
+                            label: Text(localizations.restoreTaskAction),
+                          ),
+                        ),
+                      );
+                    }
+                    final isSelected = task.id == _selectedTaskId;
+                    return GestureDetector(
+                      onSecondaryTapDown: (details) =>
+                          _showActiveTaskMenu(task, details.globalPosition),
+                      child: ExpansionTile(
+                        key: ValueKey('task-${task.id.value}'),
+                        controller: _expansionControllers.putIfAbsent(
+                          task.id,
+                          ExpansibleController.new,
+                        ),
+                        backgroundColor: isSelected
+                            ? Theme.of(context).colorScheme.secondaryContainer
+                            : null,
+                        collapsedBackgroundColor: isSelected
+                            ? Theme.of(context).colorScheme.secondaryContainer
+                            : null,
+                        onExpansionChanged: (_) => _selectTask(task.id),
+                        leading: IconButton(
+                          tooltip: task.isCompleted
+                              ? localizations.taskCompletionMarkIncomplete
+                              : localizations.taskCompletionMarkComplete,
+                          icon: Icon(
+                            task.isCompleted
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                          ),
+                          onPressed: () => _toggleCompletion(task),
+                        ),
+                        title: Row(
+                          children: [
+                            Expanded(child: Text(task.title)),
+                            IconButton(
+                              key: ValueKey('edit-task-${task.id.value}'),
+                              tooltip: localizations.taskEditAction,
+                              icon: const Icon(Icons.edit_outlined),
+                              onPressed:
+                                  task.lifecycle == LifeOsEntityLifecycle.active
+                                  ? () => _editTask(task)
+                                  : null,
+                            ),
+                            IconButton(
+                              key: ValueKey('delete-task-${task.id.value}'),
+                              tooltip: localizations.deleteTaskAction,
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () => _confirmDeleteTask(task),
+                            ),
+                          ],
+                        ),
+                        children: [
+                          RelatedEntitiesSection(
+                            key: _relationshipKeys.putIfAbsent(
+                              task.id,
+                              GlobalKey.new,
+                            ),
+                            entityId: task.id,
+                          ),
+                        ],
                       ),
                     );
-                  }
-                  return ExpansionTile(
-                    key: ValueKey('task-${task.id.value}'),
-                    leading: IconButton(
-                      tooltip: task.isCompleted
-                          ? localizations.taskCompletionMarkIncomplete
-                          : localizations.taskCompletionMarkComplete,
-                      icon: Icon(
-                        task.isCompleted
-                            ? Icons.check_circle
-                            : Icons.radio_button_unchecked,
-                      ),
-                      onPressed: () async {
-                        await ref
-                            .read(taskListControllerProvider.notifier)
-                            .toggleCompletion(task.id);
-                      },
-                    ),
-                    title: Row(
-                      children: [
-                        Expanded(child: Text(task.title)),
-                        IconButton(
-                          key: ValueKey('edit-task-${task.id.value}'),
-                          tooltip: localizations.taskEditAction,
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed:
-                              task.lifecycle == LifeOsEntityLifecycle.active
-                              ? () => _showTaskEditDialog(
-                                  context: context,
-                                  ref: ref,
-                                  task: task,
-                                )
-                              : null,
-                        ),
-                        IconButton(
-                          key: ValueKey('delete-task-${task.id.value}'),
-                          tooltip: localizations.deleteTaskAction,
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () => _confirmDeleteTask(task),
-                        ),
-                      ],
-                    ),
-                    children: [RelatedEntitiesSection(entityId: task.id)],
-                  );
-                },
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stackTrace) =>
-                Center(child: Text(localizations.taskLoadError)),
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stackTrace) =>
+                  Center(child: Text(localizations.taskLoadError)),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Future<void> _confirmDeleteTask(LifeOsTask task) => showDialog<void>(
-    context: context,
-    builder: (context) => _TaskDeleteDialog(
-      task: task,
-      onDelete: () =>
-          ref.read(taskListControllerProvider.notifier).deleteTask(task.id),
-    ),
-  );
+  Future<void> _editTask(LifeOsTask task) async {
+    _selectTask(task.id);
+    await _showTaskEditDialog(context: context, ref: ref, task: task);
+    if (mounted) _featureFocusNode.requestFocus();
+  }
+
+  Future<void> _toggleCompletion(LifeOsTask task) async {
+    _selectTask(task.id);
+    await ref
+        .read(taskListControllerProvider.notifier)
+        .toggleCompletion(task.id);
+    if (mounted) _featureFocusNode.requestFocus();
+  }
+
+  Future<void> _showRelationships(LifeOsTask task) async {
+    _selectTask(task.id);
+    _expansionControllers
+        .putIfAbsent(task.id, ExpansibleController.new)
+        .expand();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final relationshipContext = _relationshipKeys[task.id]?.currentContext;
+      if (relationshipContext != null) {
+        Scrollable.ensureVisible(
+          relationshipContext,
+          duration: const Duration(milliseconds: 150),
+        );
+      }
+    });
+  }
+
+  Future<void> _showActiveTaskMenu(LifeOsTask task, Offset position) async {
+    _selectTask(task.id);
+    final localizations = AppLocalizations.of(context);
+    final action = await showMenu<_TaskContextAction>(
+      context: context,
+      position: _menuPosition(context, position),
+      items: [
+        PopupMenuItem(
+          key: const Key('task-context-edit'),
+          value: _TaskContextAction.edit,
+          child: Text(localizations.taskEditAction),
+        ),
+        PopupMenuItem(
+          key: const Key('task-context-toggle-completion'),
+          value: _TaskContextAction.toggleCompletion,
+          child: Text(
+            task.isCompleted
+                ? localizations.taskCompletionMarkIncomplete
+                : localizations.taskCompletionMarkComplete,
+          ),
+        ),
+        PopupMenuItem(
+          key: const Key('task-context-relationships'),
+          value: _TaskContextAction.relationships,
+          child: Text(localizations.relationshipSectionTitle),
+        ),
+        PopupMenuItem(
+          key: const Key('task-context-move-to-trash'),
+          value: _TaskContextAction.moveToTrash,
+          child: Text(localizations.moveToTrashAction),
+        ),
+      ],
+    );
+    if (!mounted) return;
+    switch (action) {
+      case _TaskContextAction.edit:
+        await _editTask(task);
+      case _TaskContextAction.toggleCompletion:
+        await _toggleCompletion(task);
+      case _TaskContextAction.relationships:
+        await _showRelationships(task);
+      case _TaskContextAction.moveToTrash:
+        await _confirmDeleteTask(task);
+      case _TaskContextAction.restore:
+        break;
+      case null:
+        _featureFocusNode.requestFocus();
+    }
+  }
+
+  Future<void> _showDeletedTaskMenu(LifeOsTask task, Offset position) async {
+    final action = await showMenu<_TaskContextAction>(
+      context: context,
+      position: _menuPosition(context, position),
+      items: [
+        PopupMenuItem(
+          key: const Key('task-context-restore'),
+          value: _TaskContextAction.restore,
+          child: Text(AppLocalizations.of(context).restoreTaskAction),
+        ),
+      ],
+    );
+    if (action == _TaskContextAction.restore && mounted) {
+      await _restoreTask(task);
+    }
+  }
+
+  Future<void> _confirmDeleteTask(LifeOsTask task) async {
+    _selectTask(task.id);
+    final deleted = await showDialog<bool>(
+      context: context,
+      builder: (context) => _TaskDeleteDialog(
+        task: task,
+        onDelete: () =>
+            ref.read(taskListControllerProvider.notifier).deleteTask(task.id),
+      ),
+    );
+    if (!mounted) return;
+    if (deleted == true) setState(() => _selectedTaskId = null);
+    _featureFocusNode.requestFocus();
+  }
 
   Future<void> _restoreTask(LifeOsTask task) async {
     setState(() {
@@ -158,13 +350,34 @@ class _TaskListState extends ConsumerState<TaskList> {
     } catch (_) {
       if (mounted) setState(() => _operationFailed = true);
     } finally {
-      if (mounted) setState(() => _isMutating = false);
+      if (mounted) {
+        setState(() => _isMutating = false);
+        _featureFocusNode.requestFocus();
+      }
     }
   }
 }
 
+enum _TaskContextAction {
+  edit,
+  toggleCompletion,
+  relationships,
+  moveToTrash,
+  restore,
+}
+
+RelativeRect _menuPosition(BuildContext context, Offset globalPosition) {
+  final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
+  return RelativeRect.fromRect(
+    Rect.fromPoints(globalPosition, globalPosition),
+    Offset.zero & overlay.size,
+  );
+}
+
 class TaskCreationForm extends ConsumerStatefulWidget {
-  const TaskCreationForm({super.key});
+  const TaskCreationForm({this.titleFocusNode, super.key});
+
+  final FocusNode? titleFocusNode;
 
   @override
   ConsumerState<TaskCreationForm> createState() => _TaskCreationFormState();
@@ -224,6 +437,7 @@ class _TaskCreationFormState extends ConsumerState<TaskCreationForm> {
           child: TextField(
             key: const Key('task-title-field'),
             controller: _titleController,
+            focusNode: widget.titleFocusNode,
             decoration: InputDecoration(
               labelText: localizations.taskTitleFieldLabel,
               errorText: errorText,
@@ -383,7 +597,7 @@ class _TaskDeleteDialogState extends State<_TaskDeleteDialog> {
     });
     try {
       await widget.onDelete();
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) Navigator.of(context).pop(true);
     } catch (_) {
       if (mounted) setState(() => _failed = true);
     } finally {

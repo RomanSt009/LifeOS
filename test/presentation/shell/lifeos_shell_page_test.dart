@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
@@ -310,6 +311,55 @@ void main() {
       'Настройки',
     ]);
   });
+
+  testWidgets('keeps Task selection local and inactive destinations inert', (
+    tester,
+  ) async {
+    final task = LifeOsTask.createUserTask(
+      id: const LifeOsEntityId(
+        value: 'selected-task',
+        entityType: LifeOsEntityType.task,
+      ),
+      title: 'Selected Task',
+      timestamp: DateTime.utc(2026, 9, 13),
+    );
+    final repository = EmptyLifeOsTaskRepository(tasks: [task]);
+    await tester.pumpWidget(
+      testApp(const Locale('en'), repository: repository),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Selected Task'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<ExpansionTile>(
+            find.byKey(const ValueKey('task-selected-task')),
+          )
+          .collapsedBackgroundColor,
+      isNotNull,
+    );
+
+    for (final destination in ['Home', 'Search', 'Settings']) {
+      await tester.tap(find.text(destination));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(repository.saveCallCount, 0);
+    }
+
+    await tester.tap(find.text('Tasks'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<ExpansionTile>(
+            find.byKey(const ValueKey('task-selected-task')),
+          )
+          .collapsedBackgroundColor,
+      isNotNull,
+    );
+  });
 }
 
 List<String> destinationLabels(NavigationRail navigationRail) {
@@ -370,27 +420,33 @@ class EmptyLifeOsNoteRepository implements LifeOsNoteRepository {
 }
 
 class EmptyLifeOsTaskRepository implements LifeOsTaskRepository {
-  EmptyLifeOsTaskRepository({this.searchResults = const []});
+  EmptyLifeOsTaskRepository({
+    this.searchResults = const [],
+    this.tasks = const [],
+  });
 
   final List<LifeOsTask> searchResults;
+  final List<LifeOsTask> tasks;
   int getAllCallCount = 0;
   int searchByTitleCallCount = 0;
+  int saveCallCount = 0;
 
   @override
   Future<List<LifeOsTask>> getByLifecycle(
     LifeOsEntityLifecycle lifecycle,
   ) async {
     getAllCallCount += 1;
-    return const [];
+    return tasks.where((task) => task.lifecycle == lifecycle).toList();
   }
 
   @override
   Future<List<LifeOsTask>> getAll() async {
-    return [];
+    return List.of(tasks);
   }
 
   @override
-  Future<LifeOsTask?> getById(LifeOsEntityId id) async => null;
+  Future<LifeOsTask?> getById(LifeOsEntityId id) async =>
+      tasks.where((task) => task.id == id).firstOrNull;
 
   @override
   Future<List<LifeOsTask>> searchByTitle(String query) async {
@@ -399,5 +455,7 @@ class EmptyLifeOsTaskRepository implements LifeOsTaskRepository {
   }
 
   @override
-  Future<void> save(LifeOsTask task) async {}
+  Future<void> save(LifeOsTask task) async {
+    saveCallCount += 1;
+  }
 }

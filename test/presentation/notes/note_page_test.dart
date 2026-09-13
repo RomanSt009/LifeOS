@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -573,6 +574,194 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.notes.single.lifecycle, LifeOsEntityLifecycle.active);
   });
+
+  testWidgets('Note context menu keeps its id target and dirty guard', (
+    tester,
+  ) async {
+    final first = _note('note-a', title: 'First Note', content: 'First body');
+    final second = _note(
+      'note-b',
+      title: 'Second Note',
+      content: 'Second body',
+    );
+    final repository = _MemoryNoteRepository([first, second]);
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('First Note'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Dirty first body',
+    );
+    await _secondaryTap(tester, find.text('Second Note'));
+
+    expect(find.text('Edit Note'), findsOneWidget);
+    expect(find.byKey(const Key('note-context-relationships')), findsOneWidget);
+    expect(find.text('Move to Trash'), findsOneWidget);
+    await tester.tap(find.text('Move to Trash'));
+    await tester.pumpAndSettle();
+    expect(find.text('Save changes to this Note?'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('unsaved-note-cancel')));
+    await tester.pumpAndSettle();
+    expect(repository.saveCallCount, 0);
+    expect(
+      repository.notes.every(
+        (note) => note.lifecycle == LifeOsEntityLifecycle.active,
+      ),
+      isTrue,
+    );
+
+    await _secondaryTap(tester, find.text('Second Note'));
+    await tester.tap(find.text('Move to Trash'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-discard')));
+    await tester.pumpAndSettle();
+    expect(find.text('Move Note to Trash?'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('confirm-delete-note-button')));
+    await tester.pumpAndSettle();
+
+    expect(
+      repository.notes.singleWhere((note) => note.id == second.id).lifecycle,
+      LifeOsEntityLifecycle.deleted,
+    );
+    expect(
+      repository.notes.singleWhere((note) => note.id == first.id).lifecycle,
+      LifeOsEntityLifecycle.active,
+    );
+  });
+
+  testWidgets('Note context Relationships selects the right-clicked Note', (
+    tester,
+  ) async {
+    final first = _note('note-a', title: 'First Note', content: 'First body');
+    final second = _note(
+      'note-b',
+      title: 'Second Note',
+      content: 'Second body',
+    );
+    final repository = _MemoryNoteRepository([first, second]);
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('First Note'));
+    await tester.pumpAndSettle();
+    await _secondaryTap(tester, find.text('Second Note'));
+    await tester.tap(find.byKey(const Key('note-context-relationships')));
+    await tester.pumpAndSettle();
+
+    expect(_fieldText(tester, 'note-title-field'), 'Second Note');
+    expect(
+      tester
+          .widget<ListTile>(find.byKey(const ValueKey('note-note-b')))
+          .selected,
+      isTrue,
+    );
+    expect(
+      find.byKey(const ValueKey('add-relationship-note-b')).hitTestable(),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Note keyboard actions require safe feature focus', (
+    tester,
+  ) async {
+    final note = _note('note-a', title: 'Keyboard Note', content: 'Body');
+    final repository = _MemoryNoteRepository([note]);
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+
+    await tester.tap(find.text('Keyboard Note'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+    await tester.pumpAndSettle();
+    expect(find.text('Move Note to Trash?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('note-content-field')));
+    await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+    await tester.pump();
+    expect(find.byType(AlertDialog), findsNothing);
+
+    await _pressControlN(tester);
+    await tester.pumpAndSettle();
+    expect(_fieldText(tester, 'note-title-field'), '');
+    expect(_fieldText(tester, 'note-content-field'), '');
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-title-field')))
+          .focusNode
+          ?.hasFocus,
+      isTrue,
+    );
+  });
+
+  testWidgets('Note Trash context menu exposes Restore only in Russian', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final deleted = _note(
+      'note-a',
+      title: 'Удалённая заметка',
+      content: 'Текст',
+    ).delete(updatedAt: DateTime.utc(2026, 9, 12, 11));
+    final repository = _MemoryNoteRepository([deleted]);
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('ru'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('note-trash-toggle')));
+    await tester.pumpAndSettle();
+    await _secondaryTap(tester, find.text('Удалённая заметка'));
+
+    expect(find.byKey(const Key('note-context-restore')), findsOneWidget);
+    expect(find.byKey(const Key('note-context-edit')), findsNothing);
+    expect(find.byKey(const Key('note-context-move-to-trash')), findsNothing);
+    expect(find.text('Восстановить заметку'), findsWidgets);
+    await tester.tap(find.byKey(const Key('note-context-restore')));
+    await tester.pumpAndSettle();
+    expect(repository.notes.single.lifecycle, LifeOsEntityLifecycle.active);
+  });
+}
+
+Future<void> _secondaryTap(WidgetTester tester, Finder finder) async {
+  await tester.tapAt(tester.getCenter(finder), buttons: kSecondaryMouseButton);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pressControlN(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 }
 
 LifeOsNote _note(String id, {required String title, required String content}) =>

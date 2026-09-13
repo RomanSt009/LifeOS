@@ -18,6 +18,7 @@ void main() {
     expect(english.deleteTaskDialogTitle, 'Move Task to Trash?');
     expect(english.restoreTaskAction, 'Restore Task');
     expect(english.deleteNoteDialogTitle, 'Move Note to Trash?');
+    expect(english.noteEditAction, 'Edit Note');
     expect(english.restoreNoteAction, 'Restore Note');
     expect(english.navigationHome, 'Home');
     expect(english.navigationTasks, 'Tasks');
@@ -38,6 +39,7 @@ void main() {
     expect(russian.deleteTaskDialogTitle, 'Переместить задачу в корзину?');
     expect(russian.restoreTaskAction, 'Восстановить задачу');
     expect(russian.deleteNoteDialogTitle, 'Переместить заметку в корзину?');
+    expect(russian.noteEditAction, 'Изменить заметку');
     expect(russian.restoreNoteAction, 'Восстановить заметку');
     expect(russian.navigationHome, 'Главная');
     expect(russian.navigationTasks, 'Задачи');

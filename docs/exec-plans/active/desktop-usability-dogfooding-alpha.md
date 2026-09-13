@@ -2,7 +2,7 @@
 
 Статус плана: active
 
-Точная точка возобновления: `DU-05 — Note draft and explicit-save safety` (`pending`). DU-04 завершён и проверен; DU-05 не начат.
+Точная точка возобновления: `DU-07 — Safety, refresh and error recovery` (`pending`). DU-06 завершён и проверен; DU-07 не начат.
 
 ## Goal
 
@@ -651,7 +651,7 @@ Focused DU-05/Note/shell/Settings/Domain/Application/Drift validation PASS (56 �
 
 ## DU-06 — Desktop actions, context menus, focus and selection
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -675,7 +675,13 @@ Focused mouse/keyboard/context-menu/desktop-layout widget tests plus standard pl
 
 ### Result / evidence
 
-Not started.
+Architecture gate пройден без нового ADR: Flutter SDK `Focus`/key events, `showMenu`, существующие feature-local state и Application use cases полностью покрывают checkpoint; Domain/Application/Infrastructure менять не потребовалось.
+
+Task и Note получили локальное, визуально различимое selected-item state. Right-click menu захватывает конкретный Entity ID: active Task предоставляет Edit, Complete/Reopen, Relationships и Move to Trash; active Note — Edit, Relationships и Move to Trash; feature Trash предоставляет только Restore. Relationships раскрывает/показывает существующий `RelatedEntitiesSection`, без новой navigation surface. Все destructive paths сохраняют существующие confirmation и Note dirty-draft guards; cancel/failure не применяют скрытую mutation. После dialog/menu операций фокус возвращается в feature, а `IndexedStack` сохраняет selection/draft state.
+
+Feature-scoped `Ctrl+N` переводит Task в существующее поле создания и запускает безопасный New Note flow; Note `Ctrl+S` сохранён. `Delete` действует только при явном active selection и feature focus, игнорируется в `EditableText`, modal routes, Trash и Home/Search/Settings. Существующие Enter/Escape semantics полей и dialog сохранены. Для Note sidebar action row применён `Wrap`, устранив обнаруженный overflow русских подписей без введения mobile/tablet layout.
+
+Focused Task/Note/shell/Relationships mouse, keyboard, context-menu, lifecycle и desktop-layout suite PASS (46 тестов); localization suite PASS (5 тестов); `flutter gen-l10n` PASS; EN/RU ARB parity PASS (100/100 message keys); `flutter analyze` PASS; полный `flutter test` PASS (236 тестов); Domain/Application/Presentation import-boundary и localization scans PASS; routing/dependency scans PASS; `schemaVersion` остаётся 3; `git diff --check` PASS. Новых dependencies, schema/Backup изменений и нового ADR нет. `.obsidian/workspace.json` остаётся отдельным pre-existing user change и не изменялся в DU-06. Resume point: DU-07 — Safety, refresh and error recovery; DU-07 не начинался.
 
 ## DU-07 — Safety, refresh and error recovery
 
@@ -803,4 +809,4 @@ Not started.
 
 ## Exact resume point
 
-Resume with **DU-06 — Desktop actions, context menus, focus and selection only**. Reconcile this plan with Git and production state, re-read every ADR referenced by DU-06, then mark DU-06 active before implementation. Do not begin DU-07.
+Resume with **DU-07 — Safety, refresh and error recovery only**. Reconcile this plan with Git and production state, re-read every ADR referenced by DU-07, then mark DU-07 active before implementation. Do not begin DU-08.

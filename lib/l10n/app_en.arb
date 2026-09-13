@@ -68,6 +68,7 @@
   "noteLoadError": "Unable to load Notes",
   "noteUntitled": "Untitled Note",
   "noteCreateAction": "New Note",
+  "noteEditAction": "Edit Note",
   "noteTitleFieldLabel": "Note title",
   "noteContentFieldLabel": "Note content",
   "noteContentRequired": "Enter a title or content",

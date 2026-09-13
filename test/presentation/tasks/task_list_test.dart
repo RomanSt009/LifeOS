@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -349,6 +350,121 @@ void main() {
       LifeOsEntityLifecycle.deleted,
     );
   });
+
+  testWidgets('Task context menu targets the right-clicked Task by id', (
+    tester,
+  ) async {
+    final first = createTask('task-1', 'First Task', isCompleted: false);
+    final second = createTask('task-2', 'Second Task', isCompleted: false);
+    final repository = FakeLifeOsTaskRepository(
+      () async => [first, second],
+      storedTask: second,
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('First Task'));
+    await tester.pumpAndSettle();
+    await _secondaryTap(tester, find.text('Second Task'));
+
+    expect(find.text('Edit Task'), findsOneWidget);
+    expect(find.text('Mark complete'), findsWidgets);
+    expect(find.byKey(const Key('task-context-relationships')), findsOneWidget);
+    expect(find.text('Move to Trash'), findsOneWidget);
+    await tester.tap(find.text('Mark complete').last);
+    await tester.pumpAndSettle();
+
+    expect(repository.savedTasks.single.id.value, 'task-2');
+    expect(repository.savedTasks.single.isCompleted, isTrue);
+
+    await _secondaryTap(tester, find.text('Second Task'));
+    await tester.tap(find.byKey(const Key('task-context-relationships')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('add-relationship-task-2')).hitTestable(),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Delete requires selection and never fires in the title field', (
+    tester,
+  ) async {
+    final task = createTask('task-1', 'Keyboard Task', isCompleted: false);
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+
+    await tester.tap(find.text('Keyboard Task'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('task-title-field')),
+      'Draft title',
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+    await tester.pump();
+    expect(find.byType(AlertDialog), findsNothing);
+
+    await tester.tap(find.text('Keyboard Task'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+    await tester.pumpAndSettle();
+    expect(find.text('Move Task to Trash?'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    await _pressControlN(tester);
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('task-title-field')))
+          .focusNode
+          ?.hasFocus,
+      isTrue,
+    );
+  });
+
+  testWidgets('Task Trash context menu exposes Restore only', (tester) async {
+    final task = createTask('task-1', 'Trash Task', isCompleted: false);
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('delete-task-task-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-delete-task-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('task-trash-toggle')));
+    await tester.pumpAndSettle();
+    await _secondaryTap(tester, find.text('Trash Task'));
+
+    expect(find.byKey(const Key('task-context-restore')), findsOneWidget);
+    expect(find.byKey(const Key('task-context-edit')), findsNothing);
+    expect(find.byKey(const Key('task-context-move-to-trash')), findsNothing);
+    await tester.tap(find.byKey(const Key('task-context-restore')));
+    await tester.pumpAndSettle();
+    expect(repository.savedTasks.last.lifecycle, LifeOsEntityLifecycle.active);
+  });
+}
+
+Future<void> _secondaryTap(WidgetTester tester, Finder finder) async {
+  await tester.tapAt(tester.getCenter(finder), buttons: kSecondaryMouseButton);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pressControlN(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 }
 
 Widget testApp(LifeOsTaskRepository repository) {

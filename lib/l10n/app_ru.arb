@@ -68,6 +68,7 @@
   "noteLoadError": "Не удалось загрузить заметки",
   "noteUntitled": "Заметка без названия",
   "noteCreateAction": "Новая заметка",
+  "noteEditAction": "Изменить заметку",
   "noteTitleFieldLabel": "Название заметки",
   "noteContentFieldLabel": "Текст заметки",
   "noteContentRequired": "Введите название или текст",

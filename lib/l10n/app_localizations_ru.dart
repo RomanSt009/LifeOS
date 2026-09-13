@@ -222,6 +222,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noteCreateAction => 'Новая заметка';
 
   @override
+  String get noteEditAction => 'Изменить заметку';
+
+  @override
   String get noteTitleFieldLabel => 'Название заметки';
 
   @override

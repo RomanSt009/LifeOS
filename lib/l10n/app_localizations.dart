@@ -500,6 +500,12 @@ abstract class AppLocalizations {
   /// **'New Note'**
   String get noteCreateAction;
 
+  /// No description provided for @noteEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Note'**
+  String get noteEditAction;
+
   /// No description provided for @noteTitleFieldLabel.
   ///
   /// In en, this message translates to:

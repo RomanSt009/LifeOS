@@ -219,6 +219,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteCreateAction => 'New Note';
 
   @override
+  String get noteEditAction => 'Edit Note';
+
+  @override
   String get noteTitleFieldLabel => 'Note title';
 
   @override
