@@ -74,6 +74,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get cancelAction => 'Отмена';
 
   @override
+  String get retryAction => 'Повторить';
+
+  @override
   String get restoreConfirmationTitle => 'Заменить текущие данные LifeOS?';
 
   @override
@@ -146,6 +149,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get taskCompletionMarkIncomplete => 'Отметить невыполненной';
+
+  @override
+  String get taskCompletionError => 'Не удалось изменить состояние задачи';
 
   @override
   String get taskTitleFieldLabel => 'Название задачи';
@@ -317,6 +323,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get relationshipPickerEmpty => 'Нет других задач или заметок';
+
+  @override
+  String get relationshipEndpointChoicesError =>
+      'Не удалось загрузить доступные задачи и заметки';
+
+  @override
+  String get relationshipEndpointError =>
+      'Не удалось загрузить связанный объект';
+
+  @override
+  String get relationshipUnlinkDialogTitle => 'Удалить связь?';
+
+  @override
+  String get relationshipUnlinkDialogMessage =>
+      'Связь будет удалена из раздела «Связанные». Задача или заметка не будет удалена.';
 
   @override
   String relationshipTaskLabel(String title) {

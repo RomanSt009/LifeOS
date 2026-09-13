@@ -74,6 +74,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelAction => 'Cancel';
 
   @override
+  String get retryAction => 'Retry';
+
+  @override
   String get restoreConfirmationTitle => 'Replace current LifeOS data?';
 
   @override
@@ -143,6 +146,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taskCompletionMarkIncomplete => 'Mark incomplete';
+
+  @override
+  String get taskCompletionError => 'Unable to update Task completion';
 
   @override
   String get taskTitleFieldLabel => 'Task title';
@@ -314,6 +320,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get relationshipPickerEmpty => 'No other Tasks or Notes are available';
+
+  @override
+  String get relationshipEndpointChoicesError =>
+      'Unable to load available Tasks and Notes';
+
+  @override
+  String get relationshipEndpointError => 'Unable to load related item';
+
+  @override
+  String get relationshipUnlinkDialogTitle => 'Remove relationship?';
+
+  @override
+  String get relationshipUnlinkDialogMessage =>
+      'The relationship will be removed from Related. The Task or Note will not be deleted.';
 
   @override
   String relationshipTaskLabel(String title) {

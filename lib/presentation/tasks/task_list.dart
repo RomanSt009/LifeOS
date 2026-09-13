@@ -22,7 +22,9 @@ class _TaskListState extends ConsumerState<TaskList> {
   final _relationshipKeys = <LifeOsEntityId, GlobalKey>{};
   bool _showTrash = false;
   bool _isMutating = false;
-  bool _operationFailed = false;
+  bool _restoreFailed = false;
+  final _completionMutations = <LifeOsEntityId>{};
+  LifeOsEntityId? _completionFailedTaskId;
   LifeOsEntityId? _selectedTaskId;
 
   @override
@@ -104,7 +106,8 @@ class _TaskListState extends ConsumerState<TaskList> {
                   : () => setState(() {
                       _showTrash = !_showTrash;
                       _selectedTaskId = null;
-                      _operationFailed = false;
+                      _restoreFailed = false;
+                      _completionFailedTaskId = null;
                     }),
               icon: Icon(_showTrash ? Icons.arrow_back : Icons.delete_outline),
               label: Text(
@@ -116,14 +119,21 @@ class _TaskListState extends ConsumerState<TaskList> {
           ),
           if (!_showTrash) TaskCreationForm(titleFocusNode: _creationFocusNode),
           const SizedBox(height: 12),
-          if (_operationFailed)
+          if (_restoreFailed)
             Text(
               localizations.taskRestoreError,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          if (!_showTrash && _completionFailedTaskId != null)
+            Text(
+              localizations.taskCompletionError,
+              key: const Key('task-completion-error'),
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           Expanded(
             child: tasks.when(
               data: (tasks) {
+                _reconcileSelection(tasks);
                 if (tasks.isEmpty) {
                   return Center(
                     child: Text(
@@ -174,6 +184,7 @@ class _TaskListState extends ConsumerState<TaskList> {
                             : null,
                         onExpansionChanged: (_) => _selectTask(task.id),
                         leading: IconButton(
+                          key: ValueKey('toggle-task-${task.id.value}'),
                           tooltip: task.isCompleted
                               ? localizations.taskCompletionMarkIncomplete
                               : localizations.taskCompletionMarkComplete,
@@ -182,7 +193,9 @@ class _TaskListState extends ConsumerState<TaskList> {
                                 ? Icons.check_circle
                                 : Icons.radio_button_unchecked,
                           ),
-                          onPressed: () => _toggleCompletion(task),
+                          onPressed: _completionMutations.contains(task.id)
+                              ? null
+                              : () => _toggleCompletion(task),
                         ),
                         title: Row(
                           children: [
@@ -219,8 +232,21 @@ class _TaskListState extends ConsumerState<TaskList> {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stackTrace) =>
-                  Center(child: Text(localizations.taskLoadError)),
+              error: (error, stackTrace) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(localizations.taskLoadError),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      key: const Key('retry-task-list'),
+                      onPressed: _retryLoad,
+                      icon: const Icon(Icons.refresh),
+                      label: Text(localizations.retryAction),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -235,11 +261,44 @@ class _TaskListState extends ConsumerState<TaskList> {
   }
 
   Future<void> _toggleCompletion(LifeOsTask task) async {
+    if (_completionMutations.contains(task.id)) return;
     _selectTask(task.id);
-    await ref
-        .read(taskListControllerProvider.notifier)
-        .toggleCompletion(task.id);
-    if (mounted) _featureFocusNode.requestFocus();
+    setState(() {
+      _completionMutations.add(task.id);
+      _completionFailedTaskId = null;
+    });
+    try {
+      await ref
+          .read(taskListControllerProvider.notifier)
+          .toggleCompletion(task.id);
+    } catch (_) {
+      if (mounted) setState(() => _completionFailedTaskId = task.id);
+    } finally {
+      if (mounted) {
+        setState(() => _completionMutations.remove(task.id));
+        _featureFocusNode.requestFocus();
+      }
+    }
+  }
+
+  void _retryLoad() {
+    ref.invalidate(
+      _showTrash ? taskTrashControllerProvider : taskListControllerProvider,
+    );
+  }
+
+  void _reconcileSelection(List<LifeOsTask> tasks) {
+    final selectedId = _selectedTaskId;
+    if (_showTrash ||
+        selectedId == null ||
+        tasks.any((task) => task.id == selectedId)) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _selectedTaskId == selectedId) {
+        setState(() => _selectedTaskId = null);
+      }
+    });
   }
 
   Future<void> _showRelationships(LifeOsTask task) async {
@@ -273,6 +332,7 @@ class _TaskListState extends ConsumerState<TaskList> {
         PopupMenuItem(
           key: const Key('task-context-toggle-completion'),
           value: _TaskContextAction.toggleCompletion,
+          enabled: !_completionMutations.contains(task.id),
           child: Text(
             task.isCompleted
                 ? localizations.taskCompletionMarkIncomplete
@@ -343,12 +403,12 @@ class _TaskListState extends ConsumerState<TaskList> {
   Future<void> _restoreTask(LifeOsTask task) async {
     setState(() {
       _isMutating = true;
-      _operationFailed = false;
+      _restoreFailed = false;
     });
     try {
       await ref.read(taskTrashControllerProvider.notifier).restoreTask(task.id);
     } catch (_) {
-      if (mounted) setState(() => _operationFailed = true);
+      if (mounted) setState(() => _restoreFailed = true);
     } finally {
       if (mounted) {
         setState(() => _isMutating = false);

@@ -54,6 +54,26 @@ void main() {
       find.byKey(const ValueKey('unlink-relationship-relationship-created')),
     );
     await tester.pumpAndSettle();
+    expect(find.text('Remove relationship?'), findsOneWidget);
+    expect(
+      find.text(
+        'The relationship will be removed from Related. The Task or Note will not be deleted.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('cancel-relationship-unlink')));
+    await tester.pumpAndSettle();
+    expect(
+      relationshipRepository.items.single.lifecycle,
+      LifeOsEntityLifecycle.active,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('unlink-relationship-relationship-created')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-relationship-unlink')));
+    await tester.pumpAndSettle();
     expect(
       relationshipRepository.items.single.lifecycle,
       LifeOsEntityLifecycle.deleted,
@@ -82,7 +102,157 @@ void main() {
     expect(find.text('Связанные'), findsOneWidget);
     expect(find.text('Добавить связь'), findsOneWidget);
   });
+
+  testWidgets('unlink failure stays open and retries without hiding the link', (
+    tester,
+  ) async {
+    final taskRepository = _TaskRepository([_task('task-a', 'Task A')]);
+    final noteRepository = _NoteRepository([_note('note-a', 'Note A')]);
+    final relationshipRepository = _RelationshipRepository()
+      ..items.add(_relationship())
+      ..failNextSave = true;
+    await tester.pumpWidget(
+      _app(
+        const NotePage(),
+        taskRepository,
+        noteRepository,
+        relationshipRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('note-note-a')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('unlink-relationship-relationship-a')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-relationship-unlink')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('relationship-unlink-error')), findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(
+      relationshipRepository.items.single.lifecycle,
+      LifeOsEntityLifecycle.active,
+    );
+
+    await tester.tap(find.byKey(const Key('confirm-relationship-unlink')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('No related Tasks or Notes'), findsOneWidget);
+  });
+
+  testWidgets('Relationship list failure has a bounded retry', (tester) async {
+    final taskRepository = _TaskRepository([_task('task-a', 'Task A')]);
+    final noteRepository = _NoteRepository([_note('note-a', 'Note A')]);
+    final relationshipRepository = _RelationshipRepository()
+      ..failNextGetForEntity = true;
+    await tester.pumpWidget(
+      _app(
+        const NotePage(),
+        taskRepository,
+        noteRepository,
+        relationshipRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('note-note-a')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load relationships'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('retry-relationships-note-a')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('retry-relationships-note-a')));
+    await tester.pumpAndSettle();
+    expect(find.text('No related Tasks or Notes'), findsOneWidget);
+  });
+
+  testWidgets('Endpoint label failure stops loading and can retry', (
+    tester,
+  ) async {
+    final taskRepository = _TaskRepository([_task('task-a', 'Task A')])
+      ..failNextLifecycleRead = true;
+    final noteRepository = _NoteRepository([_note('note-a', 'Note A')]);
+    final relationshipRepository = _RelationshipRepository()
+      ..items.add(_relationship());
+    await tester.pumpWidget(
+      _app(
+        const NotePage(),
+        taskRepository,
+        noteRepository,
+        relationshipRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('note-note-a')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load related item'), findsOneWidget);
+    expect(find.text('Loading related item…'), findsNothing);
+    await tester.tap(
+      find.byKey(const ValueKey('retry-relationship-endpoint-relationship-a')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Task: Task A'), findsOneWidget);
+  });
+
+  testWidgets('Relationship picker endpoint failure has a bounded retry', (
+    tester,
+  ) async {
+    final taskRepository = _TaskRepository([_task('task-a', 'Task A')])
+      ..failNextLifecycleRead = true;
+    final noteRepository = _NoteRepository([_note('note-a', 'Note A')]);
+    final relationshipRepository = _RelationshipRepository();
+    await tester.pumpWidget(
+      _app(
+        const NotePage(),
+        taskRepository,
+        noteRepository,
+        relationshipRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('note-note-a')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('add-relationship-note-a')));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Unable to load available Tasks and Notes'),
+      findsOneWidget,
+    );
+    expect(find.byType(SimpleDialog), findsNothing);
+
+    await tester.tap(
+      find.byKey(const ValueKey('retry-relationship-choices-note-a')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(SimpleDialog), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('relationship-choice-task-a')),
+      findsOneWidget,
+    );
+  });
 }
+
+LifeOsRelationship _relationship() => LifeOsRelationship.createUserRelationship(
+  id: const LifeOsEntityId(
+    value: 'relationship-a',
+    entityType: LifeOsEntityType.relationship,
+  ),
+  firstEndpoint: const LifeOsEntityId(
+    value: 'task-a',
+    entityType: LifeOsEntityType.task,
+  ),
+  secondEndpoint: const LifeOsEntityId(
+    value: 'note-a',
+    entityType: LifeOsEntityType.note,
+  ),
+  timestamp: DateTime.utc(2026, 9, 12),
+);
 
 Widget _app(
   Widget child,
@@ -165,10 +335,18 @@ LifeOsNote _note(String id, String title) => LifeOsNote(
 class _TaskRepository implements LifeOsTaskRepository {
   _TaskRepository(this.items);
   final List<LifeOsTask> items;
+  bool failNextLifecycleRead = false;
   @override
   Future<List<LifeOsTask>> getByLifecycle(
     LifeOsEntityLifecycle lifecycle,
-  ) async => items.where((item) => item.lifecycle == lifecycle).toList();
+  ) async {
+    if (failNextLifecycleRead) {
+      failNextLifecycleRead = false;
+      throw StateError('Expected endpoint load failure.');
+    }
+    return items.where((item) => item.lifecycle == lifecycle).toList();
+  }
+
   @override
   Future<List<LifeOsTask>> getAll() async => List.of(items);
   @override
@@ -198,23 +376,35 @@ class _NoteRepository implements LifeOsNoteRepository {
 
 class _RelationshipRepository implements LifeOsRelationshipRepository {
   final List<LifeOsRelationship> items = [];
+  bool failNextSave = false;
+  bool failNextGetForEntity = false;
   @override
   Future<List<LifeOsRelationship>> getAll() async => List.of(items);
   @override
   Future<LifeOsRelationship?> getById(LifeOsEntityId id) async =>
       items.where((item) => item.id == id).firstOrNull;
   @override
-  Future<List<LifeOsRelationship>> getForEntity(
-    LifeOsEntityId entityId,
-  ) async => items
-      .where(
-        (item) =>
-            item.lifecycle == LifeOsEntityLifecycle.active &&
-            (item.firstEntityId == entityId || item.secondEntityId == entityId),
-      )
-      .toList();
+  Future<List<LifeOsRelationship>> getForEntity(LifeOsEntityId entityId) async {
+    if (failNextGetForEntity) {
+      failNextGetForEntity = false;
+      throw StateError('Expected relationship load failure.');
+    }
+    return items
+        .where(
+          (item) =>
+              item.lifecycle == LifeOsEntityLifecycle.active &&
+              (item.firstEntityId == entityId ||
+                  item.secondEntityId == entityId),
+        )
+        .toList();
+  }
+
   @override
   Future<void> save(LifeOsRelationship relationship) async {
+    if (failNextSave) {
+      failNextSave = false;
+      throw StateError('Expected relationship save failure.');
+    }
     items.removeWhere((item) => item.id == relationship.id);
     items.add(relationship);
   }

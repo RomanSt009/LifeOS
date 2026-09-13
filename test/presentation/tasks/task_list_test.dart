@@ -454,6 +454,158 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.savedTasks.last.lifecycle, LifeOsEntityLifecycle.active);
   });
+
+  testWidgets('completion failure is visible, truthful, and retryable', (
+    tester,
+  ) async {
+    final task = createTask('task-1', 'Retry completion', isCompleted: false);
+    var attempts = 0;
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+      beforeSave: (_) async {
+        attempts += 1;
+        if (attempts == 1) throw StateError('Expected toggle failure.');
+      },
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Mark complete'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('task-completion-error')), findsOneWidget);
+    expect(find.byTooltip('Mark complete'), findsOneWidget);
+    expect(repository.savedTasks, isEmpty);
+
+    await tester.tap(find.byTooltip('Mark complete'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('task-completion-error')), findsNothing);
+    expect(repository.savedTasks.single.isCompleted, isTrue);
+  });
+
+  testWidgets('completion blocks duplicate requests while saving', (
+    tester,
+  ) async {
+    final task = createTask('task-1', 'One toggle', isCompleted: false);
+    final saveStarted = Completer<void>();
+    final releaseSave = Completer<void>();
+    var attempts = 0;
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+      beforeSave: (_) async {
+        attempts += 1;
+        saveStarted.complete();
+        await releaseSave.future;
+      },
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Mark complete'));
+    await tester.pump();
+    await saveStarted.future;
+    expect(
+      tester
+          .widget<IconButton>(find.byKey(const ValueKey('toggle-task-task-1')))
+          .onPressed,
+      isNull,
+    );
+    expect(attempts, 1);
+
+    releaseSave.complete();
+    await tester.pumpAndSettle();
+    expect(repository.savedTasks, hasLength(1));
+  });
+
+  testWidgets('Task list load failure exposes a working retry', (tester) async {
+    var attempts = 0;
+    final repository = FakeLifeOsTaskRepository(() async {
+      attempts += 1;
+      if (attempts == 1) throw StateError('Expected read failure.');
+      return [];
+    });
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load Tasks'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('retry-task-list')));
+    await tester.pumpAndSettle();
+    expect(find.text('No Tasks yet'), findsOneWidget);
+    expect(attempts, 2);
+  });
+
+  testWidgets('restore failure keeps the Task in Trash and allows retry', (
+    tester,
+  ) async {
+    final deleted = createTask(
+      'task-1',
+      'Restore retry',
+      isCompleted: false,
+    ).delete(updatedAt: DateTime.utc(2026, 9, 9, 11));
+    var attempts = 0;
+    final repository = FakeLifeOsTaskRepository(
+      () async => [deleted],
+      storedTask: deleted,
+      beforeSave: (_) async {
+        attempts += 1;
+        if (attempts == 1) throw StateError('Expected restore failure.');
+      },
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('task-trash-toggle')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('restore-task-task-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Unable to restore Task'), findsOneWidget);
+    expect(find.text('Restore retry'), findsOneWidget);
+    expect(repository.savedTasks, isEmpty);
+
+    await tester.tap(find.byKey(const ValueKey('restore-task-task-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Restore retry'), findsNothing);
+    expect(
+      repository.savedTasks.single.lifecycle,
+      LifeOsEntityLifecycle.active,
+    );
+  });
+
+  testWidgets('provider refresh clears a stale Task selection', (tester) async {
+    final task = createTask('task-1', 'Transient Task', isCompleted: false);
+    final source = <LifeOsTask>[task];
+    final repository = FakeLifeOsTaskRepository(() async => List.of(source));
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await _secondaryTap(tester, find.text('Transient Task'));
+    await tester.tapAt(const Offset(790, 590));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<ExpansionTile>(find.byKey(const ValueKey('task-task-1')))
+          .backgroundColor,
+      isNotNull,
+    );
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(TaskList)),
+    );
+    source.clear();
+    container.invalidate(taskListControllerProvider);
+    await tester.pumpAndSettle();
+    source.add(task);
+    container.invalidate(taskListControllerProvider);
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<ExpansionTile>(find.byKey(const ValueKey('task-task-1')))
+          .backgroundColor,
+      isNull,
+    );
+  });
 }
 
 Future<void> _secondaryTap(WidgetTester tester, Finder finder) async {

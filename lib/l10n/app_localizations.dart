@@ -224,6 +224,12 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancelAction;
 
+  /// No description provided for @retryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retryAction;
+
   /// No description provided for @restoreConfirmationTitle.
   ///
   /// In en, this message translates to:
@@ -355,6 +361,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mark incomplete'**
   String get taskCompletionMarkIncomplete;
+
+  /// No description provided for @taskCompletionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to update Task completion'**
+  String get taskCompletionError;
 
   /// No description provided for @taskTitleFieldLabel.
   ///
@@ -685,6 +697,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No other Tasks or Notes are available'**
   String get relationshipPickerEmpty;
+
+  /// No description provided for @relationshipEndpointChoicesError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load available Tasks and Notes'**
+  String get relationshipEndpointChoicesError;
+
+  /// No description provided for @relationshipEndpointError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load related item'**
+  String get relationshipEndpointError;
+
+  /// No description provided for @relationshipUnlinkDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove relationship?'**
+  String get relationshipUnlinkDialogTitle;
+
+  /// No description provided for @relationshipUnlinkDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The relationship will be removed from Related. The Task or Note will not be deleted.'**
+  String get relationshipUnlinkDialogMessage;
 
   /// No description provided for @relationshipTaskLabel.
   ///

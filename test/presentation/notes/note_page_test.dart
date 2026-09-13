@@ -751,6 +751,82 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.notes.single.lifecycle, LifeOsEntityLifecycle.active);
   });
+
+  testWidgets('Note list load failure exposes a working retry', (tester) async {
+    final repository = _MemoryNoteRepository()..failNextRead = true;
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load Notes'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('retry-note-list')));
+    await tester.pumpAndSettle();
+    expect(find.text('No Notes yet'), findsOneWidget);
+    expect(repository.readCallCount, 2);
+  });
+
+  testWidgets('Note restore failure keeps the Trash item and allows retry', (
+    tester,
+  ) async {
+    final deleted = _note(
+      'note-a',
+      title: 'Restore Note',
+      content: 'Body',
+    ).delete(updatedAt: DateTime.utc(2026, 9, 12, 11));
+    final repository = _MemoryNoteRepository([deleted])..failNextSave = true;
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('note-trash-toggle')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('restore-note-note-a')));
+    await tester.pumpAndSettle();
+    expect(find.text('Unable to restore Note'), findsOneWidget);
+    expect(find.byKey(const ValueKey('deleted-note-note-a')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('restore-note-note-a')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('deleted-note-note-a')), findsNothing);
+    expect(repository.notes.single.lifecycle, LifeOsEntityLifecycle.active);
+  });
+
+  testWidgets('clean stale Note selection clears after provider refresh', (
+    tester,
+  ) async {
+    final note = _note('note-a', title: 'Stale Note', content: 'Body');
+    final repository = _MemoryNoteRepository([note]);
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('note-note-a')));
+    await tester.pumpAndSettle();
+    expect(_fieldText(tester, 'note-title-field'), 'Stale Note');
+
+    repository.notes.clear();
+    ProviderScope.containerOf(tester.element(find.byType(NotePage)))
+        .invalidate(noteListControllerProvider);
+    await tester.pumpAndSettle();
+
+    expect(_fieldText(tester, 'note-title-field'), '');
+    expect(_fieldText(tester, 'note-content-field'), '');
+    expect(find.byKey(const Key('delete-note-button')), findsNothing);
+  });
 }
 
 Future<void> _secondaryTap(WidgetTester tester, Finder finder) async {
@@ -822,12 +898,21 @@ class _MemoryNoteRepository implements LifeOsNoteRepository {
   final List<LifeOsNote> notes;
   int saveCallCount = 0;
   bool failNextSave = false;
+  bool failNextRead = false;
+  int readCallCount = 0;
   Completer<void>? saveBarrier;
 
   @override
   Future<List<LifeOsNote>> getByLifecycle(
     LifeOsEntityLifecycle lifecycle,
-  ) async => notes.where((note) => note.lifecycle == lifecycle).toList();
+  ) async {
+    readCallCount += 1;
+    if (failNextRead) {
+      failNextRead = false;
+      throw StateError('Expected read failure.');
+    }
+    return notes.where((note) => note.lifecycle == lifecycle).toList();
+  }
 
   @override
   Future<List<LifeOsNote>> getAll() async => List.of(notes);

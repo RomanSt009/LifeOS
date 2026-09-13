@@ -21,6 +21,7 @@
   "exportDataSuccess": "Export created successfully.",
   "restoreBackupSuccess": "Backup restored successfully.",
   "cancelAction": "Cancel",
+  "retryAction": "Retry",
   "restoreConfirmationTitle": "Replace current LifeOS data?",
   "restoreConfirmationMessage": "Current local LifeOS data will be replaced by this backup. This is not a merge, and local changes still waiting to sync will not remain queued after restore.",
   "restoreReplaceAction": "Restore and replace",
@@ -43,6 +44,7 @@
   "taskUnavailable": "Task unavailable",
   "taskCompletionMarkComplete": "Mark complete",
   "taskCompletionMarkIncomplete": "Mark incomplete",
+  "taskCompletionError": "Unable to update Task completion",
   "taskTitleFieldLabel": "Task title",
   "taskTitleRequired": "Enter a Task title",
   "taskCreateError": "Unable to create Task",
@@ -100,6 +102,10 @@
   "relationshipUnavailable": "Related item unavailable",
   "relationshipPickerTitle": "Choose a Task or Note",
   "relationshipPickerEmpty": "No other Tasks or Notes are available",
+  "relationshipEndpointChoicesError": "Unable to load available Tasks and Notes",
+  "relationshipEndpointError": "Unable to load related item",
+  "relationshipUnlinkDialogTitle": "Remove relationship?",
+  "relationshipUnlinkDialogMessage": "The relationship will be removed from Related. The Task or Note will not be deleted.",
   "relationshipTaskLabel": "Task: {title}",
   "@relationshipTaskLabel": {
     "placeholders": {"title": {"type": "String"}}

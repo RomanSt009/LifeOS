@@ -2,7 +2,7 @@
 
 Статус плана: active
 
-Точная точка возобновления: `DU-07 — Safety, refresh and error recovery` (`pending`). DU-06 завершён и проверен; DU-07 не начат.
+Точная точка возобновления: `DU-08 — Search and bounded daily-use polish` (`pending`). DU-07 завершён и проверен; DU-08 не начинался.
 
 ## Goal
 
@@ -685,7 +685,7 @@ Focused Task/Note/shell/Relationships mouse, keyboard, context-menu, lifecycle �
 
 ## DU-07 — Safety, refresh and error recovery
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -709,7 +709,15 @@ Focused Settings/Restore/provider/Relationship/Task tests, existing Backup/Resto
 
 ### Result / evidence
 
-Not started.
+Architecture gate пройден без нового ADR: подтверждённые gaps ограничивались Presentation feedback/retry/confirmation и stale selection cleanup; Domain/Application/Infrastructure contracts не менялись.
+
+Повторный аудит DU-01: Task create/edit/delete failure feedback, Note dirty/save/delete guards, Backup/Restore typed errors и provider invalidation, Search initial/loading/empty/error/race recovery, destructive shortcut isolation и основной focus recovery уже были `DONE`. Task completion feedback, Task/Note collection retry, clean stale selection, Relationship unlink confirmation/retry и Relationship list/endpoint/picker failure recovery оставались `STILL RELEVANT` и закрыты в DU-07. Search clear affordance и открытие Task result остаются `DEFERRED BY DESIGN` до DU-08; Home/Dashboard, Unified/Note Search и новые Settings capabilities остаются вне scope.
+
+Task completion теперь блокирует повторный запрос, сохраняет truthful state при ошибке, показывает локализованную ошибку и допускает явный повтор; Task list load получил bounded retry, restore failure оставляет Task в Trash, а provider refresh очищает отсутствующий selected Task. Note list load получил bounded retry, restore failure остаётся повторяемой, clean stale selection очищается после refresh; dirty draft и in-flight save намеренно не перезаписываются. Relationship unlink получил cancel-safe confirmation с пояснением, что endpoints не удаляются, progress/double-submit protection и retry в не закрывающемся при ошибке dialog. Ошибки Relationship list, endpoint label и picker endpoint load теперь имеют конечное локализованное состояние и retry вместо endless loading.
+
+Search и Backup/Restore production code не менялись: существующие tests подтвердили Task-only empty/error/race semantics, отсутствие stale results после lifecycle revision, failed Restore без mutation и successful Restore refresh для Tasks/Search/Notes. Existing Task/Note delete и Backup Restore dialogs уже удовлетворяют cancel/progress/failure semantics; новый unlink dialog следует тем же ограничениям. Daily-use visual polish ограничен disabled completion control и ясными error/retry states; Home/Settings не менялись.
+
+Focused DU-07 cross-feature suite PASS (94 теста); полный `flutter test` PASS (248 тестов). `dart format` для изменённых handwritten Dart files PASS; `flutter gen-l10n` PASS; EN/RU ARB parity PASS (106/106 message keys); `flutter analyze` PASS. Domain/Application/Presentation import и localization boundary scans PASS; routing/dependency/schema/ADR/generated-schema guards PASS; `schemaVersion` остаётся 3; schema v4/migration, Backup v4, dependency/pubspec и ADR changes отсутствуют. `git diff --check` PASS. `.obsidian/workspace.json` остаётся отдельным pre-existing user change и в DU-07 не изменялся. Resume point: DU-08 — Search and bounded daily-use polish; DU-08 не начинался.
 
 ## DU-08 — Search and bounded daily-use polish
 
@@ -809,4 +817,4 @@ Not started.
 
 ## Exact resume point
 
-Resume with **DU-07 — Safety, refresh and error recovery only**. Reconcile this plan with Git and production state, re-read every ADR referenced by DU-07, then mark DU-07 active before implementation. Do not begin DU-08.
+Resume with **DU-08 — Search and bounded daily-use polish only**. Reconcile this plan with Git and production state, re-read every ADR referenced by DU-08, then mark DU-08 active before implementation. Do not begin DU-09.

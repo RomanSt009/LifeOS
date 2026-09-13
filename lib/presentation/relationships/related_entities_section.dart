@@ -24,9 +24,11 @@ class _RelatedEntitiesSectionState
     extends ConsumerState<RelatedEntitiesSection> {
   bool _isMutating = false;
   bool _mutationFailed = false;
+  bool _endpointLoadFailed = false;
 
   Future<void> _add() async {
     final localizations = AppLocalizations.of(context);
+    setState(() => _endpointLoadFailed = false);
     late final List<Object> results;
     try {
       results = await Future.wait<Object>([
@@ -34,7 +36,7 @@ class _RelatedEntitiesSectionState
         ref.read(getLifeOsNotesProvider)(),
       ]);
     } catch (_) {
-      if (mounted) setState(() => _mutationFailed = true);
+      if (mounted) setState(() => _endpointLoadFailed = true);
       return;
     }
     if (!mounted) return;
@@ -90,9 +92,19 @@ class _RelatedEntitiesSectionState
     );
   }
 
-  Future<void> _unlink(LifeOsRelationship relationship) => _mutate(
-    () => ref.read(unlinkLifeOsRelationshipProvider)(relationship.id),
-  );
+  Future<void> _confirmUnlink(LifeOsRelationship relationship) async {
+    final removed = await showDialog<bool>(
+      context: context,
+      builder: (context) => _RelationshipUnlinkDialog(
+        onUnlink: () =>
+            ref.read(unlinkLifeOsRelationshipProvider)(relationship.id),
+      ),
+    );
+    if (mounted && removed == true) {
+      ref.invalidate(relationshipsForEntityProvider(widget.entityId));
+      setState(() => _mutationFailed = false);
+    }
+  }
 
   Future<void> _mutate(Future<Object?> Function() operation) async {
     setState(() {
@@ -141,7 +153,20 @@ class _RelatedEntitiesSectionState
           ),
           relationships.when(
             loading: () => const LinearProgressIndicator(),
-            error: (_, _) => Text(localizations.relationshipLoadError),
+            error: (_, _) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(localizations.relationshipLoadError),
+                TextButton.icon(
+                  key: ValueKey('retry-relationships-${widget.entityId.value}'),
+                  onPressed: () => ref.invalidate(
+                    relationshipsForEntityProvider(widget.entityId),
+                  ),
+                  icon: const Icon(Icons.refresh),
+                  label: Text(localizations.retryAction),
+                ),
+              ],
+            ),
             data: (items) => items.isEmpty
                 ? Text(localizations.relationshipEmpty)
                 : Column(
@@ -152,11 +177,26 @@ class _RelatedEntitiesSectionState
                           relationship: relationship,
                           onUnlink: _isMutating
                               ? null
-                              : () => _unlink(relationship),
+                              : () => _confirmUnlink(relationship),
                         ),
                     ],
                   ),
           ),
+          if (_endpointLoadFailed)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(localizations.relationshipEndpointChoicesError),
+                ),
+                TextButton(
+                  key: ValueKey(
+                    'retry-relationship-choices-${widget.entityId.value}',
+                  ),
+                  onPressed: _add,
+                  child: Text(localizations.retryAction),
+                ),
+              ],
+            ),
           if (_mutationFailed) Text(localizations.relationshipSaveError),
         ],
       ),
@@ -164,7 +204,7 @@ class _RelatedEntitiesSectionState
   }
 }
 
-class _RelatedEntityTile extends ConsumerWidget {
+class _RelatedEntityTile extends ConsumerStatefulWidget {
   const _RelatedEntityTile({
     required this.currentId,
     required this.relationship,
@@ -176,12 +216,45 @@ class _RelatedEntityTile extends ConsumerWidget {
   final VoidCallback? onUnlink;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final endpoint = relationship.firstEntityId == currentId
-        ? relationship.secondEntityId
-        : relationship.firstEntityId;
+  ConsumerState<_RelatedEntityTile> createState() => _RelatedEntityTileState();
+}
+
+class _RelatedEntityTileState extends ConsumerState<_RelatedEntityTile> {
+  Future<String>? _labelFuture;
+
+  LifeOsEntityId get _endpoint =>
+      widget.relationship.firstEntityId == widget.currentId
+      ? widget.relationship.secondEntityId
+      : widget.relationship.firstEntityId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _labelFuture ??= _loadLabel();
+  }
+
+  @override
+  void didUpdateWidget(covariant _RelatedEntityTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.relationship != widget.relationship ||
+        oldWidget.currentId != widget.currentId) {
+      _labelFuture = _loadLabel();
+    }
+  }
+
+  void _retryLabel() {
+    final future = _loadLabel();
+    setState(() {
+      _labelFuture = future;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final endpoint = _endpoint;
+    final localizations = AppLocalizations.of(context);
     return FutureBuilder<String>(
-      future: _label(ref, endpoint, AppLocalizations.of(context)),
+      future: _labelFuture,
       builder: (context, snapshot) => ListTile(
         dense: true,
         leading: Icon(
@@ -189,18 +262,34 @@ class _RelatedEntityTile extends ConsumerWidget {
               ? Icons.task_alt_outlined
               : Icons.notes_outlined,
         ),
-        title: Text(
-          snapshot.data ?? AppLocalizations.of(context).relationshipLoading,
-        ),
+        title: snapshot.hasError
+            ? Row(
+                children: [
+                  Expanded(
+                    child: Text(localizations.relationshipEndpointError),
+                  ),
+                  TextButton(
+                    key: ValueKey(
+                      'retry-relationship-endpoint-${widget.relationship.id.value}',
+                    ),
+                    onPressed: _retryLabel,
+                    child: Text(localizations.retryAction),
+                  ),
+                ],
+              )
+            : Text(snapshot.data ?? localizations.relationshipLoading),
         trailing: IconButton(
-          key: ValueKey('unlink-relationship-${relationship.id.value}'),
-          tooltip: AppLocalizations.of(context).relationshipUnlinkAction,
-          onPressed: onUnlink,
+          key: ValueKey('unlink-relationship-${widget.relationship.id.value}'),
+          tooltip: localizations.relationshipUnlinkAction,
+          onPressed: widget.onUnlink,
           icon: const Icon(Icons.link_off),
         ),
       ),
     );
   }
+
+  Future<String> _loadLabel() =>
+      _label(ref, _endpoint, AppLocalizations.of(context));
 
   Future<String> _label(
     WidgetRef ref,
@@ -225,6 +314,85 @@ class _RelatedEntityTile extends ConsumerWidget {
       case LifeOsEntityType.relationship:
         return localizations.relationshipUnavailable;
     }
+  }
+}
+
+class _RelationshipUnlinkDialog extends StatefulWidget {
+  const _RelationshipUnlinkDialog({required this.onUnlink});
+
+  final Future<void> Function() onUnlink;
+
+  @override
+  State<_RelationshipUnlinkDialog> createState() =>
+      _RelationshipUnlinkDialogState();
+}
+
+class _RelationshipUnlinkDialogState extends State<_RelationshipUnlinkDialog> {
+  bool _isUnlinking = false;
+  bool _failed = false;
+
+  Future<void> _unlink() async {
+    if (_isUnlinking) return;
+    setState(() {
+      _isUnlinking = true;
+      _failed = false;
+    });
+    try {
+      await widget.onUnlink();
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isUnlinking = false;
+          _failed = true;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    return PopScope(
+      canPop: !_isUnlinking,
+      child: AlertDialog(
+        title: Text(localizations.relationshipUnlinkDialogTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(localizations.relationshipUnlinkDialogMessage),
+            if (_failed) ...[
+              const SizedBox(height: 8),
+              Text(
+                localizations.relationshipSaveError,
+                key: const Key('relationship-unlink-error'),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            key: const Key('cancel-relationship-unlink'),
+            onPressed: _isUnlinking
+                ? null
+                : () => Navigator.of(context).pop(false),
+            child: Text(localizations.cancelAction),
+          ),
+          FilledButton(
+            key: const Key('confirm-relationship-unlink'),
+            onPressed: _isUnlinking ? null : _unlink,
+            child: _isUnlinking
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(localizations.relationshipUnlinkAction),
+          ),
+        ],
+      ),
+    );
   }
 }
 

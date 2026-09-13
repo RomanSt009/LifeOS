@@ -21,6 +21,7 @@
   "exportDataSuccess": "Экспорт успешно создан.",
   "restoreBackupSuccess": "Данные успешно восстановлены.",
   "cancelAction": "Отмена",
+  "retryAction": "Повторить",
   "restoreConfirmationTitle": "Заменить текущие данные LifeOS?",
   "restoreConfirmationMessage": "Текущие локальные данные LifeOS будут заменены данными из резервной копии. Это не объединение данных, а локальные изменения, ожидающие синхронизации, не сохранятся в очереди после восстановления.",
   "restoreReplaceAction": "Восстановить и заменить",
@@ -43,6 +44,7 @@
   "taskUnavailable": "Задача недоступна",
   "taskCompletionMarkComplete": "Отметить выполненной",
   "taskCompletionMarkIncomplete": "Отметить невыполненной",
+  "taskCompletionError": "Не удалось изменить состояние задачи",
   "taskTitleFieldLabel": "Название задачи",
   "taskTitleRequired": "Введите название задачи",
   "taskCreateError": "Не удалось создать задачу",
@@ -100,6 +102,10 @@
   "relationshipUnavailable": "Связанный объект недоступен",
   "relationshipPickerTitle": "Выберите задачу или заметку",
   "relationshipPickerEmpty": "Нет других задач или заметок",
+  "relationshipEndpointChoicesError": "Не удалось загрузить доступные задачи и заметки",
+  "relationshipEndpointError": "Не удалось загрузить связанный объект",
+  "relationshipUnlinkDialogTitle": "Удалить связь?",
+  "relationshipUnlinkDialogMessage": "Связь будет удалена из раздела «Связанные». Задача или заметка не будет удалена.",
   "relationshipTaskLabel": "Задача: {title}",
   "@relationshipTaskLabel": {
     "placeholders": {"title": {"type": "String"}}

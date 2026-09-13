@@ -297,228 +297,273 @@ class _NotePageState extends ConsumerState<NotePage> {
         padding: const EdgeInsets.all(24),
         child: notes.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => Center(child: Text(localizations.noteLoadError)),
-          data: (items) => Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                width: 240,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      _showTrash
-                          ? localizations.noteTrashTitle
-                          : localizations.noteListTitle,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.spaceBetween,
-                      children: [
-                        if (!_showTrash)
-                          FilledButton.icon(
-                            key: const Key('new-note-button'),
+          error: (_, _) => Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(localizations.noteLoadError),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  key: const Key('retry-note-list'),
+                  onPressed: _retryLoad,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(localizations.retryAction),
+                ),
+              ],
+            ),
+          ),
+          data: (items) => _reconcileSelectionAndReturn(
+            items,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  width: 240,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        _showTrash
+                            ? localizations.noteTrashTitle
+                            : localizations.noteListTitle,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.spaceBetween,
+                        children: [
+                          if (!_showTrash)
+                            FilledButton.icon(
+                              key: const Key('new-note-button'),
+                              onPressed: _isSaving || _isLifecycleMutating
+                                  ? null
+                                  : _startNewSafely,
+                              icon: const Icon(Icons.note_add_outlined),
+                              label: Text(localizations.noteCreateAction),
+                            ),
+                          TextButton.icon(
+                            key: const Key('note-trash-toggle'),
                             onPressed: _isSaving || _isLifecycleMutating
                                 ? null
-                                : _startNewSafely,
-                            icon: const Icon(Icons.note_add_outlined),
-                            label: Text(localizations.noteCreateAction),
-                          ),
-                        TextButton.icon(
-                          key: const Key('note-trash-toggle'),
-                          onPressed: _isSaving || _isLifecycleMutating
-                              ? null
-                              : _toggleTrashSafely,
-                          icon: Icon(
-                            _showTrash
-                                ? Icons.arrow_back
-                                : Icons.delete_outline,
-                          ),
-                          label: Text(
-                            _showTrash
-                                ? localizations.backToNotesAction
-                                : localizations.trashAction,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    if (_lifecycleFailed)
-                      Text(
-                        localizations.noteRestoreError,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    if (items.isEmpty)
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            _showTrash
-                                ? localizations.noteTrashEmpty
-                                : localizations.noteListEmpty,
-                          ),
-                        ),
-                      )
-                    else
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            final note = items[index];
-                            return GestureDetector(
-                              onSecondaryTapDown: (details) => _showNoteMenu(
-                                note,
-                                details.globalPosition,
-                                deleted: _showTrash,
-                              ),
-                              child: ListTile(
-                                key: ValueKey(
-                                  '${_showTrash ? 'deleted-' : ''}note-${note.id.value}',
-                                ),
-                                selected: note.id == _selectedId,
-                                title: Text(
-                                  note.title.isEmpty
-                                      ? localizations.noteUntitled
-                                      : note.title,
-                                ),
-                                trailing: _showTrash
-                                    ? IconButton(
-                                        key: ValueKey(
-                                          'restore-note-${note.id.value}',
-                                        ),
-                                        tooltip:
-                                            localizations.restoreNoteAction,
-                                        onPressed: _isLifecycleMutating
-                                            ? null
-                                            : () => _restoreNote(note),
-                                        icon: const Icon(Icons.restore),
-                                      )
-                                    : null,
-                                onTap: _showTrash || _isSaving
-                                    ? null
-                                    : () => _selectSafely(
-                                        note.id,
-                                        requestEditorFocus: false,
-                                      ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const VerticalDivider(width: 32),
-              Expanded(
-                child: _showTrash
-                    ? Center(child: Text(localizations.noteTrashDescription))
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          TextField(
-                            key: const Key('note-title-field'),
-                            controller: _titleController,
-                            focusNode: _titleFocusNode,
-                            decoration: InputDecoration(
-                              labelText: localizations.noteTitleFieldLabel,
+                                : _toggleTrashSafely,
+                            icon: Icon(
+                              _showTrash
+                                  ? Icons.arrow_back
+                                  : Icons.delete_outline,
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Expanded(
-                            child: TextField(
-                              key: const Key('note-content-field'),
-                              controller: _contentController,
-                              focusNode: _contentFocusNode,
-                              expands: true,
-                              maxLines: null,
-                              minLines: null,
-                              textAlignVertical: TextAlignVertical.top,
-                              decoration: InputDecoration(
-                                labelText: localizations.noteContentFieldLabel,
-                                alignLabelWithHint: true,
-                                border: const OutlineInputBorder(),
-                              ),
+                            label: Text(
+                              _showTrash
+                                  ? localizations.backToNotesAction
+                                  : localizations.trashAction,
                             ),
-                          ),
-                          if (_selectedId case final selectedId?) ...[
-                            const SizedBox(height: 8),
-                            RelatedEntitiesSection(
-                              key: _relationshipKey,
-                              entityId: selectedId,
-                            ),
-                          ],
-                          if (_error != null) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              _error == _NoteEditorError.contentRequired
-                                  ? localizations.noteContentRequired
-                                  : localizations.noteSaveError,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _isDirty
-                                    ? Text(
-                                        localizations
-                                            .noteUnsavedChangesIndicator,
-                                        key: const Key(
-                                          'note-unsaved-indicator',
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      )
-                                    : _showSavedFeedback
-                                    ? Text(
-                                        localizations.noteSavedStatus,
-                                        key: const Key('note-saved-status'),
-                                        overflow: TextOverflow.ellipsis,
-                                      )
-                                    : const SizedBox.shrink(),
-                              ),
-                              if (_selectedId != null)
-                                TextButton.icon(
-                                  key: const Key('delete-note-button'),
-                                  onPressed: _isSaving || _isLifecycleMutating
-                                      ? null
-                                      : _confirmDeleteNoteSafely,
-                                  icon: const Icon(Icons.delete_outline),
-                                  label: Text(localizations.deleteNoteAction),
-                                ),
-                              const SizedBox(width: 8),
-                              FilledButton(
-                                key: const Key('save-note-button'),
-                                onPressed:
-                                    _isSaving ||
-                                        (_selectedId != null && !_isDirty)
-                                    ? null
-                                    : _save,
-                                child: _isSaving
-                                    ? const SizedBox.square(
-                                        dimension: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : Text(localizations.noteSaveAction),
-                              ),
-                            ],
                           ),
                         ],
                       ),
-              ),
-            ],
+                      const SizedBox(height: 8),
+                      if (_lifecycleFailed)
+                        Text(
+                          localizations.noteRestoreError,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      if (items.isEmpty)
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              _showTrash
+                                  ? localizations.noteTrashEmpty
+                                  : localizations.noteListEmpty,
+                            ),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: items.length,
+                            itemBuilder: (context, index) {
+                              final note = items[index];
+                              return GestureDetector(
+                                onSecondaryTapDown: (details) => _showNoteMenu(
+                                  note,
+                                  details.globalPosition,
+                                  deleted: _showTrash,
+                                ),
+                                child: ListTile(
+                                  key: ValueKey(
+                                    '${_showTrash ? 'deleted-' : ''}note-${note.id.value}',
+                                  ),
+                                  selected: note.id == _selectedId,
+                                  title: Text(
+                                    note.title.isEmpty
+                                        ? localizations.noteUntitled
+                                        : note.title,
+                                  ),
+                                  trailing: _showTrash
+                                      ? IconButton(
+                                          key: ValueKey(
+                                            'restore-note-${note.id.value}',
+                                          ),
+                                          tooltip:
+                                              localizations.restoreNoteAction,
+                                          onPressed: _isLifecycleMutating
+                                              ? null
+                                              : () => _restoreNote(note),
+                                          icon: const Icon(Icons.restore),
+                                        )
+                                      : null,
+                                  onTap: _showTrash || _isSaving
+                                      ? null
+                                      : () => _selectSafely(
+                                          note.id,
+                                          requestEditorFocus: false,
+                                        ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const VerticalDivider(width: 32),
+                Expanded(
+                  child: _showTrash
+                      ? Center(child: Text(localizations.noteTrashDescription))
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextField(
+                              key: const Key('note-title-field'),
+                              controller: _titleController,
+                              focusNode: _titleFocusNode,
+                              decoration: InputDecoration(
+                                labelText: localizations.noteTitleFieldLabel,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Expanded(
+                              child: TextField(
+                                key: const Key('note-content-field'),
+                                controller: _contentController,
+                                focusNode: _contentFocusNode,
+                                expands: true,
+                                maxLines: null,
+                                minLines: null,
+                                textAlignVertical: TextAlignVertical.top,
+                                decoration: InputDecoration(
+                                  labelText:
+                                      localizations.noteContentFieldLabel,
+                                  alignLabelWithHint: true,
+                                  border: const OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                            if (_selectedId case final selectedId?) ...[
+                              const SizedBox(height: 8),
+                              RelatedEntitiesSection(
+                                key: _relationshipKey,
+                                entityId: selectedId,
+                              ),
+                            ],
+                            if (_error != null) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                _error == _NoteEditorError.contentRequired
+                                    ? localizations.noteContentRequired
+                                    : localizations.noteSaveError,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _isDirty
+                                      ? Text(
+                                          localizations
+                                              .noteUnsavedChangesIndicator,
+                                          key: const Key(
+                                            'note-unsaved-indicator',
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        )
+                                      : _showSavedFeedback
+                                      ? Text(
+                                          localizations.noteSavedStatus,
+                                          key: const Key('note-saved-status'),
+                                          overflow: TextOverflow.ellipsis,
+                                        )
+                                      : const SizedBox.shrink(),
+                                ),
+                                if (_selectedId != null)
+                                  TextButton.icon(
+                                    key: const Key('delete-note-button'),
+                                    onPressed: _isSaving || _isLifecycleMutating
+                                        ? null
+                                        : _confirmDeleteNoteSafely,
+                                    icon: const Icon(Icons.delete_outline),
+                                    label: Text(localizations.deleteNoteAction),
+                                  ),
+                                const SizedBox(width: 8),
+                                FilledButton(
+                                  key: const Key('save-note-button'),
+                                  onPressed:
+                                      _isSaving ||
+                                          (_selectedId != null && !_isDirty)
+                                      ? null
+                                      : _save,
+                                  child: _isSaving
+                                      ? const SizedBox.square(
+                                          dimension: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : Text(localizations.noteSaveAction),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  void _retryLoad() {
+    ref.invalidate(
+      _showTrash ? noteTrashControllerProvider : noteListControllerProvider,
+    );
+  }
+
+  Widget _reconcileSelectionAndReturn(List<LifeOsNote> notes, Widget child) {
+    _reconcileSelection(notes);
+    return child;
+  }
+
+  void _reconcileSelection(List<LifeOsNote> notes) {
+    final selectedId = _selectedId;
+    if (_showTrash ||
+        selectedId == null ||
+        _isDirty ||
+        _isSaving ||
+        notes.any((note) => note.id == selectedId)) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _selectedId == selectedId && !_isDirty && !_isSaving) {
+        _startNew(requestFocus: false);
+      }
+    });
   }
 
   Future<void> _showNoteMenu(

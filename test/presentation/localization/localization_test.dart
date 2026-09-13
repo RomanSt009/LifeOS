@@ -10,6 +10,7 @@ void main() {
 
     expect(english.taskListTitle, 'Tasks');
     expect(english.taskCreateAction, 'Add Task');
+    expect(english.taskCompletionError, 'Unable to update Task completion');
     expect(english.taskEditAction, 'Edit Task');
     expect(english.taskEditDialogTitle, 'Edit Task');
     expect(english.taskSaveAction, 'Save');
@@ -20,6 +21,9 @@ void main() {
     expect(english.deleteNoteDialogTitle, 'Move Note to Trash?');
     expect(english.noteEditAction, 'Edit Note');
     expect(english.restoreNoteAction, 'Restore Note');
+    expect(english.retryAction, 'Retry');
+    expect(english.relationshipUnlinkDialogTitle, 'Remove relationship?');
+    expect(english.relationshipEndpointError, 'Unable to load related item');
     expect(english.navigationHome, 'Home');
     expect(english.navigationTasks, 'Tasks');
     expect(english.navigationSearch, 'Search');
@@ -31,6 +35,7 @@ void main() {
     expect(english.searchError, 'Unable to search Tasks');
     expect(russian.taskListTitle, 'Задачи');
     expect(russian.taskCreateAction, 'Добавить задачу');
+    expect(russian.taskCompletionError, 'Не удалось изменить состояние задачи');
     expect(russian.taskEditAction, 'Изменить задачу');
     expect(russian.taskEditDialogTitle, 'Изменить задачу');
     expect(russian.taskSaveAction, 'Сохранить');
@@ -41,6 +46,12 @@ void main() {
     expect(russian.deleteNoteDialogTitle, 'Переместить заметку в корзину?');
     expect(russian.noteEditAction, 'Изменить заметку');
     expect(russian.restoreNoteAction, 'Восстановить заметку');
+    expect(russian.retryAction, 'Повторить');
+    expect(russian.relationshipUnlinkDialogTitle, 'Удалить связь?');
+    expect(
+      russian.relationshipEndpointError,
+      'Не удалось загрузить связанный объект',
+    );
     expect(russian.navigationHome, 'Главная');
     expect(russian.navigationTasks, 'Задачи');
     expect(russian.navigationSearch, 'Поиск');
