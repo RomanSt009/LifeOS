@@ -617,7 +617,7 @@ Relationships физически не мутируются и не создаю�
 
 ## DU-05 — Note draft and explicit-save safety
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -641,7 +641,13 @@ Focused Note widget/lifecycle tests, localization check, analyze/full tests/impo
 
 ### Result / evidence
 
-Not started.
+Architecture gate пройден: ADR-0030 и ADR-0033 поддерживают Presentation-local explicit-save guard; новый ADR, schema/dependency/Backup change не потребовались. Baseline: `flutter analyze` PASS; полный `flutter test` PASS (217 тестов).
+
+`NotePage` теперь хранит единый persisted draft baseline (`id`, normalized `title`, literal `content`) рядом с editor controllers и вычисляет dirty семантически по ADR-0030: `title.trim()` и exact `content`. Successful Save обновляет baseline и убирает dirty; Discard восстанавливает baseline без repository mutation; Cancel сохраняет draft. Единый локализованный Save/Discard/Cancel guard защищает выбор другой Note, New, Trash и Delete. Save продолжает исходное действие только после успеха; validation/failure оставляют dialog открытым для retry/cancel, а Delete после успешного Save/Discard по-прежнему требует отдельного подтверждения.
+
+Локальный для Note text editor `Ctrl+S` выполняет valid dirty Save, показывает validation для invalid draft, является no-op для clean persisted Note и блокирует duplicate request. Saving progress, `Unsaved changes` и `Saved` feedback видимы; Escape эквивалентен Cancel. Async response применяет persisted baseline, но не перезаписывает ввод, изменённый после старта Save; delayed guard сохраняет deterministic target, provider refresh не заменяет dirty draft. Переключение shell destination не показывает guard, потому что `IndexedStack` сохраняет Note state. Backup Restore revision очищает draft только после successful confirmed replace; failure/cancel revision не публикуют.
+
+Focused DU-05/Note/shell/Settings/Domain/Application/Drift validation PASS (56 тестов); focused Task/Search/Relationships/Backup regressions PASS (30 тестов); `flutter gen-l10n` PASS; EN/RU ARB parity PASS (99 user keys); `flutter analyze` PASS; полный `flutter test` PASS (228 тестов); Domain/Application/Presentation import и localization boundary scans PASS; routing scan PASS; dependency scan PASS; `git diff --check` PASS. `schemaVersion` остаётся 3; schema v4/migration, Backup v4, новые dependencies и изменения `pubspec.yaml` отсутствуют. Предсуществующие user/tool changes `.metadata`, `pubspec.lock` и `.obsidian/workspace.json` сохранены и DU-05 не изменялись. Resume point: DU-06 — Desktop actions, context menus, focus and selection; DU-06 не начинался.
 
 ## DU-06 — Desktop actions, context menus, focus and selection
 
@@ -797,4 +803,4 @@ Not started.
 
 ## Exact resume point
 
-Resume with **DU-05 — Note draft and explicit-save safety only**. Reconcile this plan with Git and production state, re-read every ADR referenced by DU-05, then mark DU-05 active before implementation. Do not begin DU-06.
+Resume with **DU-06 — Desktop actions, context menus, focus and selection only**. Reconcile this plan with Git and production state, re-read every ADR referenced by DU-06, then mark DU-06 active before implementation. Do not begin DU-07.

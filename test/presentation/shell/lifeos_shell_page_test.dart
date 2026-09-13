@@ -280,6 +280,7 @@ void main() {
     );
     await tester.tap(find.text('Home'));
     await tester.pumpAndSettle();
+    expect(find.text('Save changes to this Note?'), findsNothing);
     await tester.tap(find.text('Notes'));
     await tester.pumpAndSettle();
 
@@ -290,6 +291,7 @@ void main() {
           ?.text,
       'Unsaved Note',
     );
+    expect(find.byKey(const Key('note-unsaved-indicator')), findsOneWidget);
   });
 
   testWidgets('localizes shell navigation labels in Russian', (tester) async {

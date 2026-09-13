@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_note.dart';
@@ -11,6 +14,7 @@ import 'package:lifeos/domain/repositories/lifeos_note_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/notes/note_page.dart';
 import 'package:lifeos/presentation/notes/note_providers.dart';
+import 'package:lifeos/presentation/settings/backup_settings_providers.dart';
 
 void main() {
   testWidgets('creates, selects, edits, and saves a localized Note', (
@@ -50,6 +54,7 @@ void main() {
       find.byKey(const Key('note-content-field')),
       'edited',
     );
+    await tester.pump();
     await tester.tap(find.byKey(const Key('save-note-button')));
     await tester.pumpAndSettle();
 
@@ -78,15 +83,465 @@ void main() {
     expect(repository.notes, isEmpty);
   });
 
-  testWidgets('protects a dirty Note, then deletes and restores it', (
+  testWidgets('guards dirty selection with Cancel, Discard, and Save', (
     tester,
   ) async {
+    final first = _note('first', title: 'First', content: 'First content');
+    final second = _note('second', title: 'Second', content: 'Second content');
+    final repository = _MemoryNoteRepository([first, second]);
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 11),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('note-first')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Changed first',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('note-second')));
+    await tester.pumpAndSettle();
+    expect(find.text('Save changes to this Note?'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(_fieldText(tester, 'note-content-field'), 'Changed first');
+
+    await tester.tap(find.byKey(const ValueKey('note-second')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-discard')));
+    await tester.pumpAndSettle();
+    expect(_fieldText(tester, 'note-content-field'), 'Second content');
+    expect(repository.saveCallCount, 0);
+
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Changed second',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('note-first')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-save')));
+    await tester.pumpAndSettle();
+    expect(_fieldText(tester, 'note-content-field'), 'First content');
+    expect(
+      repository.notes.singleWhere((note) => note.id == second.id).content,
+      'Changed second',
+    );
+    expect(repository.saveCallCount, 1);
+  });
+
+  testWidgets('guards New, Trash, and Delete without silent draft loss', (
+    tester,
+  ) async {
+    final note = _note('guarded', title: 'Guarded', content: 'Persisted');
+    final repository = _MemoryNoteRepository([note]);
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 11),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('note-guarded')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Unsaved',
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('new-note-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-cancel')));
+    await tester.pumpAndSettle();
+    expect(_fieldText(tester, 'note-content-field'), 'Unsaved');
+
+    await tester.tap(find.byKey(const Key('note-trash-toggle')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-cancel')));
+    await tester.pumpAndSettle();
+    expect(find.text('Notes'), findsOneWidget);
+    expect(_fieldText(tester, 'note-content-field'), 'Unsaved');
+
+    await tester.tap(find.byKey(const Key('delete-note-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-discard')));
+    await tester.pumpAndSettle();
+    expect(find.text('Move Note to Trash?'), findsOneWidget);
+    expect(repository.saveCallCount, 0);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(_fieldText(tester, 'note-content-field'), 'Persisted');
+
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Discard for New',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('new-note-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-discard')));
+    await tester.pumpAndSettle();
+    expect(_fieldText(tester, 'note-content-field'), isEmpty);
+  });
+
+  testWidgets('New saves a dirty draft before opening an empty editor', (
+    tester,
+  ) async {
+    final repository = _MemoryNoteRepository();
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 11),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Save before New',
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('new-note-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-save')));
+    await tester.pumpAndSettle();
+
+    expect(repository.notes.single.content, 'Save before New');
+    expect(repository.saveCallCount, 1);
+    expect(_fieldText(tester, 'note-title-field'), isEmpty);
+    expect(_fieldText(tester, 'note-content-field'), isEmpty);
+    expect(find.byKey(const Key('note-unsaved-indicator')), findsNothing);
+  });
+
+  testWidgets('Delete can cancel or save a dirty draft before confirmation', (
+    tester,
+  ) async {
+    final note = _note('delete-guard', title: 'Delete guard', content: 'Old');
+    final repository = _MemoryNoteRepository([note]);
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 11),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('note-delete-guard')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Keep this draft',
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('delete-note-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-cancel')));
+    await tester.pumpAndSettle();
+    expect(_fieldText(tester, 'note-content-field'), 'Keep this draft');
+    expect(repository.saveCallCount, 0);
+
+    await tester.tap(find.byKey(const Key('delete-note-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-save')));
+    await tester.pumpAndSettle();
+    expect(find.text('Move Note to Trash?'), findsOneWidget);
+    expect(repository.notes.single.content, 'Keep this draft');
+    expect(repository.saveCallCount, 1);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(repository.notes.single.lifecycle, LifeOsEntityLifecycle.active);
+  });
+
+  testWidgets('guard keeps invalid or failed save open and supports retry', (
+    tester,
+  ) async {
+    final first = _note('first', title: 'First', content: 'Persisted');
+    final second = _note('second', title: 'Second', content: 'Other');
+    final repository = _MemoryNoteRepository([first, second]);
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 11),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const Key('note-content-field')), '   ');
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('new-note-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-save')));
+    await tester.pumpAndSettle();
+    expect(find.text('Enter a title or content'), findsWidgets);
+    expect(find.text('Save changes to this Note?'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('unsaved-note-cancel')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('note-content-field')), '');
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('note-first')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Will retry',
+    );
+    await tester.pump();
+    repository.failNextSave = true;
+    await tester.tap(find.byKey(const ValueKey('note-second')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-save')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('unsaved-note-save-error')), findsOneWidget);
+    expect(find.text('Save changes to this Note?'), findsOneWidget);
+    expect(_fieldText(tester, 'note-content-field'), 'Will retry');
+
+    await tester.tap(find.byKey(const Key('unsaved-note-save')));
+    await tester.pumpAndSettle();
+    expect(_fieldText(tester, 'note-content-field'), 'Other');
+    expect(repository.saveCallCount, 2);
+  });
+
+  testWidgets(
+    'delayed guard save disables duplicate actions and keeps target',
+    (tester) async {
+      final first = _note('first', title: 'First', content: 'Persisted');
+      final second = _note('second', title: 'Second', content: 'Target');
+      final repository = _MemoryNoteRepository([first, second]);
+      final saveBarrier = Completer<void>();
+      repository.saveBarrier = saveBarrier;
+      await tester.pumpWidget(
+        _testApp(
+          repository,
+          locale: const Locale('en'),
+          utcClock: () => DateTime.utc(2026, 9, 12, 11),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('note-first')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('note-content-field')),
+        'Delayed update',
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('note-second')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('unsaved-note-save')));
+      await tester.pump();
+
+      expect(repository.saveCallCount, 1);
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('unsaved-note-save')))
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<TextButton>(find.byKey(const Key('unsaved-note-discard')))
+            .onPressed,
+        isNull,
+      );
+
+      saveBarrier.complete();
+      await tester.pumpAndSettle();
+      expect(_fieldText(tester, 'note-content-field'), 'Target');
+      expect(repository.saveCallCount, 1);
+    },
+  );
+
+  testWidgets('a delayed save never overwrites newer editor input', (
+    tester,
+  ) async {
+    final repository = _MemoryNoteRepository();
+    final saveBarrier = Completer<void>();
+    repository.saveBarrier = saveBarrier;
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 11),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Submitted content',
+    );
+    await tester.pump();
+    await _pressControlS(tester);
+    await tester.pump();
+    await _pressControlS(tester);
+    await tester.pump();
+    expect(repository.saveCallCount, 1);
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Newer draft',
+    );
+    await tester.pump();
+
+    saveBarrier.complete();
+    await tester.pumpAndSettle();
+    expect(repository.notes.single.content, 'Submitted content');
+    expect(_fieldText(tester, 'note-content-field'), 'Newer draft');
+    expect(find.byKey(const Key('note-unsaved-indicator')), findsOneWidget);
+
+    await _pressControlS(tester);
+    await tester.pumpAndSettle();
+    expect(repository.notes, hasLength(1));
+    expect(repository.notes.single.content, 'Newer draft');
+    expect(repository.saveCallCount, 2);
+  });
+
+  testWidgets('provider refresh does not overwrite a dirty editor', (
+    tester,
+  ) async {
+    final original = _note('refresh', title: 'Original', content: 'Persisted');
+    final repository = _MemoryNoteRepository([original]);
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 11),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('note-refresh')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Local draft',
+    );
+    await tester.pump();
+
+    repository.notes[0] = original.edit(
+      title: original.title,
+      content: 'External refresh',
+      updatedAt: DateTime.utc(2026, 9, 12, 11),
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(NotePage)),
+    );
+    container.invalidate(noteListControllerProvider);
+    await tester.pumpAndSettle();
+
+    expect(_fieldText(tester, 'note-content-field'), 'Local draft');
+    expect(find.byKey(const Key('note-unsaved-indicator')), findsOneWidget);
+  });
+
+  testWidgets('successful confirmed Restore revision clears the local draft', (
+    tester,
+  ) async {
+    final repository = _MemoryNoteRepository();
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 11),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Replaced dataset draft',
+    );
+    await tester.pump();
+    expect(find.byKey(const Key('note-unsaved-indicator')), findsOneWidget);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(NotePage)),
+    );
+    container.read(backupRestoreRevisionProvider.notifier).advance();
+    await tester.pumpAndSettle();
+
+    expect(_fieldText(tester, 'note-content-field'), isEmpty);
+    expect(find.byKey(const Key('note-unsaved-indicator')), findsNothing);
+  });
+
+  testWidgets('Ctrl+S saves locally and clean semantic saves are no-ops', (
+    tester,
+  ) async {
+    final repository = _MemoryNoteRepository();
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 12, 11),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('note-title-field')));
+    await tester.pump();
+    await _pressControlS(tester);
+    await tester.pump();
+    expect(find.text('Enter a title or content'), findsOneWidget);
+    expect(repository.saveCallCount, 0);
+
+    await tester.enterText(find.byKey(const Key('note-title-field')), 'Note');
+    await tester.pump();
+    await _pressControlS(tester);
+    await tester.pumpAndSettle();
+    expect(repository.saveCallCount, 1);
+    expect(find.byKey(const Key('note-saved-status')), findsOneWidget);
+
+    await _pressControlS(tester);
+    await tester.pumpAndSettle();
+    expect(repository.saveCallCount, 1);
+
+    await tester.enterText(
+      find.byKey(const Key('note-title-field')),
+      '  Note  ',
+    );
+    await tester.pump();
+    expect(find.byKey(const Key('note-unsaved-indicator')), findsNothing);
+    await _pressControlS(tester);
+    await tester.pumpAndSettle();
+    expect(repository.saveCallCount, 1);
+  });
+
+  testWidgets('localizes the unsaved guard in Russian', (tester) async {
+    final repository = _MemoryNoteRepository();
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('ru'),
+        utcClock: () => DateTime.utc(2026, 9, 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Черновик',
+    );
+    await tester.pump();
+    expect(find.text('Есть несохранённые изменения'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('new-note-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Сохранить изменения заметки?'), findsOneWidget);
+    expect(find.text('Сохранить'), findsOneWidget);
+    expect(find.text('Не сохранять'), findsOneWidget);
+    expect(find.text('Отмена'), findsOneWidget);
+  });
+
+  testWidgets('deletes and restores a clean Note', (tester) async {
     final repository = _MemoryNoteRepository();
     final timestamps = [
       DateTime.utc(2026, 9, 12, 10),
       DateTime.utc(2026, 9, 12, 11),
       DateTime.utc(2026, 9, 12, 12),
-      DateTime.utc(2026, 9, 12, 13),
     ];
     await tester.pumpWidget(
       _testApp(
@@ -97,29 +552,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('note-title-field')), 'Note');
-    await tester.tap(find.byKey(const Key('save-note-button')));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const Key('note-content-field')),
-      'Unsaved draft',
-    );
     await tester.pump();
-    expect(
-      tester
-          .widget<TextButton>(find.byKey(const Key('delete-note-button')))
-          .onPressed,
-      isNull,
-    );
-    expect(
-      tester
-          .widget<TextButton>(find.byKey(const Key('note-trash-toggle')))
-          .onPressed,
-      isNull,
-    );
-
     await tester.tap(find.byKey(const Key('save-note-button')));
     await tester.pumpAndSettle();
+
     await tester.tap(find.byKey(const Key('delete-note-button')));
     await tester.pumpAndSettle();
     expect(find.text('Move Note to Trash?'), findsOneWidget);
@@ -137,6 +573,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.notes.single.lifecycle, LifeOsEntityLifecycle.active);
   });
+}
+
+LifeOsNote _note(String id, {required String title, required String content}) =>
+    LifeOsNote.createUserNote(
+      id: LifeOsEntityId(value: id, entityType: LifeOsEntityType.note),
+      title: title,
+      content: content,
+      timestamp: DateTime.utc(2026, 9, 12, 10),
+    );
+
+String _fieldText(WidgetTester tester, String key) =>
+    tester.widget<TextField>(find.byKey(Key(key))).controller!.text;
+
+Future<void> _pressControlS(WidgetTester tester) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 }
 
 Widget _testApp(
@@ -174,7 +627,13 @@ Widget _testApp(
 }
 
 class _MemoryNoteRepository implements LifeOsNoteRepository {
-  final List<LifeOsNote> notes = [];
+  _MemoryNoteRepository([Iterable<LifeOsNote> initialNotes = const []])
+    : notes = List.of(initialNotes);
+
+  final List<LifeOsNote> notes;
+  int saveCallCount = 0;
+  bool failNextSave = false;
+  Completer<void>? saveBarrier;
 
   @override
   Future<List<LifeOsNote>> getByLifecycle(
@@ -196,6 +655,12 @@ class _MemoryNoteRepository implements LifeOsNoteRepository {
 
   @override
   Future<void> save(LifeOsNote note) async {
+    saveCallCount += 1;
+    if (failNextSave) {
+      failNextSave = false;
+      throw StateError('Expected save failure.');
+    }
+    await saveBarrier?.future;
     notes.removeWhere((current) => current.id == note.id);
     notes.add(note);
   }

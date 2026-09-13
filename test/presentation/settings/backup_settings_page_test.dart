@@ -172,6 +172,10 @@ void main() {
       find.text('The backup could not replace current LifeOS data.'),
       findsOneWidget,
     );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(BackupSettingsPage)),
+    );
+    expect(container.read(backupRestoreRevisionProvider), 0);
   });
 
   testWidgets('Restore confirmation cancel performs no confirmed mutation', (
@@ -213,6 +217,10 @@ void main() {
 
     expect(operations.restoreConfirmations, [false, true]);
     expect(find.text('Backup restored successfully.'), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(BackupSettingsPage)),
+    );
+    expect(container.read(backupRestoreRevisionProvider), 1);
   });
 
   test('suggested filenames are UTC and Windows-safe', () {
@@ -277,8 +285,9 @@ class FakeFileChooser implements LifeOsArtifactFileChooser {
   }
 
   @override
-  Future<String?> chooseBackupToRestore({required String fileTypeLabel}) async =>
-      restoreSource;
+  Future<String?> chooseBackupToRestore({
+    required String fileTypeLabel,
+  }) async => restoreSource;
 }
 
 class FakeBackupOperations implements LifeOsBackupOperations {

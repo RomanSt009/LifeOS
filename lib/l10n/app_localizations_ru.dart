@@ -237,6 +237,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noteSaveError => 'Не удалось сохранить заметку';
 
   @override
+  String get noteUnsavedChangesIndicator => 'Есть несохранённые изменения';
+
+  @override
+  String get noteSavedStatus => 'Сохранено';
+
+  @override
+  String get noteUnsavedChangesDialogTitle => 'Сохранить изменения заметки?';
+
+  @override
+  String get noteUnsavedChangesDialogMessage =>
+      'Несохранённые изменения будут потеряны, если продолжить.';
+
+  @override
+  String get saveChangesAction => 'Сохранить';
+
+  @override
+  String get discardChangesAction => 'Не сохранять';
+
+  @override
   String get noteTrashTitle => 'Удалённые заметки';
 
   @override
@@ -265,14 +284,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noteRestoreError => 'Не удалось восстановить заметку';
-
-  @override
-  String get saveNoteBeforeDelete =>
-      'Сохраните или отмените изменения перед удалением заметки';
-
-  @override
-  String get saveNoteBeforeTrash =>
-      'Сохраните или отмените изменения перед открытием корзины';
 
   @override
   String get relationshipSectionTitle => 'Связанные';

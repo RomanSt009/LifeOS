@@ -530,6 +530,42 @@ abstract class AppLocalizations {
   /// **'Unable to save Note'**
   String get noteSaveError;
 
+  /// No description provided for @noteUnsavedChangesIndicator.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved changes'**
+  String get noteUnsavedChangesIndicator;
+
+  /// No description provided for @noteSavedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get noteSavedStatus;
+
+  /// No description provided for @noteUnsavedChangesDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes to this Note?'**
+  String get noteUnsavedChangesDialogTitle;
+
+  /// No description provided for @noteUnsavedChangesDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your unsaved changes will be lost if you continue.'**
+  String get noteUnsavedChangesDialogMessage;
+
+  /// No description provided for @saveChangesAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveChangesAction;
+
+  /// No description provided for @discardChangesAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discardChangesAction;
+
   /// No description provided for @noteTrashTitle.
   ///
   /// In en, this message translates to:
@@ -583,18 +619,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to restore Note'**
   String get noteRestoreError;
-
-  /// No description provided for @saveNoteBeforeDelete.
-  ///
-  /// In en, this message translates to:
-  /// **'Save or discard changes before deleting this Note'**
-  String get saveNoteBeforeDelete;
-
-  /// No description provided for @saveNoteBeforeTrash.
-  ///
-  /// In en, this message translates to:
-  /// **'Save or discard changes before opening Trash'**
-  String get saveNoteBeforeTrash;
 
   /// No description provided for @relationshipSectionTitle.
   ///

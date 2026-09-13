@@ -234,6 +234,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteSaveError => 'Unable to save Note';
 
   @override
+  String get noteUnsavedChangesIndicator => 'Unsaved changes';
+
+  @override
+  String get noteSavedStatus => 'Saved';
+
+  @override
+  String get noteUnsavedChangesDialogTitle => 'Save changes to this Note?';
+
+  @override
+  String get noteUnsavedChangesDialogMessage =>
+      'Your unsaved changes will be lost if you continue.';
+
+  @override
+  String get saveChangesAction => 'Save';
+
+  @override
+  String get discardChangesAction => 'Discard';
+
+  @override
   String get noteTrashTitle => 'Deleted Notes';
 
   @override
@@ -262,14 +281,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noteRestoreError => 'Unable to restore Note';
-
-  @override
-  String get saveNoteBeforeDelete =>
-      'Save or discard changes before deleting this Note';
-
-  @override
-  String get saveNoteBeforeTrash =>
-      'Save or discard changes before opening Trash';
 
   @override
   String get relationshipSectionTitle => 'Related';
