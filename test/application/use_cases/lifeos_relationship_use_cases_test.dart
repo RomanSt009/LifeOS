@@ -152,6 +152,10 @@ class _TaskRepository implements LifeOsTaskRepository {
   _TaskRepository(this.items);
   final List<LifeOsTask> items;
   @override
+  Future<List<LifeOsTask>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => items.where((item) => item.lifecycle == lifecycle).toList();
+  @override
   Future<List<LifeOsTask>> getAll() async => List.of(items);
   @override
   Future<LifeOsTask?> getById(LifeOsEntityId id) async =>
@@ -165,6 +169,10 @@ class _TaskRepository implements LifeOsTaskRepository {
 class _NoteRepository implements LifeOsNoteRepository {
   _NoteRepository(this.items);
   final List<LifeOsNote> items;
+  @override
+  Future<List<LifeOsNote>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => items.where((item) => item.lifecycle == lifecycle).toList();
   @override
   Future<List<LifeOsNote>> getAll() async => List.of(items);
   @override

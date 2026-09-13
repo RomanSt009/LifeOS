@@ -23,13 +23,30 @@ class DriftLifeOsTaskRepository implements LifeOsTaskRepository {
   final String _deviceId;
 
   @override
-  Future<List<LifeOsTask>> getAll() async {
-    final query = _database.select(_database.entities).join([
-      innerJoin(
-        _database.taskRecords,
-        _database.taskRecords.entityId.equalsExp(_database.entities.id),
-      ),
-    ])..where(_database.entities.entityType.equals(LifeOsEntityType.task.name));
+  Future<List<LifeOsTask>> getAll() => _getTasks();
+
+  @override
+  Future<List<LifeOsTask>> getByLifecycle(LifeOsEntityLifecycle lifecycle) =>
+      _getTasks(lifecycle: lifecycle);
+
+  Future<List<LifeOsTask>> _getTasks({LifeOsEntityLifecycle? lifecycle}) async {
+    final query =
+        _database.select(_database.entities).join([
+            innerJoin(
+              _database.taskRecords,
+              _database.taskRecords.entityId.equalsExp(_database.entities.id),
+            ),
+          ])
+          ..where(
+            _database.entities.entityType.equals(LifeOsEntityType.task.name) &
+                (lifecycle == null
+                    ? const Constant(true)
+                    : _database.entities.lifecycle.equals(lifecycle.name)),
+          )
+          ..orderBy([
+            OrderingTerm.desc(_database.entities.updatedAt),
+            OrderingTerm.asc(_database.entities.id),
+          ]);
 
     final rows = await query.get();
     return rows.map(_mapTask).toList(growable: false);
@@ -58,24 +75,23 @@ class DriftLifeOsTaskRepository implements LifeOsTaskRepository {
 
   @override
   Future<List<LifeOsTask>> searchByTitle(String query) async {
-    final taskQuery = _database.select(_database.entities).join([
-      innerJoin(
-        _database.taskRecords,
-        _database.taskRecords.entityId.equalsExp(_database.entities.id),
-      ),
-    ])..where(
-      _database.entities.entityType.equals(LifeOsEntityType.task.name) &
-          _database.entities.lifecycle.equals(
-            LifeOsEntityLifecycle.active.name,
+    final taskQuery =
+        _database.select(_database.entities).join([
+          innerJoin(
+            _database.taskRecords,
+            _database.taskRecords.entityId.equalsExp(_database.entities.id),
           ),
-    );
+        ])..where(
+          _database.entities.entityType.equals(LifeOsEntityType.task.name) &
+              _database.entities.lifecycle.equals(
+                LifeOsEntityLifecycle.active.name,
+              ),
+        );
 
     final normalizedQuery = query.toLowerCase();
     final matchingTasks = (await taskQuery.get())
         .map(_mapTask)
-        .where(
-          (task) => task.title.toLowerCase().contains(normalizedQuery),
-        )
+        .where((task) => task.title.toLowerCase().contains(normalizedQuery))
         .toList();
     matchingTasks.sort((first, second) {
       final updatedAtComparison = second.updatedAt.compareTo(first.updatedAt);

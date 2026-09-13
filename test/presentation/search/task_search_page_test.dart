@@ -90,10 +90,7 @@ void main() {
     );
     await tester.pumpWidget(searchTestApp(repository));
 
-    await tester.enterText(
-      find.byKey(const Key('search-query-field')),
-      '   ',
-    );
+    await tester.enterText(find.byKey(const Key('search-query-field')), '   ');
     await tester.tap(find.byKey(const Key('search-submit-button')));
     await tester.pumpAndSettle();
 
@@ -230,7 +227,9 @@ Widget searchTestApp(
 }) {
   return ProviderScope(
     overrides: [
-      searchLifeOsTasksProvider.overrideWithValue(SearchLifeOsTasks(repository)),
+      searchLifeOsTasksProvider.overrideWithValue(
+        SearchLifeOsTasks(repository),
+      ),
     ],
     child: MaterialApp(
       locale: locale,
@@ -269,6 +268,11 @@ class StubLifeOsTaskRepository implements LifeOsTaskRepository {
   final bool shouldFail;
   final Future<List<LifeOsTask>> Function(String query)? onSearch;
   final List<String> queries = [];
+
+  @override
+  Future<List<LifeOsTask>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => const [];
 
   @override
   Future<List<LifeOsTask>> getAll() async => [];

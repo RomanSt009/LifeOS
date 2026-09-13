@@ -2,9 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/use_cases/create_lifeos_task.dart';
 import '../../application/use_cases/edit_lifeos_task_title.dart';
+import '../../application/use_cases/delete_lifeos_task.dart';
+import '../../application/use_cases/restore_lifeos_task.dart';
 import '../../application/use_cases/get_lifeos_tasks.dart';
 import '../../domain/entities/lifeos_entity.dart';
 import '../../domain/entities/lifeos_task.dart';
+import '../relationships/relationship_providers.dart';
+import '../search/task_search_providers.dart';
 import 'task_completion_providers.dart';
 
 final createLifeOsTaskProvider = Provider<CreateLifeOsTask>((ref) {
@@ -19,8 +23,24 @@ final editLifeOsTaskTitleProvider = Provider<EditLifeOsTaskTitle>((ref) {
   );
 });
 
+final deleteLifeOsTaskProvider = Provider<DeleteLifeOsTask>((ref) {
+  throw UnimplementedError(
+    'deleteLifeOsTaskProvider must be overridden by app composition.',
+  );
+});
+
+final restoreLifeOsTaskProvider = Provider<RestoreLifeOsTask>((ref) {
+  throw UnimplementedError(
+    'restoreLifeOsTaskProvider must be overridden by app composition.',
+  );
+});
+
 final getLifeOsTasksProvider = Provider<GetLifeOsTasks>((ref) {
   return GetLifeOsTasks(ref.watch(lifeOsTaskRepositoryProvider));
+});
+
+final getDeletedLifeOsTasksProvider = Provider<GetDeletedLifeOsTasks>((ref) {
+  return GetDeletedLifeOsTasks(ref.watch(lifeOsTaskRepositoryProvider));
 });
 
 final taskListControllerProvider =
@@ -72,5 +92,44 @@ class TaskListController extends AsyncNotifier<List<LifeOsTask>> {
         if (task.id == id) updatedTask else task,
     ]);
     return updatedTask;
+  }
+
+  Future<void> deleteTask(LifeOsEntityId id) async {
+    final deleted = await ref.read(deleteLifeOsTaskProvider)(id);
+    if (deleted == null) {
+      throw StateError('The selected Task no longer exists.');
+    }
+    state = AsyncData([
+      for (final task in state.requireValue)
+        if (task.id != id) task,
+    ]);
+    ref.invalidate(taskTrashControllerProvider);
+    ref.invalidate(relationshipsForEntityProvider);
+    ref.read(taskSearchRevisionProvider.notifier).advance();
+  }
+}
+
+final taskTrashControllerProvider =
+    AsyncNotifierProvider<TaskTrashController, List<LifeOsTask>>(
+      TaskTrashController.new,
+    );
+
+class TaskTrashController extends AsyncNotifier<List<LifeOsTask>> {
+  @override
+  Future<List<LifeOsTask>> build() =>
+      ref.watch(getDeletedLifeOsTasksProvider)();
+
+  Future<void> restoreTask(LifeOsEntityId id) async {
+    final restored = await ref.read(restoreLifeOsTaskProvider)(id);
+    if (restored == null) {
+      throw StateError('The selected Task no longer exists.');
+    }
+    state = AsyncData([
+      for (final task in state.requireValue)
+        if (task.id != id) task,
+    ]);
+    ref.invalidate(taskListControllerProvider);
+    ref.invalidate(relationshipsForEntityProvider);
+    ref.read(taskSearchRevisionProvider.notifier).advance();
   }
 }

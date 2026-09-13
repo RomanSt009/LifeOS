@@ -88,7 +88,7 @@ void main() {
       for (final task in sourceTasks) {
         await source.taskRepository.save(task);
       }
-      final sourceNote = LifeOsNote(
+      final activeSourceNote = LifeOsNote(
         id: const LifeOsEntityId(
           value: '00000000-0000-4000-8000-000000000004',
           entityType: LifeOsEntityType.note,
@@ -96,22 +96,26 @@ void main() {
         title: 'Imported Note',
         content: '  exact\r\nNote content  ',
         createdAt: DateTime.utc(2025, 6, 7, 8, 9, 10),
-        updatedAt: DateTime.utc(2026, 7, 8, 9, 10, 11),
-        lifecycle: LifeOsEntityLifecycle.archived,
-        version: 5,
+        updatedAt: DateTime.utc(2025, 6, 7, 8, 9, 10),
+        lifecycle: LifeOsEntityLifecycle.active,
+        version: 4,
         source: LifeOsEntitySource.import,
       );
-      await source.noteRepository.save(sourceNote);
+      await source.noteRepository.save(activeSourceNote);
       final createdRelationship = LifeOsRelationship.createUserRelationship(
         id: const LifeOsEntityId(
           value: '00000000-0000-4000-8000-000000000005',
           entityType: LifeOsEntityType.relationship,
         ),
         firstEndpoint: sourceTasks[1].id,
-        secondEndpoint: sourceNote.id,
+        secondEndpoint: activeSourceNote.id,
         timestamp: DateTime.utc(2025, 7, 8, 9, 10, 11),
       );
       await source.relationshipRepository.save(createdRelationship);
+      final sourceNote = activeSourceNote.archive(
+        updatedAt: DateTime.utc(2026, 7, 8, 9, 10, 11),
+      );
+      await source.noteRepository.save(sourceNote);
       final sourceRelationship = createdRelationship.unlink(
         updatedAt: DateTime.utc(2026, 8, 9, 10, 11, 12),
       );
@@ -124,7 +128,7 @@ void main() {
       expect(await source.relationshipRepository.getAll(), [
         sourceRelationship,
       ]);
-      expect(await _outbox(source), hasLength(6));
+      expect(await _outbox(source), hasLength(7));
       await source.close();
 
       final persistedSource = await openInstallation(
@@ -139,7 +143,7 @@ void main() {
       expect(await persistedSource.relationshipRepository.getAll(), [
         sourceRelationship,
       ]);
-      expect(await _outbox(persistedSource), hasLength(6));
+      expect(await _outbox(persistedSource), hasLength(7));
       expect(await _deviceId(root, 'source'), 'source-device');
 
       final backupPath = path.join(root.path, 'cross-installation.zip');

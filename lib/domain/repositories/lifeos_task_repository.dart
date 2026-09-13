@@ -6,6 +6,8 @@ abstract interface class LifeOsTaskRepository {
 
   Future<List<LifeOsTask>> getAll();
 
+  Future<List<LifeOsTask>> getByLifecycle(LifeOsEntityLifecycle lifecycle);
+
   /// Searches active Tasks by title using a trimmed, non-empty query.
   Future<List<LifeOsTask>> searchByTitle(String query);
 

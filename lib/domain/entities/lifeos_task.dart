@@ -85,6 +85,10 @@ class LifeOsTask implements LifeOsEntity {
   final LifeOsEntitySource source;
 
   LifeOsTask toggleCompletion({required DateTime updatedAt}) {
+    _validateMutationTimestamp(updatedAt);
+    if (lifecycle != LifeOsEntityLifecycle.active) {
+      throw StateError('Only an active Task can change completion.');
+    }
     return LifeOsTask(
       id: id,
       title: title,
@@ -99,14 +103,7 @@ class LifeOsTask implements LifeOsEntity {
 
   LifeOsTask editTitle({required String title, required DateTime updatedAt}) {
     final normalizedTitle = title.trim();
-    _validateUtc(updatedAt, 'updatedAt');
-    if (updatedAt.isBefore(this.updatedAt)) {
-      throw ArgumentError.value(
-        updatedAt,
-        'updatedAt',
-        'A Task update timestamp cannot move backwards.',
-      );
-    }
+    _validateMutationTimestamp(updatedAt);
     _validateTitle(normalizedTitle);
     if (lifecycle != LifeOsEntityLifecycle.active) {
       throw StateError('Only an active Task can be edited.');
@@ -125,6 +122,65 @@ class LifeOsTask implements LifeOsEntity {
       version: version + 1,
       source: source,
     );
+  }
+
+  LifeOsTask archive({required DateTime updatedAt}) => _changeLifecycle(
+    target: LifeOsEntityLifecycle.archived,
+    updatedAt: updatedAt,
+    allowedFrom: LifeOsEntityLifecycle.active,
+  );
+
+  LifeOsTask unarchive({required DateTime updatedAt}) => _changeLifecycle(
+    target: LifeOsEntityLifecycle.active,
+    updatedAt: updatedAt,
+    allowedFrom: LifeOsEntityLifecycle.archived,
+  );
+
+  LifeOsTask delete({required DateTime updatedAt}) => _changeLifecycle(
+    target: LifeOsEntityLifecycle.deleted,
+    updatedAt: updatedAt,
+    allowedFrom: lifecycle == LifeOsEntityLifecycle.archived
+        ? LifeOsEntityLifecycle.archived
+        : LifeOsEntityLifecycle.active,
+  );
+
+  LifeOsTask restore({required DateTime updatedAt}) => _changeLifecycle(
+    target: LifeOsEntityLifecycle.active,
+    updatedAt: updatedAt,
+    allowedFrom: LifeOsEntityLifecycle.deleted,
+  );
+
+  LifeOsTask _changeLifecycle({
+    required LifeOsEntityLifecycle target,
+    required DateTime updatedAt,
+    required LifeOsEntityLifecycle allowedFrom,
+  }) {
+    _validateMutationTimestamp(updatedAt);
+    if (lifecycle == target) return this;
+    if (lifecycle != allowedFrom) {
+      throw StateError('The requested Task lifecycle transition is invalid.');
+    }
+    return LifeOsTask(
+      id: id,
+      title: title,
+      isCompleted: isCompleted,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      lifecycle: target,
+      version: version + 1,
+      source: source,
+    );
+  }
+
+  void _validateMutationTimestamp(DateTime value) {
+    _validateUtc(value, 'updatedAt');
+    if (value.isBefore(updatedAt)) {
+      throw ArgumentError.value(
+        value,
+        'updatedAt',
+        'A Task update timestamp cannot move backwards.',
+      );
+    }
   }
 
   @override

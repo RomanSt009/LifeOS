@@ -61,6 +61,12 @@ class _LifeOSAppState extends State<LifeOSApp> {
           widget.dependencies.createNote,
         ),
         editLifeOsNoteProvider.overrideWithValue(widget.dependencies.editNote),
+        deleteLifeOsNoteProvider.overrideWithValue(
+          widget.dependencies.deleteNote,
+        ),
+        restoreLifeOsNoteProvider.overrideWithValue(
+          widget.dependencies.restoreNote,
+        ),
         createLifeOsRelationshipProvider.overrideWithValue(
           widget.dependencies.createRelationship,
         ),
@@ -72,6 +78,12 @@ class _LifeOSAppState extends State<LifeOSApp> {
         ),
         editLifeOsTaskTitleProvider.overrideWithValue(
           widget.dependencies.editTaskTitle,
+        ),
+        deleteLifeOsTaskProvider.overrideWithValue(
+          widget.dependencies.deleteTask,
+        ),
+        restoreLifeOsTaskProvider.overrideWithValue(
+          widget.dependencies.restoreTask,
         ),
         searchLifeOsTasksProvider.overrideWithValue(
           widget.dependencies.searchTasks,

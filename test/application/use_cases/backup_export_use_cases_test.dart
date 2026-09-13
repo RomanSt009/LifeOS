@@ -200,6 +200,11 @@ class FakeLifeOsTaskRepository implements LifeOsTaskRepository {
   int getAllCalls = 0;
 
   @override
+  Future<List<LifeOsTask>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => tasks.where((task) => task.lifecycle == lifecycle).toList();
+
+  @override
   Future<List<LifeOsTask>> getAll() async {
     getAllCalls += 1;
     if (getAllError case final error?) {
@@ -223,6 +228,11 @@ class FakeLifeOsNoteRepository implements LifeOsNoteRepository {
 
   final List<LifeOsNote> notes;
   int getAllCalls = 0;
+
+  @override
+  Future<List<LifeOsNote>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => notes.where((note) => note.lifecycle == lifecycle).toList();
 
   @override
   Future<List<LifeOsNote>> getAll() async {

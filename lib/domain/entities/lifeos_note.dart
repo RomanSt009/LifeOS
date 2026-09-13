@@ -100,6 +100,9 @@ class LifeOsNote implements LifeOsEntity {
       );
     }
     _validateContent(normalizedTitle, content);
+    if (lifecycle != LifeOsEntityLifecycle.active) {
+      throw StateError('Only an active Note can be edited.');
+    }
 
     if (normalizedTitle == this.title && content == this.content) {
       return this;
@@ -115,6 +118,65 @@ class LifeOsNote implements LifeOsEntity {
       version: version + 1,
       source: source,
     );
+  }
+
+  LifeOsNote archive({required DateTime updatedAt}) => _changeLifecycle(
+    target: LifeOsEntityLifecycle.archived,
+    updatedAt: updatedAt,
+    allowedFrom: LifeOsEntityLifecycle.active,
+  );
+
+  LifeOsNote unarchive({required DateTime updatedAt}) => _changeLifecycle(
+    target: LifeOsEntityLifecycle.active,
+    updatedAt: updatedAt,
+    allowedFrom: LifeOsEntityLifecycle.archived,
+  );
+
+  LifeOsNote delete({required DateTime updatedAt}) => _changeLifecycle(
+    target: LifeOsEntityLifecycle.deleted,
+    updatedAt: updatedAt,
+    allowedFrom: lifecycle == LifeOsEntityLifecycle.archived
+        ? LifeOsEntityLifecycle.archived
+        : LifeOsEntityLifecycle.active,
+  );
+
+  LifeOsNote restore({required DateTime updatedAt}) => _changeLifecycle(
+    target: LifeOsEntityLifecycle.active,
+    updatedAt: updatedAt,
+    allowedFrom: LifeOsEntityLifecycle.deleted,
+  );
+
+  LifeOsNote _changeLifecycle({
+    required LifeOsEntityLifecycle target,
+    required DateTime updatedAt,
+    required LifeOsEntityLifecycle allowedFrom,
+  }) {
+    _validateMutationTimestamp(updatedAt);
+    if (lifecycle == target) return this;
+    if (lifecycle != allowedFrom) {
+      throw StateError('The requested Note lifecycle transition is invalid.');
+    }
+    return LifeOsNote(
+      id: id,
+      title: title,
+      content: content,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      lifecycle: target,
+      version: version + 1,
+      source: source,
+    );
+  }
+
+  void _validateMutationTimestamp(DateTime value) {
+    _validateUtc(value, 'updatedAt');
+    if (value.isBefore(updatedAt)) {
+      throw ArgumentError.value(
+        value,
+        'updatedAt',
+        'A Note update timestamp cannot move backwards.',
+      );
+    }
   }
 
   @override

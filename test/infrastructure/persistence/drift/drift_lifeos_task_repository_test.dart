@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifeos/application/use_cases/delete_lifeos_task.dart';
+import 'package:lifeos/application/use_cases/restore_lifeos_task.dart';
 import 'package:lifeos/application/use_cases/toggle_stored_task_completion.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_task_title.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
@@ -278,6 +280,74 @@ void main() {
     expect(await repository.getAll(), unorderedEquals([firstTask, secondTask]));
   });
 
+  test('persists delete and restore as exact UPDATE snapshots', () async {
+    final task = createTask(
+      title: 'Lifecycle persistence',
+      isCompleted: false,
+      updatedAt: firstUpdatedAt,
+      version: 1,
+    );
+    await repository.save(task);
+
+    final deleted = await DeleteLifeOsTask(
+      repository: repository,
+      utcClock: () => secondUpdatedAt,
+    )(taskId);
+
+    expect(await repository.getAll(), [deleted]);
+    expect(
+      await repository.getByLifecycle(LifeOsEntityLifecycle.active),
+      isEmpty,
+    );
+    expect(await repository.getByLifecycle(LifeOsEntityLifecycle.deleted), [
+      deleted,
+    ]);
+    final deleteChange =
+        (await database.select(database.outboxEntries).get()).last;
+    expect(deleteChange.operation, 'UPDATE');
+    expect(deleteChange.baseVersion, 1);
+    expect(deleteChange.newVersion, 2);
+    expect(
+      jsonDecode(deleteChange.payload),
+      containsPair('lifecycle', 'deleted'),
+    );
+
+    final restored = await RestoreLifeOsTask(
+      repository: repository,
+      utcClock: () => secondUpdatedAt.add(const Duration(hours: 1)),
+    )(taskId);
+    expect(await repository.getByLifecycle(LifeOsEntityLifecycle.active), [
+      restored,
+    ]);
+    final changes = await database.select(database.outboxEntries).get();
+    expect(changes, hasLength(3));
+    expect(changes.last.operation, 'UPDATE');
+    expect(changes.last.baseVersion, 2);
+    expect(changes.last.newVersion, 3);
+    expect(
+      jsonDecode(changes.last.payload),
+      containsPair('lifecycle', 'active'),
+    );
+  });
+
+  test('lifecycle no-op creates no Outbox change', () async {
+    final task = createTask(
+      title: 'No-op lifecycle',
+      isCompleted: false,
+      updatedAt: firstUpdatedAt,
+      version: 1,
+    );
+    await repository.save(task);
+
+    final result = await RestoreLifeOsTask(
+      repository: repository,
+      utcClock: () => secondUpdatedAt,
+    )(taskId);
+
+    expect(result, task);
+    expect(await database.select(database.outboxEntries).get(), hasLength(1));
+  });
+
   test('searches active title substrings case-insensitively in deterministic order', () async {
     final olderMatch = createTask(
       id: const LifeOsEntityId(
@@ -330,12 +400,24 @@ void main() {
       version: 1,
       lifecycle: LifeOsEntityLifecycle.archived,
     );
+    final deletedMatch = createTask(
+      id: const LifeOsEntityId(
+        value: 'task-deleted',
+        entityType: LifeOsEntityType.task,
+      ),
+      title: 'Deleted Flutter Task',
+      isCompleted: false,
+      updatedAt: DateTime.utc(2026, 9, 6, 16),
+      version: 1,
+      lifecycle: LifeOsEntityLifecycle.deleted,
+    );
     for (final task in [
       olderMatch,
       tiedMatchB,
       tiedMatchA,
       nonMatch,
       archivedMatch,
+      deletedMatch,
     ]) {
       await repository.save(task);
     }
@@ -451,19 +533,14 @@ void main() {
     },
   );
 
-  test('rolls back Domain State when the outbox write fails', () async {
+  test('rolls back Task delete when the Outbox write fails', () async {
     final original = createTask(
       title: 'Original title',
       isCompleted: false,
       updatedAt: firstUpdatedAt,
       version: 1,
     );
-    final updated = createTask(
-      title: 'Updated title',
-      isCompleted: true,
-      updatedAt: secondUpdatedAt,
-      version: 2,
-    );
+    final deleted = original.delete(updatedAt: secondUpdatedAt);
     await repository.save(original);
     final duplicateChangeRepository = DriftLifeOsTaskRepository(
       database,
@@ -472,7 +549,7 @@ void main() {
     );
 
     await expectLater(
-      duplicateChangeRepository.save(updated),
+      duplicateChangeRepository.save(deleted),
       throwsA(anything),
     );
 

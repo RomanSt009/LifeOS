@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_note.dart';
+import 'package:lifeos/application/use_cases/delete_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_note.dart';
+import 'package:lifeos/application/use_cases/restore_lifeos_note.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_note.dart';
 import 'package:lifeos/domain/repositories/lifeos_note_repository.dart';
@@ -75,6 +77,66 @@ void main() {
     expect(find.text('Введите название или текст'), findsOneWidget);
     expect(repository.notes, isEmpty);
   });
+
+  testWidgets('protects a dirty Note, then deletes and restores it', (
+    tester,
+  ) async {
+    final repository = _MemoryNoteRepository();
+    final timestamps = [
+      DateTime.utc(2026, 9, 12, 10),
+      DateTime.utc(2026, 9, 12, 11),
+      DateTime.utc(2026, 9, 12, 12),
+      DateTime.utc(2026, 9, 12, 13),
+    ];
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => timestamps.removeAt(0),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('note-title-field')), 'Note');
+    await tester.tap(find.byKey(const Key('save-note-button')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Unsaved draft',
+    );
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextButton>(find.byKey(const Key('delete-note-button')))
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<TextButton>(find.byKey(const Key('note-trash-toggle')))
+          .onPressed,
+      isNull,
+    );
+
+    await tester.tap(find.byKey(const Key('save-note-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('delete-note-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Move Note to Trash?'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('confirm-delete-note-button')));
+    await tester.pumpAndSettle();
+    expect(repository.notes.single.lifecycle, LifeOsEntityLifecycle.deleted);
+
+    await tester.tap(find.byKey(const Key('note-trash-toggle')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('deleted-note-note-created')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('restore-note-note-created')));
+    await tester.pumpAndSettle();
+    expect(repository.notes.single.lifecycle, LifeOsEntityLifecycle.active);
+  });
 }
 
 Widget _testApp(
@@ -95,6 +157,12 @@ Widget _testApp(
       editLifeOsNoteProvider.overrideWithValue(
         EditLifeOsNote(repository: repository, utcClock: utcClock),
       ),
+      deleteLifeOsNoteProvider.overrideWithValue(
+        DeleteLifeOsNote(repository: repository, utcClock: utcClock),
+      ),
+      restoreLifeOsNoteProvider.overrideWithValue(
+        RestoreLifeOsNote(repository: repository, utcClock: utcClock),
+      ),
     ],
     child: MaterialApp(
       locale: locale,
@@ -107,6 +175,11 @@ Widget _testApp(
 
 class _MemoryNoteRepository implements LifeOsNoteRepository {
   final List<LifeOsNote> notes = [];
+
+  @override
+  Future<List<LifeOsNote>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => notes.where((note) => note.lifecycle == lifecycle).toList();
 
   @override
   Future<List<LifeOsNote>> getAll() async => List.of(notes);

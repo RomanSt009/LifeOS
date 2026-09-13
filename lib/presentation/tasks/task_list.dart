@@ -7,29 +7,83 @@ import '../../domain/entities/lifeos_task.dart';
 import '../relationships/related_entities_section.dart';
 import 'task_list_providers.dart';
 
-class TaskList extends ConsumerWidget {
+class TaskList extends ConsumerStatefulWidget {
   const TaskList({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tasks = ref.watch(taskListControllerProvider);
+  ConsumerState<TaskList> createState() => _TaskListState();
+}
+
+class _TaskListState extends ConsumerState<TaskList> {
+  bool _showTrash = false;
+  bool _isMutating = false;
+  bool _operationFailed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tasks = ref.watch(
+      _showTrash ? taskTrashControllerProvider : taskListControllerProvider,
+    );
     final localizations = AppLocalizations.of(context);
 
     return Column(
       children: [
-        const TaskCreationForm(),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            key: const Key('task-trash-toggle'),
+            onPressed: _isMutating
+                ? null
+                : () => setState(() {
+                    _showTrash = !_showTrash;
+                    _operationFailed = false;
+                  }),
+            icon: Icon(_showTrash ? Icons.arrow_back : Icons.delete_outline),
+            label: Text(
+              _showTrash
+                  ? localizations.backToTasksAction
+                  : localizations.trashAction,
+            ),
+          ),
+        ),
+        if (!_showTrash) const TaskCreationForm(),
         const SizedBox(height: 12),
+        if (_operationFailed)
+          Text(
+            localizations.taskRestoreError,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         Expanded(
           child: tasks.when(
             data: (tasks) {
               if (tasks.isEmpty) {
-                return Center(child: Text(localizations.taskListEmpty));
+                return Center(
+                  child: Text(
+                    _showTrash
+                        ? localizations.taskTrashEmpty
+                        : localizations.taskListEmpty,
+                  ),
+                );
               }
 
               return ListView.builder(
                 itemCount: tasks.length,
                 itemBuilder: (context, index) {
                   final task = tasks[index];
+                  if (_showTrash) {
+                    return ListTile(
+                      key: ValueKey('deleted-task-${task.id.value}'),
+                      title: Text(task.title),
+                      trailing: TextButton.icon(
+                        key: ValueKey('restore-task-${task.id.value}'),
+                        onPressed: _isMutating
+                            ? null
+                            : () => _restoreTask(task),
+                        icon: const Icon(Icons.restore),
+                        label: Text(localizations.restoreTaskAction),
+                      ),
+                    );
+                  }
                   return ExpansionTile(
                     key: ValueKey('task-${task.id.value}'),
                     leading: IconButton(
@@ -63,6 +117,12 @@ class TaskList extends ConsumerWidget {
                                 )
                               : null,
                         ),
+                        IconButton(
+                          key: ValueKey('delete-task-${task.id.value}'),
+                          tooltip: localizations.deleteTaskAction,
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () => _confirmDeleteTask(task),
+                        ),
                       ],
                     ),
                     children: [RelatedEntitiesSection(entityId: task.id)],
@@ -77,6 +137,29 @@ class TaskList extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _confirmDeleteTask(LifeOsTask task) => showDialog<void>(
+    context: context,
+    builder: (context) => _TaskDeleteDialog(
+      task: task,
+      onDelete: () =>
+          ref.read(taskListControllerProvider.notifier).deleteTask(task.id),
+    ),
+  );
+
+  Future<void> _restoreTask(LifeOsTask task) async {
+    setState(() {
+      _isMutating = true;
+      _operationFailed = false;
+    });
+    try {
+      await ref.read(taskTrashControllerProvider.notifier).restoreTask(task.id);
+    } catch (_) {
+      if (mounted) setState(() => _operationFailed = true);
+    } finally {
+      if (mounted) setState(() => _isMutating = false);
+    }
   }
 }
 
@@ -277,3 +360,72 @@ class _TaskEditDialogState extends State<_TaskEditDialog> {
 }
 
 enum _TaskEditError { titleRequired, saveFailed }
+
+class _TaskDeleteDialog extends StatefulWidget {
+  const _TaskDeleteDialog({required this.task, required this.onDelete});
+
+  final LifeOsTask task;
+  final Future<void> Function() onDelete;
+
+  @override
+  State<_TaskDeleteDialog> createState() => _TaskDeleteDialogState();
+}
+
+class _TaskDeleteDialogState extends State<_TaskDeleteDialog> {
+  bool _isDeleting = false;
+  bool _failed = false;
+
+  Future<void> _delete() async {
+    if (_isDeleting) return;
+    setState(() {
+      _isDeleting = true;
+      _failed = false;
+    });
+    try {
+      await widget.onDelete();
+      if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(localizations.deleteTaskDialogTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(localizations.moveTaskToTrashConfirmation(widget.task.title)),
+          if (_failed) ...[
+            const SizedBox(height: 8),
+            Text(
+              localizations.taskDeleteError,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isDeleting ? null : () => Navigator.of(context).pop(),
+          child: Text(localizations.cancelAction),
+        ),
+        FilledButton(
+          key: const Key('confirm-delete-task-button'),
+          onPressed: _isDeleting ? null : _delete,
+          child: _isDeleting
+              ? const SizedBox.square(
+                  dimension: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(localizations.moveToTrashAction),
+        ),
+      ],
+    );
+  }
+}

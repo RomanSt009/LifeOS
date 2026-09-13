@@ -353,6 +353,11 @@ Widget testApp(Locale locale, {EmptyLifeOsTaskRepository? repository}) {
 
 class EmptyLifeOsNoteRepository implements LifeOsNoteRepository {
   @override
+  Future<List<LifeOsNote>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => const [];
+
+  @override
   Future<List<LifeOsNote>> getAll() async => [];
 
   @override
@@ -370,8 +375,15 @@ class EmptyLifeOsTaskRepository implements LifeOsTaskRepository {
   int searchByTitleCallCount = 0;
 
   @override
-  Future<List<LifeOsTask>> getAll() async {
+  Future<List<LifeOsTask>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async {
     getAllCallCount += 1;
+    return const [];
+  }
+
+  @override
+  Future<List<LifeOsTask>> getAll() async {
     return [];
   }
 

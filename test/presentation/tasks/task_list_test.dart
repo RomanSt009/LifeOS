@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
+import 'package:lifeos/application/use_cases/delete_lifeos_task.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_task_title.dart';
+import 'package:lifeos/application/use_cases/restore_lifeos_task.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
@@ -274,6 +276,79 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.savedTasks, hasLength(1));
   });
+
+  testWidgets('confirms delete and restores a Task from feature Trash', (
+    tester,
+  ) async {
+    final task = createTask('task-1', 'Lifecycle Task', isCompleted: false);
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('delete-task-task-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Move Task to Trash?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(repository.savedTasks, isEmpty);
+
+    await tester.tap(find.byKey(const ValueKey('delete-task-task-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-delete-task-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Lifecycle Task'), findsNothing);
+    expect(
+      repository.savedTasks.single.lifecycle,
+      LifeOsEntityLifecycle.deleted,
+    );
+
+    await tester.tap(find.byKey(const Key('task-trash-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('Lifecycle Task'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('restore-task-task-1')));
+    await tester.pumpAndSettle();
+    expect(repository.savedTasks.last.lifecycle, LifeOsEntityLifecycle.active);
+    expect(find.text('Lifecycle Task'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('task-trash-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('Lifecycle Task'), findsOneWidget);
+  });
+
+  testWidgets('keeps Task delete confirmation open on failure for retry', (
+    tester,
+  ) async {
+    final task = createTask('task-1', 'Retry delete', isCompleted: false);
+    var attempts = 0;
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+      beforeSave: (_) async {
+        attempts += 1;
+        if (attempts == 1) throw StateError('write failed');
+      },
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('delete-task-task-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-delete-task-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Unable to delete Task'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('confirm-delete-task-button')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(
+      repository.savedTasks.single.lifecycle,
+      LifeOsEntityLifecycle.deleted,
+    );
+  });
 }
 
 Widget testApp(LifeOsTaskRepository repository) {
@@ -286,12 +361,22 @@ Widget testApp(LifeOsTaskRepository repository) {
     repository: repository,
     utcClock: () => DateTime.utc(2026, 9, 9, 17),
   );
+  final deleteTask = DeleteLifeOsTask(
+    repository: repository,
+    utcClock: () => DateTime.utc(2026, 9, 9, 18),
+  );
+  final restoreTask = RestoreLifeOsTask(
+    repository: repository,
+    utcClock: () => DateTime.utc(2026, 9, 9, 19),
+  );
 
   return ProviderScope(
     overrides: [
       lifeOsTaskRepositoryProvider.overrideWithValue(repository),
       createLifeOsTaskProvider.overrideWithValue(createTask),
       editLifeOsTaskTitleProvider.overrideWithValue(editTaskTitle),
+      deleteLifeOsTaskProvider.overrideWithValue(deleteTask),
+      restoreLifeOsTaskProvider.overrideWithValue(restoreTask),
     ],
     child: const MaterialApp(
       locale: Locale('en'),
@@ -322,6 +407,20 @@ class FakeLifeOsTaskRepository implements LifeOsTaskRepository {
   LifeOsTask? storedTask;
   final Future<void> Function(LifeOsTask task)? beforeSave;
   final List<LifeOsTask> savedTasks = [];
+
+  @override
+  Future<List<LifeOsTask>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async {
+    final values = await getAll();
+    final stored = storedTask;
+    if (stored != null) {
+      values
+        ..removeWhere((task) => task.id == stored.id)
+        ..add(stored);
+    }
+    return values.where((task) => task.lifecycle == lifecycle).toList();
+  }
 
   @override
   Future<List<LifeOsTask>> getAll() => _loadTasks();

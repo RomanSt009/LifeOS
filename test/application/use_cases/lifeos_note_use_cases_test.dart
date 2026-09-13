@@ -71,6 +71,11 @@ class _FakeNoteRepository implements LifeOsNoteRepository {
   int saveCount = 0;
 
   @override
+  Future<List<LifeOsNote>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => notes.values.where((note) => note.lifecycle == lifecycle).toList();
+
+  @override
   Future<List<LifeOsNote>> getAll() async => notes.values.toList();
 
   @override

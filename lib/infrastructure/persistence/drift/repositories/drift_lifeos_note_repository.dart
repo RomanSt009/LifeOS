@@ -31,7 +31,13 @@ class DriftLifeOsNoteRepository implements LifeOsNoteRepository {
   final String _deviceId;
 
   @override
-  Future<List<LifeOsNote>> getAll() async {
+  Future<List<LifeOsNote>> getAll() => _getNotes();
+
+  @override
+  Future<List<LifeOsNote>> getByLifecycle(LifeOsEntityLifecycle lifecycle) =>
+      _getNotes(lifecycle: lifecycle);
+
+  Future<List<LifeOsNote>> _getNotes({LifeOsEntityLifecycle? lifecycle}) async {
     final query =
         _database.select(_database.entities).join([
             innerJoin(
@@ -40,7 +46,10 @@ class DriftLifeOsNoteRepository implements LifeOsNoteRepository {
             ),
           ])
           ..where(
-            _database.entities.entityType.equals(LifeOsEntityType.note.name),
+            _database.entities.entityType.equals(LifeOsEntityType.note.name) &
+                (lifecycle == null
+                    ? const Constant(true)
+                    : _database.entities.lifecycle.equals(lifecycle.name)),
           )
           ..orderBy([
             OrderingTerm.desc(_database.entities.updatedAt),

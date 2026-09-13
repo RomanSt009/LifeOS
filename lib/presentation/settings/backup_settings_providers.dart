@@ -12,3 +12,15 @@ final lifeOsBackupOperationsProvider = Provider<LifeOsBackupOperations>((ref) {
 final lifeOsArtifactFileChooserProvider = Provider<LifeOsArtifactFileChooser>(
   (ref) => const FileSelectorLifeOsArtifactFileChooser(),
 );
+
+final backupRestoreRevisionProvider =
+    NotifierProvider<BackupRestoreRevisionController, int>(
+      BackupRestoreRevisionController.new,
+    );
+
+class BackupRestoreRevisionController extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void advance() => state += 1;
+}

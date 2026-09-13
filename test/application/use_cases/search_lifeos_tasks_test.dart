@@ -51,6 +51,11 @@ class StubLifeOsTaskRepository implements LifeOsTaskRepository {
   final List<String> queries = [];
 
   @override
+  Future<List<LifeOsTask>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => const [];
+
+  @override
   Future<List<LifeOsTask>> getAll() async => [];
 
   @override

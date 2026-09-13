@@ -169,6 +169,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskEditError => 'Unable to save Task';
 
   @override
+  String get trashAction => 'Trash';
+
+  @override
+  String get backToTasksAction => 'Back to Tasks';
+
+  @override
+  String get backToNotesAction => 'Back to Notes';
+
+  @override
+  String get deleteTaskAction => 'Delete Task';
+
+  @override
+  String get deleteTaskDialogTitle => 'Move Task to Trash?';
+
+  @override
+  String get moveToTrashAction => 'Move to Trash';
+
+  @override
+  String moveTaskToTrashConfirmation(String title) {
+    return '$title will be moved to Trash and can be restored.';
+  }
+
+  @override
+  String get restoreTaskAction => 'Restore Task';
+
+  @override
+  String get taskTrashEmpty => 'No deleted Tasks';
+
+  @override
+  String get taskDeleteError => 'Unable to delete Task';
+
+  @override
+  String get taskRestoreError => 'Unable to restore Task';
+
+  @override
   String get noteListTitle => 'Notes';
 
   @override
@@ -197,6 +232,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noteSaveError => 'Unable to save Note';
+
+  @override
+  String get noteTrashTitle => 'Deleted Notes';
+
+  @override
+  String get noteTrashDescription =>
+      'Deleted Notes can be restored from this list.';
+
+  @override
+  String get deleteNoteAction => 'Delete Note';
+
+  @override
+  String get deleteNoteDialogTitle => 'Move Note to Trash?';
+
+  @override
+  String moveNoteToTrashConfirmation(String title) {
+    return '$title will be moved to Trash and can be restored.';
+  }
+
+  @override
+  String get restoreNoteAction => 'Restore Note';
+
+  @override
+  String get noteTrashEmpty => 'No deleted Notes';
+
+  @override
+  String get noteDeleteError => 'Unable to delete Note';
+
+  @override
+  String get noteRestoreError => 'Unable to restore Note';
+
+  @override
+  String get saveNoteBeforeDelete =>
+      'Save or discard changes before deleting this Note';
+
+  @override
+  String get saveNoteBeforeTrash =>
+      'Save or discard changes before opening Trash';
 
   @override
   String get relationshipSectionTitle => 'Related';

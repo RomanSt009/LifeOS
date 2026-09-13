@@ -35,6 +35,12 @@ void main() {
 
 class EmptyLifeOsTaskRepository implements LifeOsTaskRepository {
   @override
+  Future<List<LifeOsTask>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async =>
+      (await getAll()).where((task) => task.lifecycle == lifecycle).toList();
+
+  @override
   Future<List<LifeOsTask>> getAll() async => [];
 
   @override

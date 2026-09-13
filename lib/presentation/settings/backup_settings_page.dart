@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/backup/lifeos_backup_operations.dart';
 import '../../l10n/app_localizations.dart';
 import '../tasks/task_list_providers.dart';
+import '../notes/note_providers.dart';
+import '../relationships/relationship_providers.dart';
+import '../search/task_search_providers.dart';
 import 'backup_settings_providers.dart';
 import 'lifeos_artifact_file_chooser.dart';
 
@@ -201,6 +204,12 @@ class _BackupSettingsPageState extends ConsumerState<BackupSettingsPage> {
             .restoreBackupFrom(source, destructiveReplaceConfirmed: true);
       }
       ref.invalidate(taskListControllerProvider);
+      ref.invalidate(taskTrashControllerProvider);
+      ref.invalidate(noteListControllerProvider);
+      ref.invalidate(noteTrashControllerProvider);
+      ref.invalidate(relationshipsForEntityProvider);
+      ref.read(taskSearchRevisionProvider.notifier).advance();
+      ref.read(backupRestoreRevisionProvider.notifier).advance();
       if (mounted) {
         _setPhase(
           _DataTransferPhase.success,

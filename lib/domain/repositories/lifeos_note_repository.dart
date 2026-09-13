@@ -6,5 +6,7 @@ abstract interface class LifeOsNoteRepository {
 
   Future<LifeOsNote?> getById(LifeOsEntityId id);
 
+  Future<List<LifeOsNote>> getByLifecycle(LifeOsEntityLifecycle lifecycle);
+
   Future<void> save(LifeOsNote note);
 }

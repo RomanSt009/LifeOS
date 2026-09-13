@@ -269,4 +269,65 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('applies the Task lifecycle transition matrix immutably', () {
+    final task = LifeOsTask.createUserTask(
+      id: const LifeOsEntityId(
+        value: 'task-lifecycle',
+        entityType: LifeOsEntityType.task,
+      ),
+      title: 'Lifecycle Task',
+      timestamp: DateTime.utc(2026, 9, 13, 10),
+    );
+    final archived = task.archive(updatedAt: DateTime.utc(2026, 9, 13, 11));
+    final activeAgain = archived.unarchive(
+      updatedAt: DateTime.utc(2026, 9, 13, 12),
+    );
+    final deleted = activeAgain.delete(
+      updatedAt: DateTime.utc(2026, 9, 13, 13),
+    );
+    final restored = deleted.restore(updatedAt: DateTime.utc(2026, 9, 13, 14));
+
+    expect(archived.lifecycle, LifeOsEntityLifecycle.archived);
+    expect(activeAgain.lifecycle, LifeOsEntityLifecycle.active);
+    expect(deleted.lifecycle, LifeOsEntityLifecycle.deleted);
+    expect(restored.lifecycle, LifeOsEntityLifecycle.active);
+    expect(restored.version, 5);
+    expect(restored.updatedAt, DateTime.utc(2026, 9, 13, 14));
+    expect(task.lifecycle, LifeOsEntityLifecycle.active);
+    expect(
+      archived.delete(updatedAt: DateTime.utc(2026, 9, 13, 12)).lifecycle,
+      LifeOsEntityLifecycle.deleted,
+    );
+  });
+
+  test('lifecycle no-ops preserve identity and invalid transitions fail', () {
+    final task = LifeOsTask.createUserTask(
+      id: const LifeOsEntityId(
+        value: 'task-lifecycle-guards',
+        entityType: LifeOsEntityType.task,
+      ),
+      title: 'Lifecycle guards',
+      timestamp: DateTime.utc(2026, 9, 13, 10),
+    );
+    final deleted = task.delete(updatedAt: DateTime.utc(2026, 9, 13, 11));
+
+    expect(task.restore(updatedAt: DateTime.utc(2026, 9, 13, 11)), same(task));
+    expect(
+      deleted.delete(updatedAt: DateTime.utc(2026, 9, 13, 12)),
+      same(deleted),
+    );
+    expect(
+      () => deleted.archive(updatedAt: DateTime.utc(2026, 9, 13, 12)),
+      throwsStateError,
+    );
+    expect(
+      () => deleted.toggleCompletion(updatedAt: DateTime.utc(2026, 9, 13, 12)),
+      throwsStateError,
+    );
+    expect(
+      () => deleted.restore(updatedAt: DateTime.utc(2026, 9, 13, 9)),
+      throwsArgumentError,
+    );
+  });
 }

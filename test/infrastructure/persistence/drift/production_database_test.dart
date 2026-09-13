@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifeos/application/use_cases/delete_lifeos_task.dart';
 import 'package:lifeos/application/use_cases/toggle_stored_task_completion.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
@@ -9,69 +10,82 @@ import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeo
 import 'package:path/path.dart' as path;
 
 void main() {
-  test(
-    'stores an edited Task in lifeos.db and retains it after reopen',
-    () async {
-      final supportDirectory = await Directory.systemTemp.createTemp(
-        'lifeos-production-database-',
-      );
-      addTearDown(() => supportDirectory.delete(recursive: true));
+  test('stores an edited and deleted Task in lifeos.db after reopen', () async {
+    final supportDirectory = await Directory.systemTemp.createTemp(
+      'lifeos-production-database-',
+    );
+    addTearDown(() => supportDirectory.delete(recursive: true));
 
-      const taskId = LifeOsEntityId(
-        value: 'task-file-backed',
-        entityType: LifeOsEntityType.task,
-      );
-      final task = LifeOsTask(
-        id: taskId,
-        title: 'Survive database restart',
-        isCompleted: true,
-        createdAt: DateTime.utc(2026, 9, 8, 10),
-        updatedAt: DateTime.utc(2026, 9, 8, 11),
-        lifecycle: LifeOsEntityLifecycle.active,
-        version: 1,
-        source: LifeOsEntitySource.user,
-      );
+    const taskId = LifeOsEntityId(
+      value: 'task-file-backed',
+      entityType: LifeOsEntityType.task,
+    );
+    final task = LifeOsTask(
+      id: taskId,
+      title: 'Survive database restart',
+      isCompleted: true,
+      createdAt: DateTime.utc(2026, 9, 8, 10),
+      updatedAt: DateTime.utc(2026, 9, 8, 11),
+      lifecycle: LifeOsEntityLifecycle.active,
+      version: 1,
+      source: LifeOsEntitySource.user,
+    );
 
-      final firstDatabase = await openProductionDatabase(
-        applicationSupportDirectoryProvider: () async => supportDirectory,
-      );
-      final changeIds = ['change-file-backed-1', 'change-file-backed-2'];
-      final firstRepository = DriftLifeOsTaskRepository(
-        firstDatabase,
-        () => changeIds.removeAt(0),
-        'device-test',
-      );
+    final firstDatabase = await openProductionDatabase(
+      applicationSupportDirectoryProvider: () async => supportDirectory,
+    );
+    final changeIds = [
+      'change-file-backed-1',
+      'change-file-backed-2',
+      'change-file-backed-3',
+    ];
+    final firstRepository = DriftLifeOsTaskRepository(
+      firstDatabase,
+      () => changeIds.removeAt(0),
+      'device-test',
+    );
 
-      await firstRepository.save(task);
-      final edited = task.editTitle(
-        title: 'Edited before database restart',
-        updatedAt: DateTime.utc(2026, 9, 8, 12),
-      );
-      await firstRepository.save(edited);
-      await firstDatabase.close();
+    await firstRepository.save(task);
+    final edited = task.editTitle(
+      title: 'Edited before database restart',
+      updatedAt: DateTime.utc(2026, 9, 8, 12),
+    );
+    await firstRepository.save(edited);
+    final deleted = await DeleteLifeOsTask(
+      repository: firstRepository,
+      utcClock: () => DateTime.utc(2026, 9, 8, 13),
+    )(taskId);
+    await firstDatabase.close();
 
-      final databaseFile = File(
-        path.join(supportDirectory.path, productionDatabaseFileName),
-      );
-      expect(databaseFile.existsSync(), isTrue);
+    final databaseFile = File(
+      path.join(supportDirectory.path, productionDatabaseFileName),
+    );
+    expect(databaseFile.existsSync(), isTrue);
 
-      final reopenedDatabase = await openProductionDatabase(
-        applicationSupportDirectoryProvider: () async => supportDirectory,
-      );
-      addTearDown(reopenedDatabase.close);
-      final reopenedRepository = DriftLifeOsTaskRepository(
-        reopenedDatabase,
-        () => 'unused-change-id',
-        'device-test',
-      );
+    final reopenedDatabase = await openProductionDatabase(
+      applicationSupportDirectoryProvider: () async => supportDirectory,
+    );
+    addTearDown(reopenedDatabase.close);
+    final reopenedRepository = DriftLifeOsTaskRepository(
+      reopenedDatabase,
+      () => 'unused-change-id',
+      'device-test',
+    );
 
-      expect(await reopenedRepository.getById(taskId), edited);
-      expect(
-        await reopenedDatabase.select(reopenedDatabase.outboxEntries).get(),
-        hasLength(2),
-      );
-    },
-  );
+    expect(await reopenedRepository.getById(taskId), deleted);
+    expect(
+      await reopenedRepository.getByLifecycle(LifeOsEntityLifecycle.active),
+      isEmpty,
+    );
+    expect(
+      await reopenedRepository.getByLifecycle(LifeOsEntityLifecycle.deleted),
+      [deleted],
+    );
+    expect(
+      await reopenedDatabase.select(reopenedDatabase.outboxEntries).get(),
+      hasLength(3),
+    );
+  });
 
   test('retains both completion transitions after reopen with one Outbox change each', () async {
     final supportDirectory = await Directory.systemTemp.createTemp(

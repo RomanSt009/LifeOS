@@ -2,7 +2,7 @@
 
 Статус плана: active
 
-Точная точка возобновления: `DU-04 — Safe Task and Note lifecycle vertical slice` (`pending`, не начат). DU-03 завершён и проверен; перед implementation перечитать ADR-0033 и сверить план с Git.
+Точная точка возобновления: `DU-05 — Note draft and explicit-save safety` (`pending`). DU-04 завершён и проверен; DU-05 не начат.
 
 ## Goal
 
@@ -577,7 +577,7 @@ Validation: focused DU-03 suite PASS (47 тестов); focused Backup v3 regres
 
 ## DU-04 — Safe Task and Note lifecycle vertical slice
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -601,7 +601,19 @@ Focused lifecycle/Outbox/relationship/search/widget/persistence/reopen tests, mi
 
 ### Result / evidence
 
-Not started; depends on DU-02.
+Architecture gate пройден: ADR-0033 принят и находится в HEAD; DU-03 также находится в HEAD. Baseline до изменений: `flutter analyze` PASS; полный `flutter test` PASS (202 теста).
+
+Task и Note получили immutable Domain lifecycle mutations `archive`/`unarchive`/`delete`/`restore` с UTC/monotonic timestamp validation, `version + 1`, сохранением metadata, target-state no-op и запретом недопустимых переходов; обычные edit/toggle mutations разрешены только для active Entity. Application содержит четыре explicit typed use case (`DeleteLifeOsTask`, `RestoreLifeOsTask`, `DeleteLifeOsNote`, `RestoreLifeOsNote`), которые владеют load/clock/mutation/save orchestration и не вызывают `save()` для missing/no-op результата.
+
+Typed Task/Note repositories получили `getByLifecycle`; `getAll` и `getById` сохранили all-state contract. Drift lifecycle reads фильтруют общую `entities.lifecycle` и сохраняют deterministic `updatedAt DESC, id ASC` ordering. Delete/Restore сохраняют Entity + typed state + ровно один Outbox `UPDATE` в существующей transaction: корректные `baseVersion`/`newVersion`, полный resulting snapshot и lifecycle; no-op не создаёт Outbox. File-backed reopen сохраняет deleted Task/Note, а lifecycle rollback при Outbox failure оставляет Domain State неизменным.
+
+Tasks и Notes показывают active-only ordinary lists и отдельный feature-local Trash с deleted-only содержимым и Restore; Archive UI, purge и новый destination не добавлены. Delete доступен мышью, требует локализованного recoverable confirmation, блокирует повторную отправку и оставляет dialog открытым с bounded error/retry при failure. После успеха удалённая Entity снимается с selection и перемещается между active/Trash projections. Для Note dirty-state применён разрешённый безопасный минимум: Delete и переход в Trash недоступны до сохранения draft; полноценная save/discard UX state machine остаётся DU-05.
+
+Relationships физически не мутируются и не создают Relationship Outbox при lifecycle изменении endpoint. All-state `getAll()` продолжает сохранять их для Backup, а contextual `getForEntity()` показывает active Relationship только при обоих active endpoints; restore возвращает ту же связь, duplicate protection продолжает видеть persisted pair, а picker использует active-only Task/Note reads. Task Search остаётся Task-only и active-only; lifecycle mutation сбрасывает mounted Search projection. Successful Backup Restore теперь invalidates active и Trash providers Tasks/Notes, contextual Relationships, Search state и Note selection/draft, исключая stale mounted projections без global event bus.
+
+Новые user-facing строки добавлены в EN/RU ARB; generated localization обновлена только через `flutter gen-l10n`. Focused Domain/Application/Drift/Relationship suite PASS (51 тест), focused lifecycle/Application/repository suite PASS (28 тестов), focused Task/Note/Restore/shell widget suites PASS, focused Backup v3/migration/localization regression PASS. Финальная validation: `flutter gen-l10n` PASS; `flutter analyze --no-pub` PASS; полный `flutter test` PASS (217 тестов); import/localization boundary scan PASS; routing scan PASS; schema v4 scan PASS; dependency manifest/lock diff PASS; `git diff --check` PASS.
+
+`schemaVersion` остаётся 3; migration/schema v4, Backup v4, новые packages и изменения `pubspec.yaml`/`pubspec.lock` отсутствуют. Backup v3 all-state round-trip сохраняет deleted/archived state и Relationships. `.obsidian/workspace.json` остаётся отдельным pre-existing user-owned change и в DU-04 не изменялся.
 
 ## DU-05 — Note draft and explicit-save safety
 
@@ -785,4 +797,4 @@ Not started.
 
 ## Exact resume point
 
-Resume with **DU-04 — Safe Task and Note lifecycle vertical slice only**. Reconcile this plan with Git and production state, re-read ADR-0033 and every ADR referenced by DU-04, then mark DU-04 active before implementation. Do not begin DU-05.
+Resume with **DU-05 — Note draft and explicit-save safety only**. Reconcile this plan with Git and production state, re-read every ADR referenced by DU-05, then mark DU-05 active before implementation. Do not begin DU-06.

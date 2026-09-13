@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
@@ -242,6 +243,55 @@ void main() {
     );
     expect(await database.select(database.outboxEntries).get(), hasLength(1));
   });
+
+  test(
+    'keeps relationships stored while inactive endpoints hide context',
+    () async {
+      final taskToTask = relationship('rel-tt', taskA, taskB);
+      final taskToNote = relationship('rel-tn', taskA, noteA);
+      final noteToNote = relationship(
+        'rel-nn',
+        noteA,
+        const LifeOsEntityId(
+          value: 'note-b',
+          entityType: LifeOsEntityType.note,
+        ),
+      );
+      await _entity(database, 'note-b', 'note');
+      for (final value in [taskToTask, taskToNote, noteToNote]) {
+        await repository.save(value);
+      }
+      final relationshipOutboxCount =
+          (await database.select(database.outboxEntries).get()).length;
+
+      await (database.update(database.entities)
+            ..where((entity) => entity.id.equals(taskA.value)))
+          .write(const EntitiesCompanion(lifecycle: Value('deleted')));
+      expect(await repository.getForEntity(taskA), isEmpty);
+      expect(await repository.getForEntity(taskB), isEmpty);
+      expect(await repository.getForEntity(noteA), [noteToNote]);
+      expect(
+        await repository.getAll(),
+        unorderedEquals([taskToTask, taskToNote, noteToNote]),
+      );
+      expect(await repository.getById(taskToTask.id), taskToTask);
+      expect(await repository.getById(taskToNote.id), taskToNote);
+      expect(
+        await database.select(database.outboxEntries).get(),
+        hasLength(relationshipOutboxCount),
+      );
+
+      await (database.update(database.entities)
+            ..where((entity) => entity.id.equals(taskA.value)))
+          .write(const EntitiesCompanion(lifecycle: Value('active')));
+      expect(await repository.getForEntity(taskB), [taskToTask]);
+      expect(await repository.getForEntity(noteA), [noteToNote, taskToNote]);
+      await expectLater(
+        repository.save(relationship('rel-duplicate', noteA, taskA)),
+        throwsA(isA<LifeOsRelationshipPersistenceException>()),
+      );
+    },
+  );
 
   test('survives close and reopen', () async {
     final directory = await Directory.systemTemp.createTemp(

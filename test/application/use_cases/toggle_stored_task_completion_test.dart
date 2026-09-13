@@ -8,10 +8,7 @@ void main() {
   final createdAt = DateTime.utc(2026, 9, 6, 10);
   final initialUpdatedAt = DateTime.utc(2026, 9, 6, 11);
   final toggledAt = DateTime.utc(2026, 9, 6, 12);
-  const id = LifeOsEntityId(
-    value: 'task-1',
-    entityType: LifeOsEntityType.task,
-  );
+  const id = LifeOsEntityId(value: 'task-1', entityType: LifeOsEntityType.task);
 
   LifeOsTask createTask({required bool isCompleted}) {
     return LifeOsTask(
@@ -26,26 +23,29 @@ void main() {
     );
   }
 
-  test('loads an incomplete task, toggles it, saves it, and returns it', () async {
-    final original = createTask(isCompleted: false);
-    final repository = FakeLifeOsTaskRepository(taskToReturn: original);
-    final toggleStoredTaskCompletion = ToggleStoredTaskCompletion(
-      repository: repository,
-    );
+  test(
+    'loads an incomplete task, toggles it, saves it, and returns it',
+    () async {
+      final original = createTask(isCompleted: false);
+      final repository = FakeLifeOsTaskRepository(taskToReturn: original);
+      final toggleStoredTaskCompletion = ToggleStoredTaskCompletion(
+        repository: repository,
+      );
 
-    final result = await toggleStoredTaskCompletion(id, updatedAt: toggledAt);
+      final result = await toggleStoredTaskCompletion(id, updatedAt: toggledAt);
 
-    expect(repository.requestedIds, [id]);
-    expect(result, isNotNull);
-    expect(result!.isCompleted, isTrue);
-    expect(result.version, 2);
-    expect(result.updatedAt, toggledAt);
-    expect(repository.savedTasks, [result]);
-    expect(original.isCompleted, isFalse);
-    expect(original.version, 1);
-    expect(original.updatedAt, initialUpdatedAt);
-    expect(result, isNot(same(original)));
-  });
+      expect(repository.requestedIds, [id]);
+      expect(result, isNotNull);
+      expect(result!.isCompleted, isTrue);
+      expect(result.version, 2);
+      expect(result.updatedAt, toggledAt);
+      expect(repository.savedTasks, [result]);
+      expect(original.isCompleted, isFalse);
+      expect(original.version, 1);
+      expect(original.updatedAt, initialUpdatedAt);
+      expect(result, isNot(same(original)));
+    },
+  );
 
   test('loads a complete task and toggles it to incomplete', () async {
     final original = createTask(isCompleted: true);
@@ -82,6 +82,12 @@ class FakeLifeOsTaskRepository implements LifeOsTaskRepository {
   final LifeOsTask? taskToReturn;
   final List<LifeOsEntityId> requestedIds = [];
   final List<LifeOsTask> savedTasks = [];
+
+  @override
+  Future<List<LifeOsTask>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async =>
+      (await getAll()).where((task) => task.lifecycle == lifecycle).toList();
 
   @override
   Future<List<LifeOsTask>> getAll() async {

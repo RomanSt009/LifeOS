@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifeos/application/use_cases/delete_lifeos_note.dart';
+import 'package:lifeos/application/use_cases/restore_lifeos_note.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_note.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
@@ -124,6 +126,51 @@ void main() {
     );
   });
 
+  test('persists Note delete and restore with typed lifecycle reads', () async {
+    final note = createNote();
+    await repository.save(note);
+
+    final deleted = await DeleteLifeOsNote(
+      repository: repository,
+      utcClock: () => DateTime.utc(2026, 9, 12, 11),
+    )(noteId);
+
+    expect(await repository.getAll(), [deleted]);
+    expect(
+      await repository.getByLifecycle(LifeOsEntityLifecycle.active),
+      isEmpty,
+    );
+    expect(await repository.getByLifecycle(LifeOsEntityLifecycle.deleted), [
+      deleted,
+    ]);
+    final deleteChange =
+        (await database.select(database.outboxEntries).get()).last;
+    expect(deleteChange.operation, 'UPDATE');
+    expect(deleteChange.baseVersion, 1);
+    expect(deleteChange.newVersion, 2);
+    expect(
+      jsonDecode(deleteChange.payload),
+      containsPair('lifecycle', 'deleted'),
+    );
+
+    final restored = await RestoreLifeOsNote(
+      repository: repository,
+      utcClock: () => DateTime.utc(2026, 9, 12, 12),
+    )(noteId);
+    expect(await repository.getByLifecycle(LifeOsEntityLifecycle.active), [
+      restored,
+    ]);
+    final changes = await database.select(database.outboxEntries).get();
+    expect(changes, hasLength(3));
+    expect(changes.last.operation, 'UPDATE');
+    expect(changes.last.baseVersion, 2);
+    expect(changes.last.newVersion, 3);
+    expect(
+      jsonDecode(changes.last.payload),
+      containsPair('lifecycle', 'active'),
+    );
+  });
+
   test('rejects cross-type ID collisions without mutation', () async {
     final taskRepository = DriftLifeOsTaskRepository(
       database,
@@ -212,14 +259,10 @@ void main() {
     },
   );
 
-  test('rolls back Note state when the Outbox insert fails', () async {
+  test('rolls back Note delete when the Outbox insert fails', () async {
     final original = createNote();
     await repository.save(original);
-    final edited = original.edit(
-      title: 'Changed',
-      content: original.content,
-      updatedAt: DateTime.utc(2026, 9, 12, 11),
-    );
+    final deleted = original.delete(updatedAt: DateTime.utc(2026, 9, 12, 11));
     final duplicateChangeRepository = DriftLifeOsNoteRepository(
       database,
       () => 'change-1',
@@ -227,7 +270,7 @@ void main() {
     );
 
     await expectLater(
-      duplicateChangeRepository.save(edited),
+      duplicateChangeRepository.save(deleted),
       throwsA(anything),
     );
 
@@ -235,19 +278,24 @@ void main() {
     expect(await database.select(database.outboxEntries).get(), hasLength(1));
   });
 
-  test('retains Note state after closing and reopening the database', () async {
+  test('retains deleted Note state after closing and reopening', () async {
     final directory = await Directory.systemTemp.createTemp('lifeos-note-');
     addTearDown(() => directory.delete(recursive: true));
     final file = File('${directory.path}${Platform.pathSeparator}notes.db');
     await database.close();
     database = LifeOsDatabase(NativeDatabase(file));
+    final fileChanges = ['file-create', 'file-delete'];
     final firstRepository = DriftLifeOsNoteRepository(
       database,
-      () => 'file-change',
+      () => fileChanges.removeAt(0),
       'device-test',
     );
     final note = createNote(content: 'persist exactly\n');
     await firstRepository.save(note);
+    final deleted = await DeleteLifeOsNote(
+      repository: firstRepository,
+      utcClock: () => DateTime.utc(2026, 9, 12, 11),
+    )(note.id);
     await database.close();
 
     database = LifeOsDatabase(NativeDatabase(file));
@@ -257,8 +305,16 @@ void main() {
       'device-test',
     );
 
-    expect(await reopenedRepository.getById(note.id), note);
-    expect(await database.select(database.outboxEntries).get(), hasLength(1));
+    expect(await reopenedRepository.getById(note.id), deleted);
+    expect(
+      await reopenedRepository.getByLifecycle(LifeOsEntityLifecycle.active),
+      isEmpty,
+    );
+    expect(
+      await reopenedRepository.getByLifecycle(LifeOsEntityLifecycle.deleted),
+      [deleted],
+    );
+    expect(await database.select(database.outboxEntries).get(), hasLength(2));
     await database.close();
   });
 }

@@ -172,6 +172,41 @@ class AppLocalizationsRu extends AppLocalizations {
   String get taskEditError => 'Не удалось сохранить задачу';
 
   @override
+  String get trashAction => 'Корзина';
+
+  @override
+  String get backToTasksAction => 'Назад к задачам';
+
+  @override
+  String get backToNotesAction => 'Назад к заметкам';
+
+  @override
+  String get deleteTaskAction => 'Удалить задачу';
+
+  @override
+  String get deleteTaskDialogTitle => 'Переместить задачу в корзину?';
+
+  @override
+  String get moveToTrashAction => 'Переместить в корзину';
+
+  @override
+  String moveTaskToTrashConfirmation(String title) {
+    return 'Задача «$title» будет перемещена в корзину, откуда её можно восстановить.';
+  }
+
+  @override
+  String get restoreTaskAction => 'Восстановить задачу';
+
+  @override
+  String get taskTrashEmpty => 'Удалённых задач нет';
+
+  @override
+  String get taskDeleteError => 'Не удалось удалить задачу';
+
+  @override
+  String get taskRestoreError => 'Не удалось восстановить задачу';
+
+  @override
   String get noteListTitle => 'Заметки';
 
   @override
@@ -200,6 +235,44 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noteSaveError => 'Не удалось сохранить заметку';
+
+  @override
+  String get noteTrashTitle => 'Удалённые заметки';
+
+  @override
+  String get noteTrashDescription =>
+      'Удалённые заметки можно восстановить из этого списка.';
+
+  @override
+  String get deleteNoteAction => 'Удалить заметку';
+
+  @override
+  String get deleteNoteDialogTitle => 'Переместить заметку в корзину?';
+
+  @override
+  String moveNoteToTrashConfirmation(String title) {
+    return 'Заметка «$title» будет перемещена в корзину, откуда её можно восстановить.';
+  }
+
+  @override
+  String get restoreNoteAction => 'Восстановить заметку';
+
+  @override
+  String get noteTrashEmpty => 'Удалённых заметок нет';
+
+  @override
+  String get noteDeleteError => 'Не удалось удалить заметку';
+
+  @override
+  String get noteRestoreError => 'Не удалось восстановить заметку';
+
+  @override
+  String get saveNoteBeforeDelete =>
+      'Сохраните или отмените изменения перед удалением заметки';
+
+  @override
+  String get saveNoteBeforeTrash =>
+      'Сохраните или отмените изменения перед открытием корзины';
 
   @override
   String get relationshipSectionTitle => 'Связанные';

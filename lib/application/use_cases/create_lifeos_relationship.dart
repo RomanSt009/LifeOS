@@ -53,12 +53,13 @@ class CreateLifeOsRelationship {
   }
 
   Future<void> _requireEndpoint(LifeOsEntityId id) async {
-    final exists = switch (id.entityType) {
-      LifeOsEntityType.task => await taskRepository.getById(id) != null,
-      LifeOsEntityType.note => await noteRepository.getById(id) != null,
-      LifeOsEntityType.relationship => false,
+    final endpoint = switch (id.entityType) {
+      LifeOsEntityType.task => await taskRepository.getById(id),
+      LifeOsEntityType.note => await noteRepository.getById(id),
+      LifeOsEntityType.relationship => null,
     };
-    if (!exists) {
+    if (endpoint == null ||
+        endpoint.lifecycle != LifeOsEntityLifecycle.active) {
       throw LifeOsRelationshipEndpointException(id);
     }
   }

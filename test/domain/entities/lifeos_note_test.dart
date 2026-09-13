@@ -156,4 +156,61 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('applies the Note lifecycle transition matrix immutably', () {
+    final note = LifeOsNote.createUserNote(
+      id: noteId,
+      title: 'Lifecycle Note',
+      content: 'Body',
+      timestamp: createdAt,
+    );
+    final archived = note.archive(updatedAt: DateTime.utc(2026, 9, 12, 11));
+    final activeAgain = archived.unarchive(
+      updatedAt: DateTime.utc(2026, 9, 12, 12),
+    );
+    final deleted = activeAgain.delete(
+      updatedAt: DateTime.utc(2026, 9, 12, 13),
+    );
+    final restored = deleted.restore(updatedAt: DateTime.utc(2026, 9, 12, 14));
+
+    expect(archived.lifecycle, LifeOsEntityLifecycle.archived);
+    expect(activeAgain.lifecycle, LifeOsEntityLifecycle.active);
+    expect(deleted.lifecycle, LifeOsEntityLifecycle.deleted);
+    expect(restored.lifecycle, LifeOsEntityLifecycle.active);
+    expect(restored.version, 5);
+    expect(restored.updatedAt, DateTime.utc(2026, 9, 12, 14));
+    expect(note.lifecycle, LifeOsEntityLifecycle.active);
+    expect(
+      archived.delete(updatedAt: DateTime.utc(2026, 9, 12, 12)).lifecycle,
+      LifeOsEntityLifecycle.deleted,
+    );
+  });
+
+  test('inactive Note guards edits and invalid lifecycle transitions', () {
+    final note = LifeOsNote.createUserNote(
+      id: noteId,
+      title: 'Lifecycle Note',
+      content: 'Body',
+      timestamp: createdAt,
+    );
+    final deleted = note.delete(updatedAt: DateTime.utc(2026, 9, 12, 11));
+
+    expect(note.restore(updatedAt: DateTime.utc(2026, 9, 12, 11)), same(note));
+    expect(
+      deleted.delete(updatedAt: DateTime.utc(2026, 9, 12, 12)),
+      same(deleted),
+    );
+    expect(
+      () => deleted.archive(updatedAt: DateTime.utc(2026, 9, 12, 12)),
+      throwsStateError,
+    );
+    expect(
+      () => deleted.edit(
+        title: 'Changed',
+        content: 'Body',
+        updatedAt: DateTime.utc(2026, 9, 12, 12),
+      ),
+      throwsStateError,
+    );
+  });
 }

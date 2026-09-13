@@ -22,12 +22,25 @@ void main() {
           version: 1,
           source: LifeOsEntitySource.user,
         ),
+        LifeOsTask(
+          id: const LifeOsEntityId(
+            value: 'task-deleted',
+            entityType: LifeOsEntityType.task,
+          ),
+          title: 'Deleted Task',
+          isCompleted: false,
+          createdAt: DateTime.utc(2026, 9, 8, 13),
+          updatedAt: DateTime.utc(2026, 9, 8, 14),
+          lifecycle: LifeOsEntityLifecycle.deleted,
+          version: 2,
+          source: LifeOsEntitySource.user,
+        ),
       ];
       final repository = FakeLifeOsTaskRepository(tasks);
 
       final result = await GetLifeOsTasks(repository)();
 
-      expect(result, same(tasks));
+      expect(result, [tasks.first]);
     },
   );
 }
@@ -36,6 +49,11 @@ class FakeLifeOsTaskRepository implements LifeOsTaskRepository {
   FakeLifeOsTaskRepository(this.tasks);
 
   final List<LifeOsTask> tasks;
+
+  @override
+  Future<List<LifeOsTask>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => tasks.where((task) => task.lifecycle == lifecycle).toList();
 
   @override
   Future<List<LifeOsTask>> getAll() async => tasks;

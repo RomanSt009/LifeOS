@@ -4,6 +4,10 @@ import '../application/use_cases/create_lifeos_relationship.dart';
 import '../application/use_cases/create_lifeos_task.dart';
 import '../application/use_cases/edit_lifeos_note.dart';
 import '../application/use_cases/edit_lifeos_task_title.dart';
+import '../application/use_cases/delete_lifeos_task.dart';
+import '../application/use_cases/restore_lifeos_task.dart';
+import '../application/use_cases/delete_lifeos_note.dart';
+import '../application/use_cases/restore_lifeos_note.dart';
 import '../application/use_cases/unlink_lifeos_relationship.dart';
 import '../application/use_cases/export_lifeos_data.dart';
 import '../application/use_cases/restore_lifeos_backup.dart';
@@ -32,8 +36,12 @@ class LifeOsAppDependencies {
     required this.relationshipRepository,
     required this.createTask,
     required this.editTaskTitle,
+    required this.deleteTask,
+    required this.restoreTask,
     required this.createNote,
     required this.editNote,
+    required this.deleteNote,
+    required this.restoreNote,
     required this.createRelationship,
     required this.unlinkRelationship,
     required this.searchTasks,
@@ -49,8 +57,12 @@ class LifeOsAppDependencies {
   final LifeOsRelationshipRepository relationshipRepository;
   final CreateLifeOsTask createTask;
   final EditLifeOsTaskTitle editTaskTitle;
+  final DeleteLifeOsTask deleteTask;
+  final RestoreLifeOsTask restoreTask;
   final CreateLifeOsNote createNote;
   final EditLifeOsNote editNote;
+  final DeleteLifeOsNote deleteNote;
+  final RestoreLifeOsNote restoreNote;
   final CreateLifeOsRelationship createRelationship;
   final UnlinkLifeOsRelationship unlinkRelationship;
   final SearchLifeOsTasks searchTasks;
@@ -103,12 +115,28 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     repository: taskRepository,
     utcClock: utcClock,
   );
+  final deleteTask = DeleteLifeOsTask(
+    repository: taskRepository,
+    utcClock: utcClock,
+  );
+  final restoreTask = RestoreLifeOsTask(
+    repository: taskRepository,
+    utcClock: utcClock,
+  );
   final createNote = CreateLifeOsNote(
     repository: noteRepository,
     entityIdGenerator: entityIdGenerator,
     utcClock: utcClock,
   );
   final editNote = EditLifeOsNote(
+    repository: noteRepository,
+    utcClock: utcClock,
+  );
+  final deleteNote = DeleteLifeOsNote(
+    repository: noteRepository,
+    utcClock: utcClock,
+  );
+  final restoreNote = RestoreLifeOsNote(
     repository: noteRepository,
     utcClock: utcClock,
   );
@@ -159,8 +187,12 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     relationshipRepository: relationshipRepository,
     createTask: createTask,
     editTaskTitle: editTaskTitle,
+    deleteTask: deleteTask,
+    restoreTask: restoreTask,
     createNote: createNote,
     editNote: editNote,
+    deleteNote: deleteNote,
+    restoreNote: restoreNote,
     createRelationship: createRelationship,
     unlinkRelationship: unlinkRelationship,
     searchTasks: searchTasks,

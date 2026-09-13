@@ -404,6 +404,72 @@ abstract class AppLocalizations {
   /// **'Unable to save Task'**
   String get taskEditError;
 
+  /// No description provided for @trashAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash'**
+  String get trashAction;
+
+  /// No description provided for @backToTasksAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Tasks'**
+  String get backToTasksAction;
+
+  /// No description provided for @backToNotesAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Notes'**
+  String get backToNotesAction;
+
+  /// No description provided for @deleteTaskAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Task'**
+  String get deleteTaskAction;
+
+  /// No description provided for @deleteTaskDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Task to Trash?'**
+  String get deleteTaskDialogTitle;
+
+  /// No description provided for @moveToTrashAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Trash'**
+  String get moveToTrashAction;
+
+  /// No description provided for @moveTaskToTrashConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} will be moved to Trash and can be restored.'**
+  String moveTaskToTrashConfirmation(String title);
+
+  /// No description provided for @restoreTaskAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Task'**
+  String get restoreTaskAction;
+
+  /// No description provided for @taskTrashEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No deleted Tasks'**
+  String get taskTrashEmpty;
+
+  /// No description provided for @taskDeleteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to delete Task'**
+  String get taskDeleteError;
+
+  /// No description provided for @taskRestoreError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to restore Task'**
+  String get taskRestoreError;
+
   /// No description provided for @noteListTitle.
   ///
   /// In en, this message translates to:
@@ -463,6 +529,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to save Note'**
   String get noteSaveError;
+
+  /// No description provided for @noteTrashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted Notes'**
+  String get noteTrashTitle;
+
+  /// No description provided for @noteTrashDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted Notes can be restored from this list.'**
+  String get noteTrashDescription;
+
+  /// No description provided for @deleteNoteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Note'**
+  String get deleteNoteAction;
+
+  /// No description provided for @deleteNoteDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Note to Trash?'**
+  String get deleteNoteDialogTitle;
+
+  /// No description provided for @moveNoteToTrashConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} will be moved to Trash and can be restored.'**
+  String moveNoteToTrashConfirmation(String title);
+
+  /// No description provided for @restoreNoteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Note'**
+  String get restoreNoteAction;
+
+  /// No description provided for @noteTrashEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No deleted Notes'**
+  String get noteTrashEmpty;
+
+  /// No description provided for @noteDeleteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to delete Note'**
+  String get noteDeleteError;
+
+  /// No description provided for @noteRestoreError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to restore Note'**
+  String get noteRestoreError;
+
+  /// No description provided for @saveNoteBeforeDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Save or discard changes before deleting this Note'**
+  String get saveNoteBeforeDelete;
+
+  /// No description provided for @saveNoteBeforeTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Save or discard changes before opening Trash'**
+  String get saveNoteBeforeTrash;
 
   /// No description provided for @relationshipSectionTitle.
   ///

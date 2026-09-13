@@ -38,6 +38,12 @@ class _TaskSearchPageState extends ConsumerState<TaskSearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(taskSearchRevisionProvider, (previous, next) {
+      if (previous == null || previous == next) return;
+      _latestSearchRequest += 1;
+      _queryController.clear();
+      if (mounted) setState(() => _searchResult = null);
+    });
     final localizations = AppLocalizations.of(context);
 
     return Padding(
@@ -72,9 +78,7 @@ class _TaskSearchPageState extends ConsumerState<TaskSearchPage> {
             ],
           ),
           const SizedBox(height: 24),
-          Expanded(
-            child: _SearchContent(searchResult: _searchResult),
-          ),
+          Expanded(child: _SearchContent(searchResult: _searchResult)),
         ],
       ),
     );

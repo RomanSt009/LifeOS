@@ -47,12 +47,8 @@ final class DriftLifeOsRelationshipRepository
         );
     final values = <LifeOsRelationship>[];
     for (final row in await query.get()) {
-      values.add(
-        await _map(
-          row.readTable(_database.entities),
-          row.readTable(_database.relationshipRecords),
-        ),
-      );
+      final typed = row.readTable(_database.relationshipRecords);
+      values.add(await _map(row.readTable(_database.entities), typed));
     }
     values.sort((a, b) => a.id.value.compareTo(b.id.value));
     return List.unmodifiable(values);
@@ -102,12 +98,9 @@ final class DriftLifeOsRelationshipRepository
         );
     final values = <LifeOsRelationship>[];
     for (final row in await query.get()) {
-      values.add(
-        await _map(
-          row.readTable(_database.entities),
-          row.readTable(_database.relationshipRecords),
-        ),
-      );
+      final typed = row.readTable(_database.relationshipRecords);
+      if (!await _endpointsAreActive(typed)) continue;
+      values.add(await _map(row.readTable(_database.entities), typed));
     }
     values.sort((a, b) {
       final updated = b.updatedAt.compareTo(a.updatedAt);
@@ -120,9 +113,15 @@ final class DriftLifeOsRelationshipRepository
   Future<void> save(LifeOsRelationship relationship) async {
     try {
       await _database.transaction(() async {
-        final first = await _verifiedEndpoint(relationship.firstEntityId);
-        final second = await _verifiedEndpoint(relationship.secondEntityId);
         final existing = await _entity(relationship.id.value);
+        final first = await _verifiedEndpoint(
+          relationship.firstEntityId,
+          requireActive: existing == null,
+        );
+        final second = await _verifiedEndpoint(
+          relationship.secondEntityId,
+          requireActive: existing == null,
+        );
         if (existing != null &&
             existing.entityType != LifeOsEntityType.relationship.name) {
           throw const LifeOsRelationshipPersistenceException(
@@ -234,7 +233,17 @@ final class DriftLifeOsRelationshipRepository
     _database.entities,
   )..where((row) => row.id.equals(id))).getSingleOrNull();
 
-  Future<EntityRecord> _verifiedEndpoint(LifeOsEntityId id) async {
+  Future<bool> _endpointsAreActive(RelationshipRecord relationship) async {
+    final first = await _entity(relationship.firstEntityId);
+    final second = await _entity(relationship.secondEntityId);
+    return first?.lifecycle == LifeOsEntityLifecycle.active.name &&
+        second?.lifecycle == LifeOsEntityLifecycle.active.name;
+  }
+
+  Future<EntityRecord> _verifiedEndpoint(
+    LifeOsEntityId id, {
+    required bool requireActive,
+  }) async {
     if (!_isSupportedEndpointType(id.entityType)) {
       throw const LifeOsRelationshipPersistenceException(
         'Relationship endpoint type is not supported.',
@@ -250,6 +259,12 @@ final class DriftLifeOsRelationshipRepository
         !_isSupportedStoredEndpointType(entity.entityType)) {
       throw const LifeOsRelationshipPersistenceException(
         'Relationship endpoint type is inconsistent.',
+      );
+    }
+    if (requireActive &&
+        entity.lifecycle != LifeOsEntityLifecycle.active.name) {
+      throw const LifeOsRelationshipPersistenceException(
+        'A new Relationship requires active endpoints.',
       );
     }
     return entity;

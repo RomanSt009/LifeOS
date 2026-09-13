@@ -156,6 +156,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Created after Backup'), findsOneWidget);
 
+      await tester.tap(find.text('Search'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('search-query-field')),
+        'Created after',
+      );
+      await tester.tap(find.byKey(const Key('search-submit-button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Created after Backup'), findsOneWidget);
+
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('restore-backup-button')));
@@ -163,6 +173,11 @@ void main() {
       await tester.tap(find.byKey(const Key('restore-confirmation-confirm')));
       await tester.pumpAndSettle();
       expect(find.text('Backup restored successfully.'), findsOneWidget);
+
+      await tester.tap(find.text('Search'));
+      await tester.pumpAndSettle();
+      expect(find.text('Enter a Task title to search'), findsOneWidget);
+      expect(find.text('Created after Backup'), findsNothing);
 
       await tester.tap(find.text('Tasks'));
       await tester.pumpAndSettle();
@@ -299,6 +314,11 @@ class MutableTaskRepository implements LifeOsTaskRepository {
   MutableTaskRepository(this.tasks);
 
   final List<LifeOsTask> tasks;
+
+  @override
+  Future<List<LifeOsTask>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => tasks.where((task) => task.lifecycle == lifecycle).toList();
 
   @override
   Future<List<LifeOsTask>> getAll() async => List.unmodifiable(tasks);

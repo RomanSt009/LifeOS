@@ -12,6 +12,10 @@ import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
 import 'package:lifeos/application/use_cases/export_lifeos_data.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_task_title.dart';
+import 'package:lifeos/application/use_cases/delete_lifeos_task.dart';
+import 'package:lifeos/application/use_cases/restore_lifeos_task.dart';
+import 'package:lifeos/application/use_cases/delete_lifeos_note.dart';
+import 'package:lifeos/application/use_cases/restore_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_backup.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
 import 'package:lifeos/application/use_cases/unlink_lifeos_relationship.dart';
@@ -61,12 +65,28 @@ void main() {
         repository: repository,
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),
+      deleteTask: DeleteLifeOsTask(
+        repository: repository,
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
+      restoreTask: RestoreLifeOsTask(
+        repository: repository,
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
       createNote: CreateLifeOsNote(
         repository: noteRepository,
         entityIdGenerator: () => 'note-test',
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),
       editNote: EditLifeOsNote(
+        repository: noteRepository,
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
+      deleteNote: DeleteLifeOsNote(
+        repository: noteRepository,
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
+      restoreNote: RestoreLifeOsNote(
         repository: noteRepository,
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),
@@ -147,12 +167,28 @@ void main() {
         repository: repository,
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),
+      deleteTask: DeleteLifeOsTask(
+        repository: repository,
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
+      restoreTask: RestoreLifeOsTask(
+        repository: repository,
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
       createNote: CreateLifeOsNote(
         repository: noteRepository,
         entityIdGenerator: () => 'note-test',
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),
       editNote: EditLifeOsNote(
+        repository: noteRepository,
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
+      deleteNote: DeleteLifeOsNote(
+        repository: noteRepository,
+        utcClock: () => DateTime.utc(2026, 9, 9),
+      ),
+      restoreNote: RestoreLifeOsNote(
         repository: noteRepository,
         utcClock: () => DateTime.utc(2026, 9, 9),
       ),

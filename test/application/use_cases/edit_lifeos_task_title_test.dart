@@ -75,6 +75,12 @@ class _FakeTaskRepository implements LifeOsTaskRepository {
   final List<LifeOsTask> savedTasks = [];
 
   @override
+  Future<List<LifeOsTask>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async =>
+      (await getAll()).where((task) => task.lifecycle == lifecycle).toList();
+
+  @override
   Future<List<LifeOsTask>> getAll() async => [?task];
 
   @override
