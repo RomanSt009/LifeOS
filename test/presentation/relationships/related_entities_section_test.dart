@@ -84,7 +84,8 @@ void main() {
   testWidgets('Task context exposes localized Related section', (tester) async {
     final taskRepository = _TaskRepository([_task('task-a', 'Task A')]);
     final noteRepository = _NoteRepository([_note('note-a', 'Заметка А')]);
-    final relationshipRepository = _RelationshipRepository();
+    final relationshipRepository = _RelationshipRepository()
+      ..items.add(_relationship());
 
     await tester.pumpWidget(
       _app(
@@ -101,7 +102,79 @@ void main() {
 
     expect(find.text('Связанные'), findsOneWidget);
     expect(find.text('Добавить связь'), findsOneWidget);
+    expect(find.text('Заметка: Заметка А'), findsOneWidget);
   });
+
+  for (final size in [const Size(1280, 800), const Size(640, 600)]) {
+    testWidgets('Note keeps a usable editor and scrolls many relationships at '
+        '${size.width.toInt()}x${size.height.toInt()}', (tester) async {
+      await tester.binding.setSurfaceSize(size);
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final tasks = List.generate(
+        18,
+        (index) => _task('task-$index', 'Task $index'),
+      );
+      final taskRepository = _TaskRepository(tasks);
+      final noteRepository = _NoteRepository([_note('note-a', 'Note A')]);
+      final relationshipRepository = _RelationshipRepository()
+        ..items.addAll(
+          List.generate(
+            tasks.length,
+            (index) =>
+                _relationship(id: 'relationship-$index', taskId: 'task-$index'),
+          ),
+        );
+
+      await tester.pumpWidget(
+        _app(
+          const NotePage(),
+          taskRepository,
+          noteRepository,
+          relationshipRepository,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('note-note-a')));
+      await tester.pumpAndSettle();
+
+      final editor = find.byKey(const Key('note-content-field'));
+      final relationshipList = find.byKey(
+        const ValueKey('relationship-list-note-a'),
+      );
+      expect(editor.hitTestable(), findsOneWidget);
+      expect(tester.getSize(editor).height, greaterThan(100));
+      expect(relationshipList, findsOneWidget);
+      expect(tester.getSize(relationshipList).height, lessThanOrEqualTo(160));
+      expect(
+        find.byKey(const ValueKey('add-relationship-note-a')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(find.text('Task: Task 17').hitTestable(), findsNothing);
+
+      final relationshipScrollable = find.descendant(
+        of: relationshipList,
+        matching: find.byType(Scrollable),
+      );
+      final lastRelationshipAction = find.byKey(
+        const ValueKey('unlink-relationship-relationship-17'),
+      );
+      await tester.scrollUntilVisible(
+        lastRelationshipAction,
+        60,
+        scrollable: relationshipScrollable,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Task: Task 17').hitTestable(), findsOneWidget);
+      expect(lastRelationshipAction.hitTestable(), findsOneWidget);
+      expect(editor.hitTestable(), findsOneWidget);
+      await tester.enterText(editor, 'Editable after relationship scroll');
+      await tester.pump();
+      expect(tester.widget<TextField>(editor).focusNode?.hasFocus, isTrue);
+      expect(find.byKey(const Key('note-unsaved-indicator')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('unlink failure stays open and retries without hiding the link', (
     tester,
@@ -238,13 +311,13 @@ void main() {
   });
 }
 
-LifeOsRelationship _relationship() => LifeOsRelationship.createUserRelationship(
-  id: const LifeOsEntityId(
-    value: 'relationship-a',
-    entityType: LifeOsEntityType.relationship,
-  ),
-  firstEndpoint: const LifeOsEntityId(
-    value: 'task-a',
+LifeOsRelationship _relationship({
+  String id = 'relationship-a',
+  String taskId = 'task-a',
+}) => LifeOsRelationship.createUserRelationship(
+  id: LifeOsEntityId(value: id, entityType: LifeOsEntityType.relationship),
+  firstEndpoint: LifeOsEntityId(
+    value: taskId,
     entityType: LifeOsEntityType.task,
   ),
   secondEndpoint: const LifeOsEntityId(

@@ -11,9 +11,14 @@ import '../tasks/task_list_providers.dart';
 import 'relationship_providers.dart';
 
 class RelatedEntitiesSection extends ConsumerStatefulWidget {
-  const RelatedEntitiesSection({required this.entityId, super.key});
+  const RelatedEntitiesSection({
+    required this.entityId,
+    this.maxListHeight,
+    super.key,
+  }) : assert(maxListHeight == null || maxListHeight > 0);
 
   final LifeOsEntityId entityId;
+  final double? maxListHeight;
 
   @override
   ConsumerState<RelatedEntitiesSection> createState() =>
@@ -169,18 +174,7 @@ class _RelatedEntitiesSectionState
             ),
             data: (items) => items.isEmpty
                 ? Text(localizations.relationshipEmpty)
-                : Column(
-                    children: [
-                      for (final relationship in items)
-                        _RelatedEntityTile(
-                          currentId: widget.entityId,
-                          relationship: relationship,
-                          onUnlink: _isMutating
-                              ? null
-                              : () => _confirmUnlink(relationship),
-                        ),
-                    ],
-                  ),
+                : _relationshipList(items),
           ),
           if (_endpointLoadFailed)
             Row(
@@ -199,6 +193,30 @@ class _RelatedEntitiesSectionState
             ),
           if (_mutationFailed) Text(localizations.relationshipSaveError),
         ],
+      ),
+    );
+  }
+
+  Widget _relationshipList(List<LifeOsRelationship> items) {
+    final children = [
+      for (final relationship in items)
+        _RelatedEntityTile(
+          currentId: widget.entityId,
+          relationship: relationship,
+          onUnlink: _isMutating ? null : () => _confirmUnlink(relationship),
+        ),
+    ];
+    final maxListHeight = widget.maxListHeight;
+    if (maxListHeight == null) {
+      return Column(children: children);
+    }
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxListHeight),
+      child: ListView(
+        key: ValueKey('relationship-list-${widget.entityId.value}'),
+        primary: false,
+        shrinkWrap: true,
+        children: children,
       ),
     );
   }

@@ -6,9 +6,11 @@
 
 ## Где Codex хранит прогресс
 
-Текущий основной активный план: отсутствует.
+Текущий основной активный план:
 
-Следующий product milestone должен быть обсуждён и принят явно; автоматически новый план не создаётся.
+`docs/exec-plans/active/dogfooding-ux-improvements-1.md`
+
+Текущий checkpoint и точная точка возобновления записаны внутри плана.
 
 Структура каталогов:
 
@@ -16,7 +18,7 @@
 docs/exec-plans/
 ├── README.md
 ├── active/
-│   └── (пусто)
+│   └── dogfooding-ux-improvements-1.md
 └── completed/
     ├── backup-export.md
     ├── documentation-reconciliation.md

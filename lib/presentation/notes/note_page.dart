@@ -17,6 +17,10 @@ class NotePage extends ConsumerStatefulWidget {
 }
 
 class _NotePageState extends ConsumerState<NotePage> {
+  static const _compactEditorBreakpoint = 400.0;
+  static const _compactRelationshipsMaxListHeight = 80.0;
+  static const _relationshipsMaxListHeight = 160.0;
+
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
   final _featureFocusNode = FocusNode(debugLabel: 'Note feature actions');
@@ -463,9 +467,17 @@ class _NotePageState extends ConsumerState<NotePage> {
                             ),
                             if (_selectedId case final selectedId?) ...[
                               const SizedBox(height: 8),
-                              RelatedEntitiesSection(
-                                key: _relationshipKey,
-                                entityId: selectedId,
+                              LayoutBuilder(
+                                builder: (context, constraints) =>
+                                    RelatedEntitiesSection(
+                                      key: _relationshipKey,
+                                      entityId: selectedId,
+                                      maxListHeight:
+                                          constraints.maxWidth <
+                                              _compactEditorBreakpoint
+                                          ? _compactRelationshipsMaxListHeight
+                                          : _relationshipsMaxListHeight,
+                                    ),
                               ),
                             ],
                             if (_error != null) ...[
@@ -480,54 +492,7 @@ class _NotePageState extends ConsumerState<NotePage> {
                               ),
                             ],
                             const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _isDirty
-                                      ? Text(
-                                          localizations
-                                              .noteUnsavedChangesIndicator,
-                                          key: const Key(
-                                            'note-unsaved-indicator',
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        )
-                                      : _showSavedFeedback
-                                      ? Text(
-                                          localizations.noteSavedStatus,
-                                          key: const Key('note-saved-status'),
-                                          overflow: TextOverflow.ellipsis,
-                                        )
-                                      : const SizedBox.shrink(),
-                                ),
-                                if (_selectedId != null)
-                                  TextButton.icon(
-                                    key: const Key('delete-note-button'),
-                                    onPressed: _isSaving || _isLifecycleMutating
-                                        ? null
-                                        : _confirmDeleteNoteSafely,
-                                    icon: const Icon(Icons.delete_outline),
-                                    label: Text(localizations.deleteNoteAction),
-                                  ),
-                                const SizedBox(width: 8),
-                                FilledButton(
-                                  key: const Key('save-note-button'),
-                                  onPressed:
-                                      _isSaving ||
-                                          (_selectedId != null && !_isDirty)
-                                      ? null
-                                      : _save,
-                                  child: _isSaving
-                                      ? const SizedBox.square(
-                                          dimension: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : Text(localizations.noteSaveAction),
-                                ),
-                              ],
-                            ),
+                            _buildEditorFooter(localizations),
                           ],
                         ),
                 ),
@@ -536,6 +501,68 @@ class _NotePageState extends ConsumerState<NotePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildEditorFooter(AppLocalizations localizations) {
+    final hasStatus = _isDirty || _showSavedFeedback;
+    final status = _isDirty
+        ? Text(
+            localizations.noteUnsavedChangesIndicator,
+            key: const Key('note-unsaved-indicator'),
+            overflow: TextOverflow.ellipsis,
+          )
+        : _showSavedFeedback
+        ? Text(
+            localizations.noteSavedStatus,
+            key: const Key('note-saved-status'),
+            overflow: TextOverflow.ellipsis,
+          )
+        : const SizedBox.shrink();
+    final deleteButton = TextButton.icon(
+      key: const Key('delete-note-button'),
+      onPressed: _isSaving || _isLifecycleMutating
+          ? null
+          : _confirmDeleteNoteSafely,
+      icon: const Icon(Icons.delete_outline),
+      label: Text(localizations.deleteNoteAction),
+    );
+    final saveButton = FilledButton(
+      key: const Key('save-note-button'),
+      onPressed: _isSaving || (_selectedId != null && !_isDirty) ? null : _save,
+      child: _isSaving
+          ? const SizedBox.square(
+              dimension: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Text(localizations.noteSaveAction),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < _compactEditorBreakpoint) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (hasStatus) ...[status, const SizedBox(height: 8)],
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 8,
+                children: [if (_selectedId != null) deleteButton, saveButton],
+              ),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: status),
+            if (_selectedId != null) deleteButton,
+            const SizedBox(width: 8),
+            saveButton,
+          ],
+        );
+      },
     );
   }
 
