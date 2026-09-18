@@ -35,6 +35,21 @@ class AppLocalizationsRu extends AppLocalizations {
       'Используйте навигацию для работы с задачами и заметками или поиска по названиям задач.';
 
   @override
+  String get homeQuickActionsTitle => 'Быстрые действия';
+
+  @override
+  String get homeNewTaskAction => 'Новая задача';
+
+  @override
+  String get homeNewNoteAction => 'Новая заметка';
+
+  @override
+  String get homeSearchAction => 'Поиск';
+
+  @override
+  String get homeSettingsAction => 'Настройки / резервная копия';
+
+  @override
   String get settingsTitle => 'Настройки';
 
   @override
@@ -144,6 +159,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get taskListEmpty => 'Задач пока нет';
+
+  @override
+  String get taskFilterAll => 'Все';
+
+  @override
+  String get taskFilterOpen => 'Активные';
+
+  @override
+  String get taskFilterCompleted => 'Выполненные';
+
+  @override
+  String get taskFilterOpenEmpty => 'Нет активных задач';
+
+  @override
+  String get taskFilterCompletedEmpty => 'Нет выполненных задач';
 
   @override
   String get taskLoadError => 'Не удалось загрузить задачи';

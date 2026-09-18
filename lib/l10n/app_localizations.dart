@@ -146,6 +146,36 @@ abstract class AppLocalizations {
   /// **'Use the navigation to work with Tasks and Notes or search Task titles.'**
   String get homeAlphaDescription;
 
+  /// No description provided for @homeQuickActionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick actions'**
+  String get homeQuickActionsTitle;
+
+  /// No description provided for @homeNewTaskAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New Task'**
+  String get homeNewTaskAction;
+
+  /// No description provided for @homeNewNoteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New Note'**
+  String get homeNewNoteAction;
+
+  /// No description provided for @homeSearchAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get homeSearchAction;
+
+  /// No description provided for @homeSettingsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings / Backup'**
+  String get homeSettingsAction;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
@@ -349,6 +379,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No Tasks yet'**
   String get taskListEmpty;
+
+  /// No description provided for @taskFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get taskFilterAll;
+
+  /// No description provided for @taskFilterOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get taskFilterOpen;
+
+  /// No description provided for @taskFilterCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get taskFilterCompleted;
+
+  /// No description provided for @taskFilterOpenEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No open Tasks'**
+  String get taskFilterOpenEmpty;
+
+  /// No description provided for @taskFilterCompletedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No completed Tasks'**
+  String get taskFilterCompletedEmpty;
 
   /// No description provided for @taskLoadError.
   ///

@@ -5,11 +5,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../domain/entities/lifeos_entity.dart';
 import '../../domain/entities/lifeos_task.dart';
+import '../navigation/lifeos_feature_command.dart';
 import '../relationships/related_entities_section.dart';
 import 'task_list_providers.dart';
 
 class TaskList extends ConsumerStatefulWidget {
-  const TaskList({super.key});
+  const TaskList({
+    this.featureCommand,
+    this.onFeatureCommandHandled,
+    super.key,
+  });
+
+  final LifeOsFeatureCommand? featureCommand;
+  final ValueChanged<int>? onFeatureCommandHandled;
 
   @override
   ConsumerState<TaskList> createState() => _TaskListState();
@@ -21,11 +29,32 @@ class _TaskListState extends ConsumerState<TaskList> {
   final _expansionControllers = <LifeOsEntityId, ExpansibleController>{};
   final _relationshipKeys = <LifeOsEntityId, GlobalKey>{};
   bool _showTrash = false;
+  TaskCompletionFilter _completionFilter = TaskCompletionFilter.all;
   bool _isMutating = false;
   bool _restoreFailed = false;
   final _completionMutations = <LifeOsEntityId>{};
   LifeOsEntityId? _completionFailedTaskId;
   LifeOsEntityId? _selectedTaskId;
+
+  @override
+  void didUpdateWidget(covariant TaskList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final command = widget.featureCommand;
+    if (command == null || command.id == oldWidget.featureCommand?.id) return;
+    if (command.type == LifeOsFeatureCommandType.newTask) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || widget.featureCommand?.id != command.id) return;
+        widget.onFeatureCommandHandled?.call(command.id);
+        setState(() {
+          _showTrash = false;
+          _selectedTaskId = null;
+          _restoreFailed = false;
+          _completionFailedTaskId = null;
+        });
+        _focusCreation();
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -67,12 +96,13 @@ class _TaskListState extends ConsumerState<TaskList> {
   LifeOsTask? _selectedTask() {
     final selectedId = _selectedTaskId;
     if (selectedId == null) return null;
-    return ref
+    final task = ref
         .read(taskListControllerProvider)
         .asData
         ?.value
         .where((task) => task.id == selectedId)
         .firstOrNull;
+    return task != null && _completionFilter.includes(task) ? task : null;
   }
 
   void _focusCreation() {
@@ -99,8 +129,11 @@ class _TaskListState extends ConsumerState<TaskList> {
         children: [
           Align(
             alignment: Alignment.centerRight,
-            child: TextButton.icon(
+            child: IconButton(
               key: const Key('task-trash-toggle'),
+              tooltip: _showTrash
+                  ? localizations.backToTasksAction
+                  : localizations.trashAction,
               onPressed: _isMutating
                   ? null
                   : () => setState(() {
@@ -109,15 +142,50 @@ class _TaskListState extends ConsumerState<TaskList> {
                       _restoreFailed = false;
                       _completionFailedTaskId = null;
                     }),
-              icon: Icon(_showTrash ? Icons.arrow_back : Icons.delete_outline),
-              label: Text(
-                _showTrash
+              icon: Icon(
+                _showTrash ? Icons.arrow_back : Icons.delete_outline,
+                semanticLabel: _showTrash
                     ? localizations.backToTasksAction
                     : localizations.trashAction,
               ),
             ),
           ),
           if (!_showTrash) TaskCreationForm(titleFocusNode: _creationFocusNode),
+          if (!_showTrash) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SegmentedButton<TaskCompletionFilter>(
+                key: const Key('task-completion-filter'),
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: TaskCompletionFilter.all,
+                    label: Text(localizations.taskFilterAll),
+                  ),
+                  ButtonSegment(
+                    value: TaskCompletionFilter.open,
+                    label: Text(localizations.taskFilterOpen),
+                  ),
+                  ButtonSegment(
+                    value: TaskCompletionFilter.completed,
+                    label: Text(localizations.taskFilterCompleted),
+                  ),
+                ],
+                selected: {_completionFilter},
+                onSelectionChanged: _isMutating
+                    ? null
+                    : (selection) {
+                        setState(() {
+                          _completionFilter = selection.single;
+                          _selectedTaskId = null;
+                          _completionFailedTaskId = null;
+                        });
+                        _featureFocusNode.requestFocus();
+                      },
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           if (_restoreFailed)
             Text(
@@ -133,21 +201,31 @@ class _TaskListState extends ConsumerState<TaskList> {
           Expanded(
             child: tasks.when(
               data: (tasks) {
-                _reconcileSelection(tasks);
-                if (tasks.isEmpty) {
+                final visibleTasks = _showTrash
+                    ? tasks
+                    : tasks.where(_completionFilter.includes).toList();
+                _reconcileSelection(visibleTasks);
+                if (visibleTasks.isEmpty) {
                   return Center(
                     child: Text(
                       _showTrash
                           ? localizations.taskTrashEmpty
-                          : localizations.taskListEmpty,
+                          : switch (_completionFilter) {
+                              TaskCompletionFilter.all =>
+                                localizations.taskListEmpty,
+                              TaskCompletionFilter.open =>
+                                localizations.taskFilterOpenEmpty,
+                              TaskCompletionFilter.completed =>
+                                localizations.taskFilterCompletedEmpty,
+                            },
                     ),
                   );
                 }
 
                 return ListView.builder(
-                  itemCount: tasks.length,
+                  itemCount: visibleTasks.length,
                   itemBuilder: (context, index) {
-                    final task = tasks[index];
+                    final task = visibleTasks[index];
                     if (_showTrash) {
                       return GestureDetector(
                         onSecondaryTapDown: (details) =>
@@ -155,13 +233,16 @@ class _TaskListState extends ConsumerState<TaskList> {
                         child: ListTile(
                           key: ValueKey('deleted-task-${task.id.value}'),
                           title: Text(task.title),
-                          trailing: TextButton.icon(
+                          trailing: IconButton(
                             key: ValueKey('restore-task-${task.id.value}'),
+                            tooltip: localizations.restoreTaskAction,
                             onPressed: _isMutating
                                 ? null
                                 : () => _restoreTask(task),
-                            icon: const Icon(Icons.restore),
-                            label: Text(localizations.restoreTaskAction),
+                            icon: Icon(
+                              Icons.restore,
+                              semanticLabel: localizations.restoreTaskAction,
+                            ),
                           ),
                         ),
                       );
@@ -424,6 +505,18 @@ enum _TaskContextAction {
   relationships,
   moveToTrash,
   restore,
+}
+
+enum TaskCompletionFilter {
+  all,
+  open,
+  completed;
+
+  bool includes(LifeOsTask task) => switch (this) {
+    TaskCompletionFilter.all => true,
+    TaskCompletionFilter.open => !task.isCompleted,
+    TaskCompletionFilter.completed => task.isCompleted,
+  };
 }
 
 RelativeRect _menuPosition(BuildContext context, Offset globalPosition) {

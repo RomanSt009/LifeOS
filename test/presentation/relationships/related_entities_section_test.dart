@@ -101,7 +101,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Связанные'), findsOneWidget);
-    expect(find.text('Добавить связь'), findsOneWidget);
+    expect(find.byTooltip('Добавить связь'), findsOneWidget);
+    expect(
+      (tester
+                  .widget<IconButton>(
+                    find.byKey(const ValueKey('add-relationship-task-a')),
+                  )
+                  .icon
+              as Icon)
+          .semanticLabel,
+      'Добавить связь',
+    );
     expect(find.text('Заметка: Заметка А'), findsOneWidget);
   });
 

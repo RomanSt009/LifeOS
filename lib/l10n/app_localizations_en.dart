@@ -35,6 +35,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use the navigation to work with Tasks and Notes or search Task titles.';
 
   @override
+  String get homeQuickActionsTitle => 'Quick actions';
+
+  @override
+  String get homeNewTaskAction => 'New Task';
+
+  @override
+  String get homeNewNoteAction => 'New Note';
+
+  @override
+  String get homeSearchAction => 'Search';
+
+  @override
+  String get homeSettingsAction => 'Settings / Backup';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override
@@ -141,6 +156,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taskListEmpty => 'No Tasks yet';
+
+  @override
+  String get taskFilterAll => 'All';
+
+  @override
+  String get taskFilterOpen => 'Open';
+
+  @override
+  String get taskFilterCompleted => 'Completed';
+
+  @override
+  String get taskFilterOpenEmpty => 'No open Tasks';
+
+  @override
+  String get taskFilterCompletedEmpty => 'No completed Tasks';
 
   @override
   String get taskLoadError => 'Unable to load Tasks';

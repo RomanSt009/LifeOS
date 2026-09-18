@@ -77,7 +77,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Заметки'), findsOneWidget);
-    expect(find.text('Новая заметка'), findsOneWidget);
+    expect(find.byTooltip('Новая заметка'), findsOneWidget);
+    expect(find.byTooltip('Корзина'), findsOneWidget);
+    expect(
+      (tester.widget<IconButton>(find.byKey(const Key('new-note-button'))).icon
+              as Icon)
+          .semanticLabel,
+      'Новая заметка',
+    );
     await tester.tap(find.byKey(const Key('save-note-button')));
     await tester.pump();
     expect(find.text('Введите название или текст'), findsOneWidget);

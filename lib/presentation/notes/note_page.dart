@@ -5,12 +5,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/lifeos_entity.dart';
 import '../../domain/entities/lifeos_note.dart';
 import '../../l10n/app_localizations.dart';
+import '../navigation/lifeos_feature_command.dart';
 import '../relationships/related_entities_section.dart';
 import '../settings/backup_settings_providers.dart';
 import 'note_providers.dart';
 
 class NotePage extends ConsumerStatefulWidget {
-  const NotePage({super.key});
+  const NotePage({
+    this.featureCommand,
+    this.onFeatureCommandHandled,
+    super.key,
+  });
+
+  final LifeOsFeatureCommand? featureCommand;
+  final ValueChanged<int>? onFeatureCommandHandled;
 
   @override
   ConsumerState<NotePage> createState() => _NotePageState();
@@ -95,6 +103,20 @@ class _NotePageState extends ConsumerState<NotePage> {
       _showSavedFeedback = false;
       _error = null;
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant NotePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final command = widget.featureCommand;
+    if (command == null || command.id == oldWidget.featureCommand?.id) return;
+    if (command.type == LifeOsFeatureCommandType.newNote) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || widget.featureCommand?.id != command.id) return;
+        widget.onFeatureCommandHandled?.call(command.id);
+        _startNewFromShell();
+      });
+    }
   }
 
   @override
@@ -265,6 +287,17 @@ class _NotePageState extends ConsumerState<NotePage> {
     _startNew();
   }
 
+  Future<void> _startNewFromShell() async {
+    if (!await _resolveDirtyDraft() || !mounted) return;
+    if (_showTrash) {
+      setState(() {
+        _showTrash = false;
+        _lifecycleFailed = false;
+      });
+    }
+    _startNew();
+  }
+
   Future<bool> _selectSafely(
     LifeOsEntityId targetId, {
     bool requestEditorFocus = true,
@@ -339,16 +372,22 @@ class _NotePageState extends ConsumerState<NotePage> {
                         alignment: WrapAlignment.spaceBetween,
                         children: [
                           if (!_showTrash)
-                            FilledButton.icon(
+                            IconButton.filled(
                               key: const Key('new-note-button'),
+                              tooltip: localizations.noteCreateAction,
                               onPressed: _isSaving || _isLifecycleMutating
                                   ? null
                                   : _startNewSafely,
-                              icon: const Icon(Icons.note_add_outlined),
-                              label: Text(localizations.noteCreateAction),
+                              icon: Icon(
+                                Icons.note_add_outlined,
+                                semanticLabel: localizations.noteCreateAction,
+                              ),
                             ),
-                          TextButton.icon(
+                          IconButton(
                             key: const Key('note-trash-toggle'),
+                            tooltip: _showTrash
+                                ? localizations.backToNotesAction
+                                : localizations.trashAction,
                             onPressed: _isSaving || _isLifecycleMutating
                                 ? null
                                 : _toggleTrashSafely,
@@ -356,9 +395,7 @@ class _NotePageState extends ConsumerState<NotePage> {
                               _showTrash
                                   ? Icons.arrow_back
                                   : Icons.delete_outline,
-                            ),
-                            label: Text(
-                              _showTrash
+                              semanticLabel: _showTrash
                                   ? localizations.backToNotesAction
                                   : localizations.trashAction,
                             ),

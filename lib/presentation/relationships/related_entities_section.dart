@@ -148,11 +148,14 @@ class _RelatedEntitiesSectionState
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
               ),
-              TextButton.icon(
+              IconButton(
                 key: ValueKey('add-relationship-${widget.entityId.value}'),
+                tooltip: localizations.relationshipAddAction,
                 onPressed: _isMutating ? null : _add,
-                icon: const Icon(Icons.add_link),
-                label: Text(localizations.relationshipAddAction),
+                icon: Icon(
+                  Icons.add_link,
+                  semanticLabel: localizations.relationshipAddAction,
+                ),
               ),
             ],
           ),

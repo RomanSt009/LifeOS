@@ -2,9 +2,9 @@
 
 Статус плана: active
 
-Текущий checkpoint: DFUX-03 — Compact actions
+Текущий checkpoint: DFUX-06 — Desktop responsive/accessibility regression
 
-Точная точка возобновления: DFUX-03 — Compact actions; checkpoint не начат.
+Точная точка возобновления: DFUX-06 — Desktop responsive/accessibility regression; checkpoint не начат.
 
 ## Goal
 
@@ -154,7 +154,7 @@ Validation: direct SDK `dart format` PASS for 3 changed handwritten Dart files. 
 
 ## DFUX-03 — Compact actions
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -182,11 +182,15 @@ Focused widget/localization/layout tests и standard plan checks.
 
 ### Result / evidence
 
-Не начат.
+Pre-flight подтвердил `main`, HEAD `5c9ac8dc0d9da0e54810c284f522ce1d8a3bd189`, upstream divergence `1 0`, единственный pre-existing diff — user-owned `.obsidian/workspace.json`. Baseline: `flutter analyze` PASS; focused Tasks/Notes/shell/localization/Relationships suite PASS (67 tests).
+
+Аудит Tasks, Notes, Relationships, Search, Home и Settings/Backup подтвердил safe compact candidates: `New Note`, Task/Note Active↔Trash, `Add Relationship` и Task restore. Они переведены на standard Material `IconButton`/`IconButton.filled` с localized tooltip, explicit icon semantic label, native focus/keyboard activation и прежним disabled state. Существующие completion/edit/delete/Note restore/Search clear icon actions уже соответствовали policy. Save, Add Task, destructive confirmations, Retry, Search submit и Backup/Export/Restore остались text actions.
+
+Existing click, context-menu, confirmation, `Ctrl+N`, `Ctrl+S`, Delete-key и narrow `640x600` regressions сохранены; EN/RU tooltip/semantic assertions добавлены. Focused Task/Note/Relationship suite PASS (49 tests). Internal gate PASS: только Presentation/tests, без user-visible string, Domain/Application, navigation architecture, dependency, schema, Backup и ADR changes.
 
 ## DFUX-04 — Task All/Open/Completed filters
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -214,11 +218,15 @@ Focused Task widget/localization tests и standard plan checks.
 
 ### Result / evidence
 
-Не начат.
+Данные подтверждены: ordinary controller загружает `active`, Trash controller — `deleted`, completion хранится в `LifeOsTask.isCompleted`, controller mutations обновляют list state без смены его порядка.
+
+Добавлен typed Presentation enum `TaskCompletionFilter` и local filtering уже загруженного active list: All, Open (`!isCompleted`) и Completed (`isCompleted`). UI — Material `SegmentedButton`; Trash остаётся отдельным mode. При смене filter selection сбрасывается; Delete-key lookup дополнительно отклоняет Task, скрытую current filter. Create, completion/reopen, Delete, Trash и Restore перерисовывают тот же provider state без нового data path.
+
+Добавлены EN/RU labels и truthful empty states в ARB; `flutter gen-l10n` PASS, generated files выпущены штатно. Tests доказывают default All, filtering, stable ordering, complete/reopen, create, delete/restore/Trash independence, stale-selection keyboard safety, RU и `640x600`. Focused Task suite PASS (25 tests); localization + DFUX-03 Relationship regression PASS (13 tests). Internal gate PASS: repository/API, Domain/Application, schema/index, Search architecture, dependency и ADR не затронуты.
 
 ## DFUX-05 — Home quick actions
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -246,7 +254,15 @@ Focused Home/shell/Task/Note navigation tests и standard plan checks.
 
 ### Result / evidence
 
-Не начат.
+Home теперь содержит bounded text-labelled Quick actions: New Task, New Note, Search и Settings / Backup. Layout использует responsive `Wrap` с двумя колонками на wide content и одной на compact content; Dashboard, counts и новые data reads не добавлены.
+
+Добавлен minimal typed Presentation-only `LifeOsFeatureCommand` с shell-owned monotonically increasing ID. Shell однократно передаёт `newTask`/`newNote` уже живущим в `IndexedStack` feature widgets; feature немедленно acknowledges ID, и shell очищает command. Global singleton, event bus, router и Application navigation state не введены.
+
+New Task переводит в active Tasks, сбрасывает stale selection/errors и фокусирует existing creation field, но не создаёт Task. New Note вызывает existing dirty-draft guard до transition: Cancel сохраняет draft, Discard отказывается от него, Save дожидается existing save и только затем открывает empty editor. Command не повторяется при rebuild/navigation.
+
+Добавлены EN/RU ARB strings и stable navigation label keys для точного widget targeting при одинаковом label Search на Home и NavigationRail. `flutter gen-l10n` PASS. Focused shell/Home suite PASS (15 tests); Task/Note/localization regression PASS (53 tests). Tests покрывают focus, keyboard activation, all dirty guard paths, one-shot semantics, IndexedStack state, Search/Settings navigation и RU `640x600` no-overflow.
+
+Internal gate PASS: bounded Presentation-local contract достаточен; Domain, Application, Infrastructure, persistence, schema, dependency, global navigation architecture и ADR changes не требуются. Implementation остановлена до DFUX-06.
 
 ## DFUX-06 — Desktop responsive/accessibility regression
 
@@ -329,6 +345,20 @@ Audit и только минимальные исправления доказа
 - `1280x800` и `640x600`, EN/RU, keyboard/focus/semantics проходят regression.
 - Domain/Application business contracts, persistence, schema v3, Backup v3 и dependencies не изменены.
 
+## Validation evidence — DFUX-03/04/05 combined run
+
+- Formatting: direct Flutter SDK `dart format` PASS for 11 changed handwritten Dart files; no further changes required.
+- Localization: `flutter gen-l10n` PASS after ARB edits; EN/RU parity PASS (118 user-facing keys in each locale); generated localization files changed only through generation.
+- Focused DFUX-03: Task/Note/Relationship suite PASS (49 tests).
+- Focused DFUX-04: Task suite PASS (25 tests); localization + Relationship compact regression PASS (13 tests).
+- Focused DFUX-05: shell/Home suite PASS (15 tests); Task/Note/localization regression PASS (53 tests).
+- Static/full: `flutter analyze` PASS (`No issues found`); full `flutter test --reporter compact` PASS (261 tests).
+- Architecture: Domain import boundary PASS; Application import boundary PASS; Presentation has no Drift/SQLite/Infrastructure imports; localization remains outside Domain/Application/Infrastructure; routing dependency/import scan PASS.
+- Dependency hygiene: `dart pub deps --style=compact` PASS; `pubspec.yaml` and `pubspec.lock` unchanged; no new dependency.
+- Persistence guards: `schemaVersion == 3`; no schema v4/migration; generated Drift files unchanged; composition still uses `V3BackupExportEncoder`; no Backup v4.
+- Git whitespace: `git diff --check` PASS after final plan bookkeeping (line-ending warnings only).
+- Scope: no Domain/Application/Infrastructure, persistence, Backup, Search semantics or navigation architecture changes; `.obsidian/workspace.json` remains separate pre-existing user-owned work.
+
 ## Exact resume point
 
-DFUX-03 — Compact actions. DFUX-03 не начат в этом run.
+DFUX-06 — Desktop responsive/accessibility regression. DFUX-06 не начат в этом run.

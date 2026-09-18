@@ -161,7 +161,7 @@ void main() {
 
     await tester.tap(find.text('Home'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Search'));
+    await tester.tap(find.byKey(const Key('navigation-search-label')));
     await tester.pumpAndSettle();
     expect(find.byType(TaskSearchPage), findsOneWidget);
 
@@ -176,7 +176,7 @@ void main() {
 
     await tester.tap(find.text('Home'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Search'));
+    await tester.tap(find.byKey(const Key('navigation-search-label')));
     await tester.pumpAndSettle();
 
     expect(
@@ -319,6 +319,185 @@ void main() {
     ]);
   });
 
+  testWidgets('Home quick actions navigate and initiate Task and Note flows', (
+    tester,
+  ) async {
+    await tester.pumpWidget(testApp(const Locale('en')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    expect(find.text('Quick actions'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('home-new-task-action')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex,
+      LifeOsDestination.tasks.index,
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('task-title-field')))
+          .focusNode
+          ?.hasFocus,
+      isTrue,
+    );
+
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-new-note-action')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex,
+      LifeOsDestination.notes.index,
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-title-field')))
+          .focusNode
+          ?.hasFocus,
+      isTrue,
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('note-title-field')),
+      'One-shot draft',
+    );
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Notes'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-title-field')))
+          .controller
+          ?.text,
+      'One-shot draft',
+    );
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  testWidgets('Home New Note preserves dirty drafts through every guard path', (
+    tester,
+  ) async {
+    final notes = EmptyLifeOsNoteRepository();
+    await tester.pumpWidget(testApp(const Locale('en'), noteRepository: notes));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Notes'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('note-title-field')),
+      'Protected draft',
+    );
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-new-note-action')));
+    await tester.pumpAndSettle();
+    expect(find.text('Save changes to this Note?'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-title-field')))
+          .controller
+          ?.text,
+      'Protected draft',
+    );
+
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-new-note-action')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Discard'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-title-field')))
+          .controller
+          ?.text,
+      isEmpty,
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('note-title-field')),
+      'Saved before New',
+    );
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-new-note-action')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-save')));
+    await tester.pumpAndSettle();
+    expect(notes.notes.single.title, 'Saved before New');
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-title-field')))
+          .controller
+          ?.text,
+      isEmpty,
+    );
+  });
+
+  testWidgets('Home Search and Settings actions support keyboard activation', (
+    tester,
+  ) async {
+    await tester.pumpWidget(testApp(const Locale('en')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+
+    final newTaskAction = find.byKey(const Key('home-new-task-action'));
+    final newTaskButton = tester.widget<FilledButton>(
+      find
+          .descendant(of: newTaskAction, matching: find.byType(FilledButton))
+          .first,
+    );
+    newTaskButton.focusNode!.requestFocus();
+    await tester.pump();
+    expect(newTaskButton.focusNode!.hasFocus, isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('task-title-field')), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('task-title-field')))
+          .focusNode
+          ?.hasFocus,
+      isTrue,
+    );
+
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-search-action')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('search-query-field')), findsOneWidget);
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-settings-action')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('backup-settings-page')), findsOneWidget);
+  });
+
+  testWidgets('Home quick actions localize without overflow at 640x600', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(640, 600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(testApp(const Locale('ru')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Главная'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Быстрые действия'), findsOneWidget);
+    expect(find.text('Новая задача'), findsOneWidget);
+    expect(find.text('Новая заметка'), findsOneWidget);
+    expect(find.text('Поиск'), findsWidgets);
+    expect(find.text('Настройки / резервная копия'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('keeps Task selection local and inactive destinations inert', (
     tester,
   ) async {
@@ -347,8 +526,12 @@ void main() {
       isNotNull,
     );
 
-    for (final destination in ['Home', 'Search', 'Settings']) {
-      await tester.tap(find.text(destination));
+    for (final destination in [
+      const Key('navigation-home-label'),
+      const Key('navigation-search-label'),
+      const Key('navigation-settings-label'),
+    ]) {
+      await tester.tap(find.byKey(destination));
       await tester.pumpAndSettle();
       await tester.sendKeyEvent(LogicalKeyboardKey.delete);
       await tester.pumpAndSettle();
@@ -376,24 +559,28 @@ List<String> destinationLabels(NavigationRail navigationRail) {
   ];
 }
 
-Widget testApp(Locale locale, {EmptyLifeOsTaskRepository? repository}) {
+Widget testApp(
+  Locale locale, {
+  EmptyLifeOsTaskRepository? repository,
+  EmptyLifeOsNoteRepository? noteRepository,
+}) {
   final taskRepository = repository ?? EmptyLifeOsTaskRepository();
-  final noteRepository = EmptyLifeOsNoteRepository();
+  final notes = noteRepository ?? EmptyLifeOsNoteRepository();
 
   return ProviderScope(
     overrides: [
       lifeOsTaskRepositoryProvider.overrideWithValue(taskRepository),
-      lifeOsNoteRepositoryProvider.overrideWithValue(noteRepository),
+      lifeOsNoteRepositoryProvider.overrideWithValue(notes),
       createLifeOsNoteProvider.overrideWithValue(
         CreateLifeOsNote(
-          repository: noteRepository,
+          repository: notes,
           entityIdGenerator: () => 'note-test',
           utcClock: () => DateTime.utc(2026, 9, 12),
         ),
       ),
       editLifeOsNoteProvider.overrideWithValue(
         EditLifeOsNote(
-          repository: noteRepository,
+          repository: notes,
           utcClock: () => DateTime.utc(2026, 9, 12, 1),
         ),
       ),
@@ -411,19 +598,25 @@ Widget testApp(Locale locale, {EmptyLifeOsTaskRepository? repository}) {
 }
 
 class EmptyLifeOsNoteRepository implements LifeOsNoteRepository {
+  final List<LifeOsNote> notes = [];
+
   @override
   Future<List<LifeOsNote>> getByLifecycle(
     LifeOsEntityLifecycle lifecycle,
-  ) async => const [];
+  ) async => notes.where((note) => note.lifecycle == lifecycle).toList();
 
   @override
-  Future<List<LifeOsNote>> getAll() async => [];
+  Future<List<LifeOsNote>> getAll() async => List.of(notes);
 
   @override
-  Future<LifeOsNote?> getById(LifeOsEntityId id) async => null;
+  Future<LifeOsNote?> getById(LifeOsEntityId id) async =>
+      notes.where((note) => note.id == id).firstOrNull;
 
   @override
-  Future<void> save(LifeOsNote note) async {}
+  Future<void> save(LifeOsNote note) async {
+    notes.removeWhere((item) => item.id == note.id);
+    notes.add(note);
+  }
 }
 
 class EmptyLifeOsTaskRepository implements LifeOsTaskRepository {

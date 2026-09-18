@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../home/home_placeholder.dart';
 import '../navigation/lifeos_destination.dart';
+import '../navigation/lifeos_feature_command.dart';
 import '../notes/note_page.dart';
 import '../search/task_search_page.dart';
 import '../settings/backup_settings_page.dart';
@@ -17,6 +18,29 @@ class LifeosShellPage extends StatefulWidget {
 
 class _LifeosShellPageState extends State<LifeosShellPage> {
   LifeOsDestination _selectedDestination = LifeOsDestination.tasks;
+  LifeOsFeatureCommand? _featureCommand;
+  int _nextFeatureCommandId = 0;
+
+  void _selectDestination(LifeOsDestination destination) {
+    setState(() => _selectedDestination = destination);
+  }
+
+  void _issueFeatureCommand(
+    LifeOsDestination destination,
+    LifeOsFeatureCommandType type,
+  ) {
+    setState(() {
+      _selectedDestination = destination;
+      _featureCommand = LifeOsFeatureCommand(
+        id: ++_nextFeatureCommandId,
+        type: type,
+      );
+    });
+  }
+
+  void _featureCommandHandled(int id) {
+    if (_featureCommand?.id == id) setState(() => _featureCommand = null);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,36 +53,48 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
           NavigationRail(
             selectedIndex: _selectedDestination.index,
             labelType: NavigationRailLabelType.all,
-            onDestinationSelected: (index) {
-              setState(() {
-                _selectedDestination = LifeOsDestination.values[index];
-              });
-            },
+            onDestinationSelected: (index) =>
+                _selectDestination(LifeOsDestination.values[index]),
             destinations: [
               NavigationRailDestination(
                 icon: const Icon(Icons.home_outlined),
                 selectedIcon: const Icon(Icons.home),
-                label: Text(localizations.navigationHome),
+                label: Text(
+                  localizations.navigationHome,
+                  key: const Key('navigation-home-label'),
+                ),
               ),
               NavigationRailDestination(
                 icon: const Icon(Icons.task_alt_outlined),
                 selectedIcon: const Icon(Icons.task_alt),
-                label: Text(localizations.navigationTasks),
+                label: Text(
+                  localizations.navigationTasks,
+                  key: const Key('navigation-tasks-label'),
+                ),
               ),
               NavigationRailDestination(
                 icon: const Icon(Icons.notes_outlined),
                 selectedIcon: const Icon(Icons.notes),
-                label: Text(localizations.navigationNotes),
+                label: Text(
+                  localizations.navigationNotes,
+                  key: const Key('navigation-notes-label'),
+                ),
               ),
               NavigationRailDestination(
                 icon: const Icon(Icons.search_outlined),
                 selectedIcon: const Icon(Icons.search),
-                label: Text(localizations.navigationSearch),
+                label: Text(
+                  localizations.navigationSearch,
+                  key: const Key('navigation-search-label'),
+                ),
               ),
               NavigationRailDestination(
                 icon: const Icon(Icons.settings_outlined),
                 selectedIcon: const Icon(Icons.settings),
-                label: Text(localizations.navigationSettings),
+                label: Text(
+                  localizations.navigationSettings,
+                  key: const Key('navigation-settings-label'),
+                ),
               ),
             ],
           ),
@@ -67,12 +103,31 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
             child: IndexedStack(
               index: _selectedDestination.index,
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: HomePlaceholder(),
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: HomePlaceholder(
+                    onNewTask: () => _issueFeatureCommand(
+                      LifeOsDestination.tasks,
+                      LifeOsFeatureCommandType.newTask,
+                    ),
+                    onNewNote: () => _issueFeatureCommand(
+                      LifeOsDestination.notes,
+                      LifeOsFeatureCommandType.newNote,
+                    ),
+                    onSearch: () =>
+                        _selectDestination(LifeOsDestination.search),
+                    onSettings: () =>
+                        _selectDestination(LifeOsDestination.settings),
+                  ),
                 ),
-                const TaskPage(),
-                const NotePage(),
+                TaskPage(
+                  featureCommand: _featureCommand,
+                  onFeatureCommandHandled: _featureCommandHandled,
+                ),
+                NotePage(
+                  featureCommand: _featureCommand,
+                  onFeatureCommandHandled: _featureCommandHandled,
+                ),
                 const TaskSearchPage(),
                 const BackupSettingsPage(),
               ],

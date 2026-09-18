@@ -47,6 +47,162 @@ void main() {
     expect(find.text('Review progress'), findsOneWidget);
     expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
     expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    expect(find.byTooltip('Trash'), findsOneWidget);
+    expect(
+      (tester
+                  .widget<IconButton>(
+                    find.byKey(const Key('task-trash-toggle')),
+                  )
+                  .icon
+              as Icon)
+          .semanticLabel,
+      'Trash',
+    );
+  });
+
+  testWidgets('filters active Tasks locally and preserves provider ordering', (
+    tester,
+  ) async {
+    final repository = FakeLifeOsTaskRepository(
+      () async => [
+        createTask('task-1', 'Completed first', isCompleted: true),
+        createTask('task-2', 'Open middle', isCompleted: false),
+        createTask('task-3', 'Completed last', isCompleted: true),
+      ],
+    );
+
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Completed first'), findsOneWidget);
+    expect(find.text('Open middle'), findsOneWidget);
+    expect(find.text('Completed last'), findsOneWidget);
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Open middle'), findsOneWidget);
+    expect(find.text('Completed first'), findsNothing);
+
+    await tester.tap(find.text('Completed'));
+    await tester.pumpAndSettle();
+    expect(find.text('Open middle'), findsNothing);
+    expect(find.text('Completed first'), findsOneWidget);
+    expect(find.text('Completed last'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Completed first')).dy,
+      lessThan(tester.getTopLeft(find.text('Completed last')).dy),
+    );
+  });
+
+  testWidgets('current completion filter reacts to complete and reopen', (
+    tester,
+  ) async {
+    final task = createTask('task-1', 'Filter toggle', isCompleted: false);
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('toggle-task-task-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Filter toggle'), findsNothing);
+    expect(find.text('No open Tasks'), findsOneWidget);
+
+    await tester.tap(find.text('Completed'));
+    await tester.pumpAndSettle();
+    expect(find.text('Filter toggle'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('toggle-task-task-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Filter toggle'), findsNothing);
+    expect(find.text('No completed Tasks'), findsOneWidget);
+  });
+
+  testWidgets('create, delete, Trash, and restore respect completion filters', (
+    tester,
+  ) async {
+    final task = createTask('task-1', 'Completed lifecycle', isCompleted: true);
+    final repository = FakeLifeOsTaskRepository(
+      () async => [task],
+      storedTask: task,
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Completed'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('delete-task-task-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-delete-task-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('task-trash-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('Completed lifecycle'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('restore-task-task-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('task-trash-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('Completed lifecycle'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('task-title-field')),
+      'New open Task',
+    );
+    await tester.tap(find.byKey(const Key('create-task-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('New open Task'), findsNothing);
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    expect(find.text('New open Task'), findsOneWidget);
+  });
+
+  testWidgets('hidden stale selection cannot receive the Delete shortcut', (
+    tester,
+  ) async {
+    final open = createTask('task-open', 'Selected open', isCompleted: false);
+    final completed = createTask(
+      'task-completed',
+      'Visible completed',
+      isCompleted: true,
+    );
+    final repository = FakeLifeOsTaskRepository(
+      () async => [open, completed],
+      storedTask: open,
+    );
+    await tester.pumpWidget(testApp(repository));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Selected open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Completed'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(repository.savedTasks, isEmpty);
+  });
+
+  testWidgets('localizes filters without overflow at 640x600', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(640, 600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = FakeLifeOsTaskRepository(() async => []);
+
+    await tester.pumpWidget(testApp(repository, locale: const Locale('ru')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Все'), findsOneWidget);
+    expect(find.text('Активные'), findsOneWidget);
+    expect(find.text('Выполненные'), findsOneWidget);
+    await tester.tap(find.text('Выполненные'));
+    await tester.pumpAndSettle();
+    expect(find.text('Нет выполненных задач'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('renders a bounded Task loading error', (tester) async {
@@ -556,6 +712,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('task-trash-toggle')));
     await tester.pumpAndSettle();
+    expect(find.byTooltip('Restore Task'), findsOneWidget);
+    expect(find.byTooltip('Back to Tasks'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('restore-task-task-1')));
     await tester.pumpAndSettle();
@@ -619,7 +777,10 @@ Future<void> _pressControlN(WidgetTester tester) async {
   await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 }
 
-Widget testApp(LifeOsTaskRepository repository) {
+Widget testApp(
+  LifeOsTaskRepository repository, {
+  Locale locale = const Locale('en'),
+}) {
   final createTask = CreateLifeOsTask(
     repository: repository,
     entityIdGenerator: () => 'task-created',
@@ -646,11 +807,11 @@ Widget testApp(LifeOsTaskRepository repository) {
       deleteLifeOsTaskProvider.overrideWithValue(deleteTask),
       restoreLifeOsTaskProvider.overrideWithValue(restoreTask),
     ],
-    child: const MaterialApp(
-      locale: Locale('en'),
+    child: MaterialApp(
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(body: TaskList()),
+      home: const Scaffold(body: TaskList()),
     ),
   );
 }
