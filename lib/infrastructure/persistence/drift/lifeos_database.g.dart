@@ -1348,6 +1348,578 @@ class RelationshipRecordsCompanion extends UpdateCompanion<RelationshipRecord> {
   }
 }
 
+class $WorkspaceRecordsTable extends WorkspaceRecords
+    with TableInfo<$WorkspaceRecordsTable, WorkspaceRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WorkspaceRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entityIdMeta = const VerificationMeta(
+    'entityId',
+  );
+  @override
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+    'entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES entities (id)',
+    ),
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [entityId, title, description];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'workspaces';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WorkspaceRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entity_id')) {
+      context.handle(
+        _entityIdMeta,
+        entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityIdMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entityId};
+  @override
+  WorkspaceRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WorkspaceRecord(
+      entityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+    );
+  }
+
+  @override
+  $WorkspaceRecordsTable createAlias(String alias) {
+    return $WorkspaceRecordsTable(attachedDatabase, alias);
+  }
+}
+
+class WorkspaceRecord extends DataClass implements Insertable<WorkspaceRecord> {
+  final String entityId;
+  final String title;
+  final String? description;
+  const WorkspaceRecord({
+    required this.entityId,
+    required this.title,
+    this.description,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entity_id'] = Variable<String>(entityId);
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
+    return map;
+  }
+
+  WorkspaceRecordsCompanion toCompanion(bool nullToAbsent) {
+    return WorkspaceRecordsCompanion(
+      entityId: Value(entityId),
+      title: Value(title),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
+    );
+  }
+
+  factory WorkspaceRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WorkspaceRecord(
+      entityId: serializer.fromJson<String>(json['entityId']),
+      title: serializer.fromJson<String>(json['title']),
+      description: serializer.fromJson<String?>(json['description']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entityId': serializer.toJson<String>(entityId),
+      'title': serializer.toJson<String>(title),
+      'description': serializer.toJson<String?>(description),
+    };
+  }
+
+  WorkspaceRecord copyWith({
+    String? entityId,
+    String? title,
+    Value<String?> description = const Value.absent(),
+  }) => WorkspaceRecord(
+    entityId: entityId ?? this.entityId,
+    title: title ?? this.title,
+    description: description.present ? description.value : this.description,
+  );
+  WorkspaceRecord copyWithCompanion(WorkspaceRecordsCompanion data) {
+    return WorkspaceRecord(
+      entityId: data.entityId.present ? data.entityId.value : this.entityId,
+      title: data.title.present ? data.title.value : this.title,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WorkspaceRecord(')
+          ..write('entityId: $entityId, ')
+          ..write('title: $title, ')
+          ..write('description: $description')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(entityId, title, description);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WorkspaceRecord &&
+          other.entityId == this.entityId &&
+          other.title == this.title &&
+          other.description == this.description);
+}
+
+class WorkspaceRecordsCompanion extends UpdateCompanion<WorkspaceRecord> {
+  final Value<String> entityId;
+  final Value<String> title;
+  final Value<String?> description;
+  final Value<int> rowid;
+  const WorkspaceRecordsCompanion({
+    this.entityId = const Value.absent(),
+    this.title = const Value.absent(),
+    this.description = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WorkspaceRecordsCompanion.insert({
+    required String entityId,
+    required String title,
+    this.description = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : entityId = Value(entityId),
+       title = Value(title);
+  static Insertable<WorkspaceRecord> custom({
+    Expression<String>? entityId,
+    Expression<String>? title,
+    Expression<String>? description,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entityId != null) 'entity_id': entityId,
+      if (title != null) 'title': title,
+      if (description != null) 'description': description,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WorkspaceRecordsCompanion copyWith({
+    Value<String>? entityId,
+    Value<String>? title,
+    Value<String?>? description,
+    Value<int>? rowid,
+  }) {
+    return WorkspaceRecordsCompanion(
+      entityId: entityId ?? this.entityId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entityId.present) {
+      map['entity_id'] = Variable<String>(entityId.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WorkspaceRecordsCompanion(')
+          ..write('entityId: $entityId, ')
+          ..write('title: $title, ')
+          ..write('description: $description, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WorkspaceMembershipRecordsTable extends WorkspaceMembershipRecords
+    with
+        TableInfo<$WorkspaceMembershipRecordsTable, WorkspaceMembershipRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WorkspaceMembershipRecordsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entityIdMeta = const VerificationMeta(
+    'entityId',
+  );
+  @override
+  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
+    'entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES entities (id)',
+    ),
+  );
+  static const VerificationMeta _workspaceIdMeta = const VerificationMeta(
+    'workspaceId',
+  );
+  @override
+  late final GeneratedColumn<String> workspaceId = GeneratedColumn<String>(
+    'workspace_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES entities (id)',
+    ),
+  );
+  static const VerificationMeta _memberEntityIdMeta = const VerificationMeta(
+    'memberEntityId',
+  );
+  @override
+  late final GeneratedColumn<String> memberEntityId = GeneratedColumn<String>(
+    'member_entity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES entities (id)',
+    ),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [entityId, workspaceId, memberEntityId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'workspace_memberships';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WorkspaceMembershipRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entity_id')) {
+      context.handle(
+        _entityIdMeta,
+        entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityIdMeta);
+    }
+    if (data.containsKey('workspace_id')) {
+      context.handle(
+        _workspaceIdMeta,
+        workspaceId.isAcceptableOrUnknown(
+          data['workspace_id']!,
+          _workspaceIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_workspaceIdMeta);
+    }
+    if (data.containsKey('member_entity_id')) {
+      context.handle(
+        _memberEntityIdMeta,
+        memberEntityId.isAcceptableOrUnknown(
+          data['member_entity_id']!,
+          _memberEntityIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_memberEntityIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entityId};
+  @override
+  WorkspaceMembershipRecord map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WorkspaceMembershipRecord(
+      entityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_id'],
+      )!,
+      workspaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}workspace_id'],
+      )!,
+      memberEntityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_entity_id'],
+      )!,
+    );
+  }
+
+  @override
+  $WorkspaceMembershipRecordsTable createAlias(String alias) {
+    return $WorkspaceMembershipRecordsTable(attachedDatabase, alias);
+  }
+}
+
+class WorkspaceMembershipRecord extends DataClass
+    implements Insertable<WorkspaceMembershipRecord> {
+  final String entityId;
+  final String workspaceId;
+  final String memberEntityId;
+  const WorkspaceMembershipRecord({
+    required this.entityId,
+    required this.workspaceId,
+    required this.memberEntityId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entity_id'] = Variable<String>(entityId);
+    map['workspace_id'] = Variable<String>(workspaceId);
+    map['member_entity_id'] = Variable<String>(memberEntityId);
+    return map;
+  }
+
+  WorkspaceMembershipRecordsCompanion toCompanion(bool nullToAbsent) {
+    return WorkspaceMembershipRecordsCompanion(
+      entityId: Value(entityId),
+      workspaceId: Value(workspaceId),
+      memberEntityId: Value(memberEntityId),
+    );
+  }
+
+  factory WorkspaceMembershipRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WorkspaceMembershipRecord(
+      entityId: serializer.fromJson<String>(json['entityId']),
+      workspaceId: serializer.fromJson<String>(json['workspaceId']),
+      memberEntityId: serializer.fromJson<String>(json['memberEntityId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entityId': serializer.toJson<String>(entityId),
+      'workspaceId': serializer.toJson<String>(workspaceId),
+      'memberEntityId': serializer.toJson<String>(memberEntityId),
+    };
+  }
+
+  WorkspaceMembershipRecord copyWith({
+    String? entityId,
+    String? workspaceId,
+    String? memberEntityId,
+  }) => WorkspaceMembershipRecord(
+    entityId: entityId ?? this.entityId,
+    workspaceId: workspaceId ?? this.workspaceId,
+    memberEntityId: memberEntityId ?? this.memberEntityId,
+  );
+  WorkspaceMembershipRecord copyWithCompanion(
+    WorkspaceMembershipRecordsCompanion data,
+  ) {
+    return WorkspaceMembershipRecord(
+      entityId: data.entityId.present ? data.entityId.value : this.entityId,
+      workspaceId: data.workspaceId.present
+          ? data.workspaceId.value
+          : this.workspaceId,
+      memberEntityId: data.memberEntityId.present
+          ? data.memberEntityId.value
+          : this.memberEntityId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WorkspaceMembershipRecord(')
+          ..write('entityId: $entityId, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('memberEntityId: $memberEntityId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(entityId, workspaceId, memberEntityId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WorkspaceMembershipRecord &&
+          other.entityId == this.entityId &&
+          other.workspaceId == this.workspaceId &&
+          other.memberEntityId == this.memberEntityId);
+}
+
+class WorkspaceMembershipRecordsCompanion
+    extends UpdateCompanion<WorkspaceMembershipRecord> {
+  final Value<String> entityId;
+  final Value<String> workspaceId;
+  final Value<String> memberEntityId;
+  final Value<int> rowid;
+  const WorkspaceMembershipRecordsCompanion({
+    this.entityId = const Value.absent(),
+    this.workspaceId = const Value.absent(),
+    this.memberEntityId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WorkspaceMembershipRecordsCompanion.insert({
+    required String entityId,
+    required String workspaceId,
+    required String memberEntityId,
+    this.rowid = const Value.absent(),
+  }) : entityId = Value(entityId),
+       workspaceId = Value(workspaceId),
+       memberEntityId = Value(memberEntityId);
+  static Insertable<WorkspaceMembershipRecord> custom({
+    Expression<String>? entityId,
+    Expression<String>? workspaceId,
+    Expression<String>? memberEntityId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entityId != null) 'entity_id': entityId,
+      if (workspaceId != null) 'workspace_id': workspaceId,
+      if (memberEntityId != null) 'member_entity_id': memberEntityId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WorkspaceMembershipRecordsCompanion copyWith({
+    Value<String>? entityId,
+    Value<String>? workspaceId,
+    Value<String>? memberEntityId,
+    Value<int>? rowid,
+  }) {
+    return WorkspaceMembershipRecordsCompanion(
+      entityId: entityId ?? this.entityId,
+      workspaceId: workspaceId ?? this.workspaceId,
+      memberEntityId: memberEntityId ?? this.memberEntityId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entityId.present) {
+      map['entity_id'] = Variable<String>(entityId.value);
+    }
+    if (workspaceId.present) {
+      map['workspace_id'] = Variable<String>(workspaceId.value);
+    }
+    if (memberEntityId.present) {
+      map['member_entity_id'] = Variable<String>(memberEntityId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WorkspaceMembershipRecordsCompanion(')
+          ..write('entityId: $entityId, ')
+          ..write('workspaceId: $workspaceId, ')
+          ..write('memberEntityId: $memberEntityId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $OutboxEntriesTable extends OutboxEntries
     with TableInfo<$OutboxEntriesTable, OutboxEntryRecord> {
   @override
@@ -2094,10 +2666,19 @@ abstract class _$LifeOsDatabase extends GeneratedDatabase {
   late final $NoteRecordsTable noteRecords = $NoteRecordsTable(this);
   late final $RelationshipRecordsTable relationshipRecords =
       $RelationshipRecordsTable(this);
+  late final $WorkspaceRecordsTable workspaceRecords = $WorkspaceRecordsTable(
+    this,
+  );
+  late final $WorkspaceMembershipRecordsTable workspaceMembershipRecords =
+      $WorkspaceMembershipRecordsTable(this);
   late final $OutboxEntriesTable outboxEntries = $OutboxEntriesTable(this);
   late final Index relationshipsSecondEntityIdIdx = Index(
     'relationships_second_entity_id_idx',
     'CREATE INDEX relationships_second_entity_id_idx ON relationships (second_entity_id)',
+  );
+  late final Index workspaceMembershipsMemberEntityIdIdx = Index(
+    'workspace_memberships_member_entity_id_idx',
+    'CREATE INDEX workspace_memberships_member_entity_id_idx ON workspace_memberships (member_entity_id)',
   );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -2108,8 +2689,11 @@ abstract class _$LifeOsDatabase extends GeneratedDatabase {
     taskRecords,
     noteRecords,
     relationshipRecords,
+    workspaceRecords,
+    workspaceMembershipRecords,
     outboxEntries,
     relationshipsSecondEntityIdIdx,
+    workspaceMembershipsMemberEntityIdIdx,
   ];
 }
 
@@ -2242,6 +2826,102 @@ final class $$EntitiesTableReferences
 
     final cache = $_typedResult.readTableOrNull(
       _secondEndpointRelationshipsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$WorkspaceRecordsTable, List<WorkspaceRecord>>
+  _workspaceRecordsRefsTable(_$LifeOsDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.workspaceRecords,
+        aliasName: 'entities__id__workspaces__entity_id',
+      );
+
+  $$WorkspaceRecordsTableProcessedTableManager get workspaceRecordsRefs {
+    final manager = $$WorkspaceRecordsTableTableManager(
+      $_db,
+      $_db.workspaceRecords,
+    ).filter((f) => f.entityId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _workspaceRecordsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $WorkspaceMembershipRecordsTable,
+    List<WorkspaceMembershipRecord>
+  >
+  _workspaceMembershipIdentityTable(_$LifeOsDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.workspaceMembershipRecords,
+        aliasName: 'entities__id__workspace_memberships__entity_id',
+      );
+
+  $$WorkspaceMembershipRecordsTableProcessedTableManager
+  get workspaceMembershipIdentity {
+    final manager = $$WorkspaceMembershipRecordsTableTableManager(
+      $_db,
+      $_db.workspaceMembershipRecords,
+    ).filter((f) => f.entityId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _workspaceMembershipIdentityTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $WorkspaceMembershipRecordsTable,
+    List<WorkspaceMembershipRecord>
+  >
+  _workspaceMembershipWorkspaceTable(_$LifeOsDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.workspaceMembershipRecords,
+        aliasName: 'entities__id__workspace_memberships__workspace_id',
+      );
+
+  $$WorkspaceMembershipRecordsTableProcessedTableManager
+  get workspaceMembershipWorkspace {
+    final manager = $$WorkspaceMembershipRecordsTableTableManager(
+      $_db,
+      $_db.workspaceMembershipRecords,
+    ).filter((f) => f.workspaceId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _workspaceMembershipWorkspaceTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<
+    $WorkspaceMembershipRecordsTable,
+    List<WorkspaceMembershipRecord>
+  >
+  _workspaceMembershipMemberTable(_$LifeOsDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.workspaceMembershipRecords,
+        aliasName: 'entities__id__workspace_memberships__member_entity_id',
+      );
+
+  $$WorkspaceMembershipRecordsTableProcessedTableManager
+  get workspaceMembershipMember {
+    final manager = $$WorkspaceMembershipRecordsTableTableManager(
+      $_db,
+      $_db.workspaceMembershipRecords,
+    ).filter((f) => f.memberEntityId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _workspaceMembershipMemberTable($_db),
     );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
@@ -2433,6 +3113,112 @@ class $$EntitiesTableFilterComposer
                 $removeJoinBuilderFromRootComposer,
           ),
     );
+    return f(composer);
+  }
+
+  Expression<bool> workspaceRecordsRefs(
+    Expression<bool> Function($$WorkspaceRecordsTableFilterComposer f) f,
+  ) {
+    final $$WorkspaceRecordsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.workspaceRecords,
+      getReferencedColumn: (t) => t.entityId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WorkspaceRecordsTableFilterComposer(
+            $db: $db,
+            $table: $db.workspaceRecords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> workspaceMembershipIdentity(
+    Expression<bool> Function($$WorkspaceMembershipRecordsTableFilterComposer f)
+    f,
+  ) {
+    final $$WorkspaceMembershipRecordsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.workspaceMembershipRecords,
+          getReferencedColumn: (t) => t.entityId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WorkspaceMembershipRecordsTableFilterComposer(
+                $db: $db,
+                $table: $db.workspaceMembershipRecords,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<bool> workspaceMembershipWorkspace(
+    Expression<bool> Function($$WorkspaceMembershipRecordsTableFilterComposer f)
+    f,
+  ) {
+    final $$WorkspaceMembershipRecordsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.workspaceMembershipRecords,
+          getReferencedColumn: (t) => t.workspaceId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WorkspaceMembershipRecordsTableFilterComposer(
+                $db: $db,
+                $table: $db.workspaceMembershipRecords,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<bool> workspaceMembershipMember(
+    Expression<bool> Function($$WorkspaceMembershipRecordsTableFilterComposer f)
+    f,
+  ) {
+    final $$WorkspaceMembershipRecordsTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.workspaceMembershipRecords,
+          getReferencedColumn: (t) => t.memberEntityId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WorkspaceMembershipRecordsTableFilterComposer(
+                $db: $db,
+                $table: $db.workspaceMembershipRecords,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
     return f(composer);
   }
 
@@ -2667,6 +3453,118 @@ class $$EntitiesTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> workspaceRecordsRefs<T extends Object>(
+    Expression<T> Function($$WorkspaceRecordsTableAnnotationComposer a) f,
+  ) {
+    final $$WorkspaceRecordsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.workspaceRecords,
+      getReferencedColumn: (t) => t.entityId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WorkspaceRecordsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.workspaceRecords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> workspaceMembershipIdentity<T extends Object>(
+    Expression<T> Function(
+      $$WorkspaceMembershipRecordsTableAnnotationComposer a,
+    )
+    f,
+  ) {
+    final $$WorkspaceMembershipRecordsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.workspaceMembershipRecords,
+          getReferencedColumn: (t) => t.entityId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WorkspaceMembershipRecordsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.workspaceMembershipRecords,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<T> workspaceMembershipWorkspace<T extends Object>(
+    Expression<T> Function(
+      $$WorkspaceMembershipRecordsTableAnnotationComposer a,
+    )
+    f,
+  ) {
+    final $$WorkspaceMembershipRecordsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.workspaceMembershipRecords,
+          getReferencedColumn: (t) => t.workspaceId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WorkspaceMembershipRecordsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.workspaceMembershipRecords,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  Expression<T> workspaceMembershipMember<T extends Object>(
+    Expression<T> Function(
+      $$WorkspaceMembershipRecordsTableAnnotationComposer a,
+    )
+    f,
+  ) {
+    final $$WorkspaceMembershipRecordsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.workspaceMembershipRecords,
+          getReferencedColumn: (t) => t.memberEntityId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$WorkspaceMembershipRecordsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.workspaceMembershipRecords,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> outboxEntriesRefs<T extends Object>(
     Expression<T> Function($$OutboxEntriesTableAnnotationComposer a) f,
   ) {
@@ -2712,6 +3610,10 @@ class $$EntitiesTableTableManager
             bool relationshipIdentity,
             bool firstEndpointRelationships,
             bool secondEndpointRelationships,
+            bool workspaceRecordsRefs,
+            bool workspaceMembershipIdentity,
+            bool workspaceMembershipWorkspace,
+            bool workspaceMembershipMember,
             bool outboxEntriesRefs,
           })
         > {
@@ -2781,6 +3683,10 @@ class $$EntitiesTableTableManager
                 relationshipIdentity = false,
                 firstEndpointRelationships = false,
                 secondEndpointRelationships = false,
+                workspaceRecordsRefs = false,
+                workspaceMembershipIdentity = false,
+                workspaceMembershipWorkspace = false,
+                workspaceMembershipMember = false,
                 outboxEntriesRefs = false,
               }) {
                 return PrefetchHooks(
@@ -2791,6 +3697,13 @@ class $$EntitiesTableTableManager
                     if (relationshipIdentity) db.relationshipRecords,
                     if (firstEndpointRelationships) db.relationshipRecords,
                     if (secondEndpointRelationships) db.relationshipRecords,
+                    if (workspaceRecordsRefs) db.workspaceRecords,
+                    if (workspaceMembershipIdentity)
+                      db.workspaceMembershipRecords,
+                    if (workspaceMembershipWorkspace)
+                      db.workspaceMembershipRecords,
+                    if (workspaceMembershipMember)
+                      db.workspaceMembershipRecords,
                     if (outboxEntriesRefs) db.outboxEntries,
                   ],
                   addJoins: null,
@@ -2901,6 +3814,90 @@ class $$EntitiesTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (workspaceRecordsRefs)
+                        await $_getPrefetchedData<
+                          EntityRecord,
+                          $EntitiesTable,
+                          WorkspaceRecord
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EntitiesTableReferences
+                              ._workspaceRecordsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EntitiesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).workspaceRecordsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.entityId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (workspaceMembershipIdentity)
+                        await $_getPrefetchedData<
+                          EntityRecord,
+                          $EntitiesTable,
+                          WorkspaceMembershipRecord
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EntitiesTableReferences
+                              ._workspaceMembershipIdentityTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EntitiesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).workspaceMembershipIdentity,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.entityId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (workspaceMembershipWorkspace)
+                        await $_getPrefetchedData<
+                          EntityRecord,
+                          $EntitiesTable,
+                          WorkspaceMembershipRecord
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EntitiesTableReferences
+                              ._workspaceMembershipWorkspaceTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EntitiesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).workspaceMembershipWorkspace,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.workspaceId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (workspaceMembershipMember)
+                        await $_getPrefetchedData<
+                          EntityRecord,
+                          $EntitiesTable,
+                          WorkspaceMembershipRecord
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EntitiesTableReferences
+                              ._workspaceMembershipMemberTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EntitiesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).workspaceMembershipMember,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.memberEntityId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (outboxEntriesRefs)
                         await $_getPrefetchedData<
                           EntityRecord,
@@ -2948,6 +3945,10 @@ typedef $$EntitiesTableProcessedTableManager =
         bool relationshipIdentity,
         bool firstEndpointRelationships,
         bool secondEndpointRelationships,
+        bool workspaceRecordsRefs,
+        bool workspaceMembershipIdentity,
+        bool workspaceMembershipWorkspace,
+        bool workspaceMembershipMember,
         bool outboxEntriesRefs,
       })
     >;
@@ -4009,6 +5010,786 @@ typedef $$RelationshipRecordsTableProcessedTableManager =
         bool secondEntityId,
       })
     >;
+typedef $$WorkspaceRecordsTableCreateCompanionBuilder =
+    WorkspaceRecordsCompanion Function({
+      required String entityId,
+      required String title,
+      Value<String?> description,
+      Value<int> rowid,
+    });
+typedef $$WorkspaceRecordsTableUpdateCompanionBuilder =
+    WorkspaceRecordsCompanion Function({
+      Value<String> entityId,
+      Value<String> title,
+      Value<String?> description,
+      Value<int> rowid,
+    });
+
+final class $$WorkspaceRecordsTableReferences
+    extends
+        BaseReferences<
+          _$LifeOsDatabase,
+          $WorkspaceRecordsTable,
+          WorkspaceRecord
+        > {
+  $$WorkspaceRecordsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $EntitiesTable _entityIdTable(_$LifeOsDatabase db) =>
+      db.entities.createAlias('workspaces__entity_id__entities__id');
+
+  $$EntitiesTableProcessedTableManager get entityId {
+    final $_column = $_itemColumn<String>('entity_id')!;
+
+    final manager = $$EntitiesTableTableManager(
+      $_db,
+      $_db.entities,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_entityIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$WorkspaceRecordsTableFilterComposer
+    extends Composer<_$LifeOsDatabase, $WorkspaceRecordsTable> {
+  $$WorkspaceRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$EntitiesTableFilterComposer get entityId {
+    final $$EntitiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableFilterComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WorkspaceRecordsTableOrderingComposer
+    extends Composer<_$LifeOsDatabase, $WorkspaceRecordsTable> {
+  $$WorkspaceRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$EntitiesTableOrderingComposer get entityId {
+    final $$EntitiesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableOrderingComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WorkspaceRecordsTableAnnotationComposer
+    extends Composer<_$LifeOsDatabase, $WorkspaceRecordsTable> {
+  $$WorkspaceRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  $$EntitiesTableAnnotationComposer get entityId {
+    final $$EntitiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WorkspaceRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$LifeOsDatabase,
+          $WorkspaceRecordsTable,
+          WorkspaceRecord,
+          $$WorkspaceRecordsTableFilterComposer,
+          $$WorkspaceRecordsTableOrderingComposer,
+          $$WorkspaceRecordsTableAnnotationComposer,
+          $$WorkspaceRecordsTableCreateCompanionBuilder,
+          $$WorkspaceRecordsTableUpdateCompanionBuilder,
+          (WorkspaceRecord, $$WorkspaceRecordsTableReferences),
+          WorkspaceRecord,
+          PrefetchHooks Function({bool entityId})
+        > {
+  $$WorkspaceRecordsTableTableManager(
+    _$LifeOsDatabase db,
+    $WorkspaceRecordsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WorkspaceRecordsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WorkspaceRecordsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WorkspaceRecordsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> entityId = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WorkspaceRecordsCompanion(
+                entityId: entityId,
+                title: title,
+                description: description,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String entityId,
+                required String title,
+                Value<String?> description = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WorkspaceRecordsCompanion.insert(
+                entityId: entityId,
+                title: title,
+                description: description,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$WorkspaceRecordsTable, WorkspaceRecord>(table),
+                  $$WorkspaceRecordsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({entityId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (entityId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.entityId,
+                        referencedTable: $$WorkspaceRecordsTableReferences
+                            ._entityIdTable(db),
+                        referencedColumn: $$WorkspaceRecordsTableReferences
+                            ._entityIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$WorkspaceRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LifeOsDatabase,
+      $WorkspaceRecordsTable,
+      WorkspaceRecord,
+      $$WorkspaceRecordsTableFilterComposer,
+      $$WorkspaceRecordsTableOrderingComposer,
+      $$WorkspaceRecordsTableAnnotationComposer,
+      $$WorkspaceRecordsTableCreateCompanionBuilder,
+      $$WorkspaceRecordsTableUpdateCompanionBuilder,
+      (WorkspaceRecord, $$WorkspaceRecordsTableReferences),
+      WorkspaceRecord,
+      PrefetchHooks Function({bool entityId})
+    >;
+typedef $$WorkspaceMembershipRecordsTableCreateCompanionBuilder =
+    WorkspaceMembershipRecordsCompanion Function({
+      required String entityId,
+      required String workspaceId,
+      required String memberEntityId,
+      Value<int> rowid,
+    });
+typedef $$WorkspaceMembershipRecordsTableUpdateCompanionBuilder =
+    WorkspaceMembershipRecordsCompanion Function({
+      Value<String> entityId,
+      Value<String> workspaceId,
+      Value<String> memberEntityId,
+      Value<int> rowid,
+    });
+
+final class $$WorkspaceMembershipRecordsTableReferences
+    extends
+        BaseReferences<
+          _$LifeOsDatabase,
+          $WorkspaceMembershipRecordsTable,
+          WorkspaceMembershipRecord
+        > {
+  $$WorkspaceMembershipRecordsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $EntitiesTable _entityIdTable(_$LifeOsDatabase db) =>
+      db.entities.createAlias('workspace_memberships__entity_id__entities__id');
+
+  $$EntitiesTableProcessedTableManager get entityId {
+    final $_column = $_itemColumn<String>('entity_id')!;
+
+    final manager = $$EntitiesTableTableManager(
+      $_db,
+      $_db.entities,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_entityIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $EntitiesTable _workspaceIdTable(_$LifeOsDatabase db) => db.entities
+      .createAlias('workspace_memberships__workspace_id__entities__id');
+
+  $$EntitiesTableProcessedTableManager get workspaceId {
+    final $_column = $_itemColumn<String>('workspace_id')!;
+
+    final manager = $$EntitiesTableTableManager(
+      $_db,
+      $_db.entities,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_workspaceIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $EntitiesTable _memberEntityIdTable(_$LifeOsDatabase db) => db.entities
+      .createAlias('workspace_memberships__member_entity_id__entities__id');
+
+  $$EntitiesTableProcessedTableManager get memberEntityId {
+    final $_column = $_itemColumn<String>('member_entity_id')!;
+
+    final manager = $$EntitiesTableTableManager(
+      $_db,
+      $_db.entities,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_memberEntityIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$WorkspaceMembershipRecordsTableFilterComposer
+    extends Composer<_$LifeOsDatabase, $WorkspaceMembershipRecordsTable> {
+  $$WorkspaceMembershipRecordsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$EntitiesTableFilterComposer get entityId {
+    final $$EntitiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableFilterComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableFilterComposer get workspaceId {
+    final $$EntitiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.workspaceId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableFilterComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableFilterComposer get memberEntityId {
+    final $$EntitiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberEntityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableFilterComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WorkspaceMembershipRecordsTableOrderingComposer
+    extends Composer<_$LifeOsDatabase, $WorkspaceMembershipRecordsTable> {
+  $$WorkspaceMembershipRecordsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$EntitiesTableOrderingComposer get entityId {
+    final $$EntitiesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableOrderingComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableOrderingComposer get workspaceId {
+    final $$EntitiesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.workspaceId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableOrderingComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableOrderingComposer get memberEntityId {
+    final $$EntitiesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberEntityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableOrderingComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WorkspaceMembershipRecordsTableAnnotationComposer
+    extends Composer<_$LifeOsDatabase, $WorkspaceMembershipRecordsTable> {
+  $$WorkspaceMembershipRecordsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$EntitiesTableAnnotationComposer get entityId {
+    final $$EntitiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableAnnotationComposer get workspaceId {
+    final $$EntitiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.workspaceId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$EntitiesTableAnnotationComposer get memberEntityId {
+    final $$EntitiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberEntityId,
+      referencedTable: $db.entities,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntitiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entities,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WorkspaceMembershipRecordsTableTableManager
+    extends
+        RootTableManager<
+          _$LifeOsDatabase,
+          $WorkspaceMembershipRecordsTable,
+          WorkspaceMembershipRecord,
+          $$WorkspaceMembershipRecordsTableFilterComposer,
+          $$WorkspaceMembershipRecordsTableOrderingComposer,
+          $$WorkspaceMembershipRecordsTableAnnotationComposer,
+          $$WorkspaceMembershipRecordsTableCreateCompanionBuilder,
+          $$WorkspaceMembershipRecordsTableUpdateCompanionBuilder,
+          (
+            WorkspaceMembershipRecord,
+            $$WorkspaceMembershipRecordsTableReferences,
+          ),
+          WorkspaceMembershipRecord,
+          PrefetchHooks Function({
+            bool entityId,
+            bool workspaceId,
+            bool memberEntityId,
+          })
+        > {
+  $$WorkspaceMembershipRecordsTableTableManager(
+    _$LifeOsDatabase db,
+    $WorkspaceMembershipRecordsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WorkspaceMembershipRecordsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$WorkspaceMembershipRecordsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$WorkspaceMembershipRecordsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> entityId = const Value.absent(),
+                Value<String> workspaceId = const Value.absent(),
+                Value<String> memberEntityId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WorkspaceMembershipRecordsCompanion(
+                entityId: entityId,
+                workspaceId: workspaceId,
+                memberEntityId: memberEntityId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String entityId,
+                required String workspaceId,
+                required String memberEntityId,
+                Value<int> rowid = const Value.absent(),
+              }) => WorkspaceMembershipRecordsCompanion.insert(
+                entityId: entityId,
+                workspaceId: workspaceId,
+                memberEntityId: memberEntityId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $WorkspaceMembershipRecordsTable,
+                    WorkspaceMembershipRecord
+                  >(table),
+                  $$WorkspaceMembershipRecordsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({
+                entityId = false,
+                workspaceId = false,
+                memberEntityId = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (entityId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.entityId,
+                            referencedTable:
+                                $$WorkspaceMembershipRecordsTableReferences
+                                    ._entityIdTable(db),
+                            referencedColumn:
+                                $$WorkspaceMembershipRecordsTableReferences
+                                    ._entityIdTable(db)
+                                    .id,
+                          ) as T;
+                        }
+                        if (workspaceId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.workspaceId,
+                            referencedTable:
+                                $$WorkspaceMembershipRecordsTableReferences
+                                    ._workspaceIdTable(db),
+                            referencedColumn:
+                                $$WorkspaceMembershipRecordsTableReferences
+                                    ._workspaceIdTable(db)
+                                    .id,
+                          ) as T;
+                        }
+                        if (memberEntityId) {
+                          state = state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.memberEntityId,
+                            referencedTable:
+                                $$WorkspaceMembershipRecordsTableReferences
+                                    ._memberEntityIdTable(db),
+                            referencedColumn:
+                                $$WorkspaceMembershipRecordsTableReferences
+                                    ._memberEntityIdTable(db)
+                                    .id,
+                          ) as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$WorkspaceMembershipRecordsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$LifeOsDatabase,
+      $WorkspaceMembershipRecordsTable,
+      WorkspaceMembershipRecord,
+      $$WorkspaceMembershipRecordsTableFilterComposer,
+      $$WorkspaceMembershipRecordsTableOrderingComposer,
+      $$WorkspaceMembershipRecordsTableAnnotationComposer,
+      $$WorkspaceMembershipRecordsTableCreateCompanionBuilder,
+      $$WorkspaceMembershipRecordsTableUpdateCompanionBuilder,
+      (WorkspaceMembershipRecord, $$WorkspaceMembershipRecordsTableReferences),
+      WorkspaceMembershipRecord,
+      PrefetchHooks Function({
+        bool entityId,
+        bool workspaceId,
+        bool memberEntityId,
+      })
+    >;
 typedef $$OutboxEntriesTableCreateCompanionBuilder =
     OutboxEntriesCompanion Function({
       required String changeId,
@@ -4490,6 +6271,14 @@ class $LifeOsDatabaseManager {
       $$NoteRecordsTableTableManager(_db, _db.noteRecords);
   $$RelationshipRecordsTableTableManager get relationshipRecords =>
       $$RelationshipRecordsTableTableManager(_db, _db.relationshipRecords);
+  $$WorkspaceRecordsTableTableManager get workspaceRecords =>
+      $$WorkspaceRecordsTableTableManager(_db, _db.workspaceRecords);
+  $$WorkspaceMembershipRecordsTableTableManager
+  get workspaceMembershipRecords =>
+      $$WorkspaceMembershipRecordsTableTableManager(
+        _db,
+        _db.workspaceMembershipRecords,
+      );
   $$OutboxEntriesTableTableManager get outboxEntries =>
       $$OutboxEntriesTableTableManager(_db, _db.outboxEntries);
 }

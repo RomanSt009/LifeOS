@@ -2,11 +2,11 @@
 
 Статус плана: active
 
-Текущий checkpoint: WS-02 — Schema v4 migration foundation (pending)
+Текущий checkpoint: WS-03 — Workspace/Membership Domain + Persistence (pending)
 
-Точная точка возобновления: начать WS-02 с повторной сверки Git, ADR-0029,
-ADR-0034, текущей schema v3 и migration tests; до изменения schema отметить
-WS-02 active. WS-03 не начинать в одном run.
+Точная точка возобновления: начать WS-03 с повторной сверки Git, ADR-0023,
+ADR-0026, ADR-0033, ADR-0034, schema v4 и generated API; до изменения Domain
+отметить WS-03 active. WS-04 не начинать без отдельного указания.
 
 ## Goal
 
@@ -511,7 +511,7 @@ commands, а не Presentation orchestration.
 
 ## WS-02 — Schema v4 migration foundation
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -559,11 +559,55 @@ Presentation, Backup v4 и WS-03.
 
 ### Result / evidence
 
-Pending.
+Pre-flight: `main`, HEAD `09560737ec08af422327b90d461dfa6d87056fba`,
+upstream divergence `0 0`; WS-01 и ADR-0034 присутствуют в HEAD; staged files
+отсутствовали; единственное исходное working-tree изменение — user-owned
+`.obsidian/workspace.json`.
+
+Schema v4 добавляет только typed tables `workspaces` и
+`workspace_memberships`. `workspaces` содержит PK/FK `entity_id`, required
+`title` и nullable `description`. `workspace_memberships` содержит PK/FK
+`entity_id`, FK `workspace_id`, FK `member_entity_id`, CHECK против self-reference
+и UNIQUE pair; отдельный index создан только для `member_entity_id`. Все FK имеют
+SQLite `NO ACTION`; Entity metadata остаётся в `entities`; `relationships` не
+изменена.
+
+`LifeOsDatabase.schemaVersion` повышен с 3 до 4. Отдельный `v3_to_v4.dart`
+создаёт две tables и member index без собственной transaction; step подключён к
+существующей последовательной orchestration после неизменённых v1 -> v2 и
+v2 -> v3. Backfill, synthetic Workspace/membership и migration Outbox
+отсутствуют.
+
+Штатными Drift tools обновлён generated database API, создан
+`drift_schema_v4.json`, generated `schema_v4.dart` и version dispatcher
+`[1, 2, 3, 4]`. Frozen JSON v1/v2/v3 byte-identical. Tooling механически
+переформатировал старые generated Dart helpers, поэтому они были возвращены к
+HEAD; generated v1/v2/v3 helpers имеют zero diff. Schema v5 отсутствует.
+
+Migration tests расширены: sequential v1 -> v4 и v2 -> v4; file-backed v3 -> v4
+с точным сохранением Task, Note, Relationship и Outbox; fresh-v4 equivalence;
+empty Workspace tables; FK/PK/nullability/CHECK/UNIQUE/index/no-extra-workspace-
+index contract; rollback controlled v3 -> v4 failure; future v5 rejection и
+production-open refusal. Close/reopen и foreign-key/quick checks проходят.
+
+Validation:
+
+- direct SDK `dart format` PASS для changed handwritten Dart/test files;
+- `dart run build_runner build` PASS; generated Drift API выпущен tooling;
+- `drift_dev schema dump/generate` PASS для frozen v4/helper;
+- focused migration suite PASS: 9 tests;
+- full Drift persistence regression directory PASS: 53 tests;
+- `flutter analyze` PASS (`No issues found`);
+- full `flutter test --reporter compact` PASS: 263 tests;
+- Domain/Application/Presentation import-boundary scans PASS;
+- `pubspec.yaml`/`pubspec.lock` unchanged; Backup composition остаётся
+  `V3BackupExportEncoder` и logical Backup v3 не менялся;
+- ADR-0034 и frozen v1/v2/v3 artifacts unchanged;
+- final `git diff --check` PASS.
 
 ### Blocker
 
-Отсутствует до architecture gate.
+Отсутствует.
 
 ## WS-03 — Workspace/Membership Domain + Persistence
 
@@ -948,6 +992,7 @@ rollback и layer-boundary regressions локализуемыми и снижа�
 
 ## Exact resume point
 
-WS-01 завершён. Возобновить с WS-02 — Schema v4 migration foundation. Перед
-изменением `lifeos_database.dart` отметить WS-02 active, перечитать ADR-0029 и
-ADR-0034, сверить HEAD/Git и current migration tests. Не начинать WS-03.
+WS-02 завершён. Возобновить с WS-03 — Workspace/Membership Domain + Persistence.
+Перед изменением Domain отметить WS-03 active, перечитать ADR-0023, ADR-0026,
+ADR-0033 и ADR-0034, сверить HEAD/Git, schema v4 generated API и migration
+evidence. Не начинать WS-04.

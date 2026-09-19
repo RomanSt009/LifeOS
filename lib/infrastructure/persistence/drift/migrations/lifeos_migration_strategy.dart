@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'lifeos_migration_validation.dart';
 import 'v1_to_v2.dart';
 import 'v2_to_v3.dart';
+import 'v3_to_v4.dart';
 
 typedef LifeOsMigrationStep = Future<void> Function(Migrator migrator);
 
@@ -26,6 +27,9 @@ MigrationStrategy createLifeOsMigrationStrategy({
   required DatabaseSchemaEntity notesTable,
   required DatabaseSchemaEntity relationshipsTable,
   required DatabaseSchemaEntity relationshipsSecondEntityIdIndex,
+  required DatabaseSchemaEntity workspacesTable,
+  required DatabaseSchemaEntity workspaceMembershipsTable,
+  required DatabaseSchemaEntity workspaceMembershipsMemberEntityIdIndex,
 }) {
   return MigrationStrategy(
     onCreate: (migrator) => migrator.createAll(),
@@ -40,6 +44,12 @@ MigrationStrategy createLifeOsMigrationStrategy({
           migrator,
           relationshipsTable,
           relationshipsSecondEntityIdIndex,
+        ),
+        3: (migrator) => migrateV3ToV4(
+          migrator,
+          workspacesTable,
+          workspaceMembershipsTable,
+          workspaceMembershipsMemberEntityIdIndex,
         ),
       },
     ),

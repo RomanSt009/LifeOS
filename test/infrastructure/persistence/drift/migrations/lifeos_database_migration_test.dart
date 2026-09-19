@@ -12,6 +12,7 @@ import 'package:lifeos/infrastructure/persistence/drift/production_database.dart
 import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
+import 'generated/schema_v3.dart' as v3;
 
 void main() {
   setUpAll(() {
@@ -23,7 +24,7 @@ void main() {
 
   group('LifeOsDatabase migrations', () {
     test(
-      'migrates frozen v1 data sequentially to v3 and remains stable',
+      'migrates frozen v1 data sequentially to v4 and remains stable',
       () async {
         final verifier = SchemaVerifier(GeneratedHelper());
         final schema = await verifier.schemaAt(1);
@@ -36,7 +37,7 @@ void main() {
         final migratedDatabase = LifeOsDatabase(schema.newConnection());
         await verifier.migrateAndValidate(
           migratedDatabase,
-          3,
+          4,
           options: const ValidationOptions(validateDropped: true),
         );
 
@@ -51,7 +52,8 @@ void main() {
               .get(),
           isEmpty,
         );
-        expect(await _userVersion(migratedDatabase), 3);
+        await _expectWorkspaceTablesEmpty(migratedDatabase);
+        expect(await _userVersion(migratedDatabase), 4);
         expect(await _foreignKeyViolations(migratedDatabase), isEmpty);
         expect(await _quickCheck(migratedDatabase), 'ok');
         await migratedDatabase.close();
@@ -68,16 +70,17 @@ void main() {
               .get(),
           isEmpty,
         );
-        expect(await _userVersion(reopenedDatabase), 3);
+        await _expectWorkspaceTablesEmpty(reopenedDatabase);
+        expect(await _userVersion(reopenedDatabase), 4);
         expect(await _foreignKeyViolations(reopenedDatabase), isEmpty);
         await reopenedDatabase.close();
       },
     );
 
-    test('migrates a file-backed v2 database to schema-equivalent v3 and '
+    test('migrates a file-backed v2 database to schema-equivalent v4 and '
         'preserves Task, Note, and Outbox', () async {
       final directory = await Directory.systemTemp.createTemp(
-        'lifeos-v2-to-v3-',
+        'lifeos-v2-to-v4-',
       );
       addTearDown(() => directory.delete(recursive: true));
       final file = File('${directory.path}${Platform.pathSeparator}lifeos.db');
@@ -90,7 +93,7 @@ void main() {
       final migratedDatabase = LifeOsDatabase(NativeDatabase(file));
       await verifier.migrateAndValidate(
         migratedDatabase,
-        3,
+        4,
         options: const ValidationOptions(validateDropped: true),
       );
 
@@ -101,19 +104,56 @@ void main() {
             .get(),
         isEmpty,
       );
-      expect(await _userVersion(migratedDatabase), 3);
+      await _expectWorkspaceTablesEmpty(migratedDatabase);
+      expect(await _userVersion(migratedDatabase), 4);
       expect(await _foreignKeyViolations(migratedDatabase), isEmpty);
       expect(await _quickCheck(migratedDatabase), 'ok');
       await migratedDatabase.close();
 
       final reopenedDatabase = LifeOsDatabase(NativeDatabase(file));
       await _expectV2FixturePreserved(reopenedDatabase);
-      expect(await _userVersion(reopenedDatabase), 3);
+      await _expectWorkspaceTablesEmpty(reopenedDatabase);
+      expect(await _userVersion(reopenedDatabase), 4);
       expect(await _foreignKeyViolations(reopenedDatabase), isEmpty);
       await reopenedDatabase.close();
     });
 
-    test('creates a fresh v3 schema equivalent to the frozen schema', () async {
+    test('migrates a file-backed v3 database to schema-equivalent v4 and '
+        'preserves Task, Note, Relationship, and Outbox', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'lifeos-v3-to-v4-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File('${directory.path}${Platform.pathSeparator}lifeos.db');
+
+      final oldDatabase = v3.DatabaseAtV3(NativeDatabase(file));
+      await _insertV3Fixture(oldDatabase);
+      await oldDatabase.close();
+
+      final verifier = SchemaVerifier(GeneratedHelper());
+      final migratedDatabase = LifeOsDatabase(NativeDatabase(file));
+      await verifier.migrateAndValidate(
+        migratedDatabase,
+        4,
+        options: const ValidationOptions(validateDropped: true),
+      );
+
+      await _expectV3FixturePreserved(migratedDatabase);
+      await _expectWorkspaceTablesEmpty(migratedDatabase);
+      expect(await _userVersion(migratedDatabase), 4);
+      expect(await _foreignKeyViolations(migratedDatabase), isEmpty);
+      expect(await _quickCheck(migratedDatabase), 'ok');
+      await migratedDatabase.close();
+
+      final reopenedDatabase = LifeOsDatabase(NativeDatabase(file));
+      await _expectV3FixturePreserved(reopenedDatabase);
+      await _expectWorkspaceTablesEmpty(reopenedDatabase);
+      expect(await _userVersion(reopenedDatabase), 4);
+      expect(await _foreignKeyViolations(reopenedDatabase), isEmpty);
+      await reopenedDatabase.close();
+    });
+
+    test('creates a fresh v4 schema equivalent to the frozen schema', () async {
       final database = LifeOsDatabase(NativeDatabase.memory());
       addTearDown(database.close);
 
@@ -122,13 +162,15 @@ void main() {
         options: const ValidationOptions(validateDropped: true),
       );
 
-      expect(await _userVersion(database), 3);
+      expect(await _userVersion(database), 4);
       expect(await _userTableNames(database), [
         'entities',
         'notes',
         'outbox',
         'relationships',
         'tasks',
+        'workspace_memberships',
+        'workspaces',
       ]);
       expect(await _foreignKeyViolations(database), isEmpty);
       expect(await _quickCheck(database), 'ok');
@@ -145,6 +187,7 @@ void main() {
             ),
         throwsA(isA<Exception>()),
       );
+      await _expectWorkspaceTablesEmpty(database);
     });
 
     test(
@@ -270,9 +313,153 @@ void main() {
       },
     );
 
-    test('rolls back the complete migration chain when a step fails', () async {
+    test(
+      'enforces Workspace and Membership keys, checks, uniqueness, and indexes',
+      () async {
+        final database = LifeOsDatabase(NativeDatabase.memory());
+        addTearDown(database.close);
+        await database.customSelect('SELECT 1').get();
+        await _insertWorkspaceConstraintEntities(database);
+
+        final workspaceForeignKeys = await database
+            .customSelect("PRAGMA foreign_key_list('workspaces')")
+            .get();
+        expect(workspaceForeignKeys, hasLength(1));
+        expect(workspaceForeignKeys.single.read<String>('from'), 'entity_id');
+        expect(
+          workspaceForeignKeys.single.read<String>('on_update'),
+          'NO ACTION',
+        );
+        expect(
+          workspaceForeignKeys.single.read<String>('on_delete'),
+          'NO ACTION',
+        );
+
+        final membershipForeignKeys = await database
+            .customSelect("PRAGMA foreign_key_list('workspace_memberships')")
+            .get();
+        expect(membershipForeignKeys, hasLength(3));
+        expect(
+          membershipForeignKeys.map((row) => row.read<String>('from')).toSet(),
+          {'entity_id', 'workspace_id', 'member_entity_id'},
+        );
+        expect(
+          membershipForeignKeys
+              .map((row) => row.read<String>('on_update'))
+              .toSet(),
+          {'NO ACTION'},
+        );
+        expect(
+          membershipForeignKeys
+              .map((row) => row.read<String>('on_delete'))
+              .toSet(),
+          {'NO ACTION'},
+        );
+
+        final workspaceColumns = await database
+            .customSelect("PRAGMA table_info('workspaces')")
+            .get();
+        expect(
+          workspaceColumns.map((row) => row.read<String>('name')).toList(),
+          ['entity_id', 'title', 'description'],
+        );
+        expect(
+          workspaceColumns
+              .singleWhere((row) => row.read<String>('name') == 'entity_id')
+              .read<int>('pk'),
+          1,
+        );
+        expect(
+          workspaceColumns
+              .singleWhere((row) => row.read<String>('name') == 'title')
+              .read<int>('notnull'),
+          1,
+        );
+        expect(
+          workspaceColumns
+              .singleWhere((row) => row.read<String>('name') == 'description')
+              .read<int>('notnull'),
+          0,
+        );
+
+        await database
+            .into(database.workspaceMembershipRecords)
+            .insert(
+              WorkspaceMembershipRecordsCompanion.insert(
+                entityId: 'membership-valid',
+                workspaceId: 'workspace-a',
+                memberEntityId: 'task-a',
+              ),
+            );
+
+        await expectLater(
+          database
+              .into(database.workspaceMembershipRecords)
+              .insert(
+                WorkspaceMembershipRecordsCompanion.insert(
+                  entityId: 'membership-duplicate',
+                  workspaceId: 'workspace-a',
+                  memberEntityId: 'task-a',
+                ),
+              ),
+          throwsA(isA<Exception>()),
+        );
+        await expectLater(
+          database
+              .into(database.workspaceMembershipRecords)
+              .insert(
+                WorkspaceMembershipRecordsCompanion.insert(
+                  entityId: 'membership-self',
+                  workspaceId: 'workspace-a',
+                  memberEntityId: 'workspace-a',
+                ),
+              ),
+          throwsA(isA<Exception>()),
+        );
+        await expectLater(
+          database
+              .into(database.workspaceMembershipRecords)
+              .insert(
+                WorkspaceMembershipRecordsCompanion.insert(
+                  entityId: 'membership-invalid-fk',
+                  workspaceId: 'workspace-a',
+                  memberEntityId: 'missing-member',
+                ),
+              ),
+          throwsA(isA<Exception>()),
+        );
+
+        final indexes = await database
+            .customSelect("PRAGMA index_list('workspace_memberships')")
+            .get();
+        expect(
+          indexes.map((row) => row.read<String>('name')),
+          contains('workspace_memberships_member_entity_id_idx'),
+        );
+        final indexColumns = <List<String>>[];
+        for (final index in indexes) {
+          final name = index.read<String>('name').replaceAll("'", "''");
+          final columns = await database
+              .customSelect("PRAGMA index_info('$name')")
+              .get();
+          indexColumns.add(
+            columns.map((row) => row.read<String>('name')).toList(),
+          );
+        }
+        expect(
+          indexColumns,
+          contains(orderedEquals(['workspace_id', 'member_entity_id'])),
+        );
+        expect(indexColumns, contains(orderedEquals(['member_entity_id'])));
+        expect(indexColumns, isNot(contains(orderedEquals(['workspace_id']))));
+        expect(await _foreignKeyViolations(database), isEmpty);
+        expect(await _quickCheck(database), 'ok');
+      },
+    );
+
+    test('rolls back v3 to v4 when its migration step fails', () async {
       final verifier = SchemaVerifier(GeneratedHelper());
-      final schema = await verifier.schemaAt(2);
+      final schema = await verifier.schemaAt(3);
       addTearDown(schema.close);
 
       final failingDatabase = _FailingLifeOsDatabase(schema.newConnection());
@@ -282,20 +469,21 @@ void main() {
       );
       await failingDatabase.close();
 
-      expect(_rawUserVersion(schema), 2);
+      expect(_rawUserVersion(schema), 3);
       expect(_rawUserTableNames(schema), [
         'entities',
         'notes',
         'outbox',
+        'relationships',
         'tasks',
       ]);
     });
 
     test('rejects a future schema version without mutating it', () async {
       final verifier = SchemaVerifier(GeneratedHelper());
-      final schema = await verifier.schemaAt(3);
+      final schema = await verifier.schemaAt(4);
       addTearDown(schema.close);
-      schema.rawDatabase.execute('PRAGMA user_version = 4');
+      schema.rawDatabase.execute('PRAGMA user_version = 5');
       final tablesBefore = _rawUserTableNames(schema);
 
       final database = LifeOsDatabase(schema.newConnection());
@@ -305,7 +493,7 @@ void main() {
       );
       await database.close();
 
-      expect(_rawUserVersion(schema), 4);
+      expect(_rawUserVersion(schema), 5);
       expect(_rawUserTableNames(schema), tablesBefore);
     });
 
@@ -320,7 +508,7 @@ void main() {
         final currentDatabase = await openProductionDatabaseIn(
           supportDirectory,
         );
-        await currentDatabase.customStatement('PRAGMA user_version = 4');
+        await currentDatabase.customStatement('PRAGMA user_version = 5');
         await currentDatabase.close();
 
         await expectLater(
@@ -439,6 +627,82 @@ Future<void> _insertV2Fixture(v2.DatabaseAtV2 database) async {
   });
 }
 
+Future<void> _insertV3Fixture(v3.DatabaseAtV3 database) async {
+  await database.batch((batch) {
+    batch.insertAll(database.entities, [
+      v3.EntitiesCompanion.insert(
+        id: 'task-v3',
+        entityType: 'task',
+        createdAt: _sqliteTimestamp(DateTime.utc(2026, 9, 3, 10)),
+        updatedAt: _sqliteTimestamp(DateTime.utc(2026, 9, 3, 11)),
+        lifecycle: 'active',
+        version: 2,
+        source: 'user',
+      ),
+      v3.EntitiesCompanion.insert(
+        id: 'note-v3',
+        entityType: 'note',
+        createdAt: _sqliteTimestamp(DateTime.utc(2026, 9, 3, 12)),
+        updatedAt: _sqliteTimestamp(DateTime.utc(2026, 9, 3, 13)),
+        lifecycle: 'archived',
+        version: 3,
+        source: 'import',
+      ),
+      v3.EntitiesCompanion.insert(
+        id: 'relationship-v3',
+        entityType: 'relationship',
+        createdAt: _sqliteTimestamp(DateTime.utc(2026, 9, 3, 14)),
+        updatedAt: _sqliteTimestamp(DateTime.utc(2026, 9, 3, 15)),
+        lifecycle: 'active',
+        version: 4,
+        source: 'user',
+      ),
+    ]);
+    batch.insert(
+      database.tasks,
+      v3.TasksCompanion.insert(
+        entityId: 'task-v3',
+        title: 'Preserved v3 Task',
+        isCompleted: 0,
+      ),
+    );
+    batch.insert(
+      database.notes,
+      v3.NotesCompanion.insert(
+        entityId: 'note-v3',
+        title: 'Preserved v3 Note',
+        content: '  Exact v3 content\r\n  ',
+      ),
+    );
+    batch.insert(
+      database.relationships,
+      v3.RelationshipsCompanion.insert(
+        entityId: 'relationship-v3',
+        firstEntityId: 'note-v3',
+        secondEntityId: 'task-v3',
+        kind: 'related',
+      ),
+    );
+    batch.insert(
+      database.outbox,
+      v3.OutboxCompanion.insert(
+        changeId: 'change-v3',
+        entityId: 'relationship-v3',
+        deviceId: 'device-v3',
+        operation: 'UPDATE',
+        baseVersion: const Value(3),
+        newVersion: 4,
+        payload: '{"id":"relationship-v3","lifecycle":"active"}',
+        schemaVersion: 1,
+        status: 'PENDING',
+        attemptCount: 1,
+        createdAt: _sqliteTimestamp(DateTime.utc(2026, 9, 3, 15)),
+        lastAttemptAt: const Value.absent(),
+      ),
+    );
+  });
+}
+
 int _sqliteTimestamp(DateTime value) {
   return value.millisecondsSinceEpoch ~/ Duration.millisecondsPerSecond;
 }
@@ -517,6 +781,79 @@ Future<void> _expectV2FixturePreserved(LifeOsDatabase database) async {
   expect(outbox.lastAttemptAt?.toUtc(), DateTime.utc(2026, 9, 2, 13, 30));
 }
 
+Future<void> _expectV3FixturePreserved(LifeOsDatabase database) async {
+  final entities = await (database.select(
+    database.entities,
+  )..orderBy([(row) => OrderingTerm.asc(row.id)])).get();
+  expect(entities, hasLength(3));
+
+  final noteEntity = entities.singleWhere((row) => row.id == 'note-v3');
+  expect(noteEntity.entityType, 'note');
+  expect(noteEntity.createdAt.toUtc(), DateTime.utc(2026, 9, 3, 12));
+  expect(noteEntity.updatedAt.toUtc(), DateTime.utc(2026, 9, 3, 13));
+  expect(noteEntity.lifecycle, 'archived');
+  expect(noteEntity.version, 3);
+  expect(noteEntity.source, 'import');
+
+  final taskEntity = entities.singleWhere((row) => row.id == 'task-v3');
+  expect(taskEntity.entityType, 'task');
+  expect(taskEntity.createdAt.toUtc(), DateTime.utc(2026, 9, 3, 10));
+  expect(taskEntity.updatedAt.toUtc(), DateTime.utc(2026, 9, 3, 11));
+  expect(taskEntity.lifecycle, 'active');
+  expect(taskEntity.version, 2);
+  expect(taskEntity.source, 'user');
+
+  final relationshipEntity = entities.singleWhere(
+    (row) => row.id == 'relationship-v3',
+  );
+  expect(relationshipEntity.entityType, 'relationship');
+  expect(relationshipEntity.createdAt.toUtc(), DateTime.utc(2026, 9, 3, 14));
+  expect(relationshipEntity.updatedAt.toUtc(), DateTime.utc(2026, 9, 3, 15));
+  expect(relationshipEntity.lifecycle, 'active');
+  expect(relationshipEntity.version, 4);
+  expect(relationshipEntity.source, 'user');
+
+  final task = await database.select(database.taskRecords).getSingle();
+  expect(task.entityId, 'task-v3');
+  expect(task.title, 'Preserved v3 Task');
+  expect(task.isCompleted, isFalse);
+
+  final note = await database.select(database.noteRecords).getSingle();
+  expect(note.entityId, 'note-v3');
+  expect(note.title, 'Preserved v3 Note');
+  expect(note.content, '  Exact v3 content\r\n  ');
+
+  final relationship = await database
+      .select(database.relationshipRecords)
+      .getSingle();
+  expect(relationship.entityId, 'relationship-v3');
+  expect(relationship.firstEntityId, 'note-v3');
+  expect(relationship.secondEntityId, 'task-v3');
+  expect(relationship.kind, 'related');
+
+  final outbox = await database.select(database.outboxEntries).getSingle();
+  expect(outbox.changeId, 'change-v3');
+  expect(outbox.entityId, 'relationship-v3');
+  expect(outbox.deviceId, 'device-v3');
+  expect(outbox.operation, 'UPDATE');
+  expect(outbox.baseVersion, 3);
+  expect(outbox.newVersion, 4);
+  expect(outbox.payload, '{"id":"relationship-v3","lifecycle":"active"}');
+  expect(outbox.schemaVersion, 1);
+  expect(outbox.status, 'PENDING');
+  expect(outbox.attemptCount, 1);
+  expect(outbox.createdAt.toUtc(), DateTime.utc(2026, 9, 3, 15));
+  expect(outbox.lastAttemptAt, equals(null));
+}
+
+Future<void> _expectWorkspaceTablesEmpty(LifeOsDatabase database) async {
+  expect(await database.select(database.workspaceRecords).get(), isEmpty);
+  expect(
+    await database.select(database.workspaceMembershipRecords).get(),
+    isEmpty,
+  );
+}
+
 Future<void> _insertRelationshipConstraintEntities(
   LifeOsDatabase database,
 ) async {
@@ -542,6 +879,48 @@ Future<void> _insertRelationshipConstraintEntities(
           version: 1,
           source: 'user',
         ),
+      ),
+    );
+  });
+}
+
+Future<void> _insertWorkspaceConstraintEntities(LifeOsDatabase database) async {
+  final timestamp = DateTime.utc(2026, 9, 19);
+  await database.batch((batch) {
+    batch.insertAll(
+      database.entities,
+      [
+        ('workspace-a', 'workspace'),
+        ('task-a', 'task'),
+        ('membership-valid', 'workspaceMembership'),
+        ('membership-duplicate', 'workspaceMembership'),
+        ('membership-self', 'workspaceMembership'),
+        ('membership-invalid-fk', 'workspaceMembership'),
+      ].map(
+        (entry) => EntitiesCompanion.insert(
+          id: entry.$1,
+          entityType: entry.$2,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          lifecycle: 'active',
+          version: 1,
+          source: 'user',
+        ),
+      ),
+    );
+    batch.insert(
+      database.workspaceRecords,
+      WorkspaceRecordsCompanion.insert(
+        entityId: 'workspace-a',
+        title: 'Workspace A',
+      ),
+    );
+    batch.insert(
+      database.taskRecords,
+      TaskRecordsCompanion.insert(
+        entityId: 'task-a',
+        title: 'Task A',
+        isCompleted: false,
       ),
     );
   });
@@ -597,9 +976,10 @@ final class _FailingLifeOsDatabase extends LifeOsDatabase {
       from: from,
       to: to,
       steps: {
-        2: (migrator) async {
-          await migrator.create(relationshipRecords);
-          await migrator.create(relationshipsSecondEntityIdIdx);
+        3: (migrator) async {
+          await migrator.create(workspaceRecords);
+          await migrator.create(workspaceMembershipRecords);
+          await migrator.create(workspaceMembershipsMemberEntityIdIdx);
           await customStatement(
             'CREATE TABLE migration_partial (id INTEGER PRIMARY KEY)',
           );

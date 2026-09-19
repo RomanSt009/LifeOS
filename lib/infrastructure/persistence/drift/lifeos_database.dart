@@ -74,6 +74,47 @@ class RelationshipRecords extends Table {
   ];
 }
 
+@DataClassName('WorkspaceRecord')
+class WorkspaceRecords extends Table {
+  @override
+  String get tableName => 'workspaces';
+
+  TextColumn get entityId => text().references(Entities, #id)();
+  TextColumn get title => text()();
+  TextColumn get description => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {entityId};
+}
+
+@DataClassName('WorkspaceMembershipRecord')
+@TableIndex(
+  name: 'workspace_memberships_member_entity_id_idx',
+  columns: {#memberEntityId},
+)
+class WorkspaceMembershipRecords extends Table {
+  @override
+  String get tableName => 'workspace_memberships';
+
+  @ReferenceName('workspaceMembershipIdentity')
+  TextColumn get entityId => text().references(Entities, #id)();
+
+  @ReferenceName('workspaceMembershipWorkspace')
+  TextColumn get workspaceId => text().references(Entities, #id)();
+
+  @ReferenceName('workspaceMembershipMember')
+  TextColumn get memberEntityId => text().references(Entities, #id)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {entityId};
+
+  @override
+  List<String> get customConstraints => [
+    'CHECK (workspace_id <> member_entity_id)',
+    'UNIQUE (workspace_id, member_entity_id)',
+  ];
+}
+
 @DataClassName('OutboxEntryRecord')
 class OutboxEntries extends Table {
   @override
@@ -102,6 +143,8 @@ class OutboxEntries extends Table {
     TaskRecords,
     NoteRecords,
     RelationshipRecords,
+    WorkspaceRecords,
+    WorkspaceMembershipRecords,
     OutboxEntries,
   ],
 )
@@ -109,7 +152,7 @@ class LifeOsDatabase extends _$LifeOsDatabase {
   LifeOsDatabase(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => createLifeOsMigrationStrategy(
@@ -117,5 +160,9 @@ class LifeOsDatabase extends _$LifeOsDatabase {
     notesTable: noteRecords,
     relationshipsTable: relationshipRecords,
     relationshipsSecondEntityIdIndex: relationshipsSecondEntityIdIdx,
+    workspacesTable: workspaceRecords,
+    workspaceMembershipsTable: workspaceMembershipRecords,
+    workspaceMembershipsMemberEntityIdIndex:
+        workspaceMembershipsMemberEntityIdIdx,
   );
 }
