@@ -6,7 +6,16 @@
 
 ## Где Codex хранит прогресс
 
-Текущий основной активный план отсутствует. Следующий execution plan ещё не создан.
+Текущий основной активный план:
+
+```text
+docs/exec-plans/active/workspace-vertical-slice.md
+```
+
+Milestone: Workspace Vertical Slice.
+
+Текущая точка возобновления: WS-02 — Schema v4 migration foundation. WS-01
+завершён как documentation/reconciliation и quick-create transaction gate.
 
 Структура каталогов:
 
@@ -14,7 +23,7 @@
 docs/exec-plans/
 ├── README.md
 ├── active/
-│   └── (пусто)
+│   └── workspace-vertical-slice.md
 └── completed/
     ├── backup-export.md
     ├── documentation-reconciliation.md
