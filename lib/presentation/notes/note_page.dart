@@ -452,7 +452,11 @@ class _NotePageState extends ConsumerState<NotePage> {
                                           onPressed: _isLifecycleMutating
                                               ? null
                                               : () => _restoreNote(note),
-                                          icon: const Icon(Icons.restore),
+                                          icon: Icon(
+                                            Icons.restore,
+                                            semanticLabel:
+                                                localizations.restoreNoteAction,
+                                          ),
                                         )
                                       : null,
                                   onTap: _showTrash || _isSaving

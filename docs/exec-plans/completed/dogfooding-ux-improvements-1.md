@@ -1,10 +1,10 @@
 # Dogfooding UX Improvements #1
 
-Статус плана: active
+Статус плана: completed
 
-Текущий checkpoint: DFUX-06 — Desktop responsive/accessibility regression
+Текущий checkpoint: отсутствует — milestone завершён
 
-Точная точка возобновления: DFUX-06 — Desktop responsive/accessibility regression; checkpoint не начат.
+Точная точка возобновления: отсутствует; следующий execution plan не создан.
 
 ## Goal
 
@@ -266,7 +266,7 @@ Internal gate PASS: bounded Presentation-local contract достаточен; Do
 
 ## DFUX-06 — Desktop responsive/accessibility regression
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -294,11 +294,15 @@ Focused regression suite и standard plan checks.
 
 ### Result / evidence
 
-Не начат.
+Pre-flight: `main`, HEAD `ddf3ba6b81016869d04e2cad390d988e46c1b28c`, upstream divergence `0 0`; единственный pre-existing diff — user-owned `.obsidian/workspace.json`. `schemaVersion == 3`, composition writer — `V3BackupExportEncoder`.
+
+Responsive regression matrix расширена на Home, Tasks active/Trash, Notes editor/Trash, Search и Settings при `1280x800` EN и `640x600` RU. Critical controls остаются hit-testable; rendering/overflow exceptions отсутствуют. Existing focused coverage сохраняет Task filters, Note/Relationship bounded scrolling, dirty-draft guard, keyboard activation и IndexedStack state.
+
+Аудит semantics выявил один конкретный Presentation-дефект: tooltip-only icon actions completion/edit/delete Task, Note restore, Relationship unlink и Search clear не имели собственных явных localized icon semantic labels. Добавлены только labels из уже существующих localization resources; visual layout, action semantics и business contracts не менялись. Focused Task/Note/Relationship/Search/shell suite PASS (80 tests); полный Presentation suite PASS (99 tests). Новых строк, ARB/codegen, dependencies или architecture decisions не потребовалось. Internal acceptance gate: **PASS**.
 
 ## DFUX-07 — Final audit
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -326,7 +330,17 @@ Audit и только минимальные исправления доказа
 
 ### Result / evidence
 
-Не начат.
+Final UI/integration audit: **PASS**. Tasks сохраняют All/Open/Completed filters, отдельный Trash, create/edit/completion/delete/restore и deterministic provider order. Notes сохраняют bounded primary editor, dirty-draft guard, explicit save, Trash/Restore и bounded independently scrollable Relationships. Relationships, Search, Home quick actions и Settings/Backup сохраняют текущие feature contracts и shell-local `NavigationRail` + `IndexedStack` lifecycle.
+
+Responsive/accessibility acceptance доказан при `1280x800` EN и `640x600` RU для Home, Tasks active/Trash, Notes editor/Trash, Search и Settings. Critical icon actions имеют localized tooltip/explicit semantics; text labels сохранены у destructive, retry, file и ambiguous actions. Keyboard/focus, context menus, dirty guards, inactive destination behavior и Search state regressions проходят.
+
+Architecture audit: Domain/Application/Presentation import boundaries PASS; localization не выходит из Presentation; composition root остаётся владельцем database/repository lifecycle; routing dependency не добавлена. Domain/Application business contracts, Infrastructure, persistence, Search semantics, Outbox и Backup production code не менялись этим milestone.
+
+Final validation: changed handwritten Dart format PASS (9 files, 0 further changes); focused DFUX-06 suite PASS (80 tests); Presentation suite PASS (99 tests); Domain/Application/Infrastructure/integration suite PASS (158 tests); `flutter analyze` PASS; полный `flutter test --reporter compact` PASS (261 tests). EN/RU ARB parity PASS (118/118); hardcoded Presentation literal scan PASS; localization sources/generated files unchanged в DFUX-06/07. Import/localization/routing scans PASS; `dart pub deps --style=compact` PASS; `pubspec.yaml`/`pubspec.lock` unchanged; generated Drift unchanged; `schemaVersion == 3`; current writer `V3BackupExportEncoder`; schema/Backup v4 отсутствуют; `git diff --check` PASS.
+
+Documentation reconciliation: root README обновлён только для фактического Home quick-actions behavior; execution guide указывает отсутствие active plan и этот plan в completed. Deferred scope остаётся прежним: system tray/notifications/background startup, Task due-date/Today/reminders/timezone, Note/unified Search, AI, Sync, Projects/Workspace, mobile/tablet redesign, design system, router/deep links/history, schema/Backup v4 без отдельного requirement/gate.
+
+Milestone завершён на `main`, HEAD `ddf3ba6b81016869d04e2cad390d988e46c1b28c`, upstream divergence `0 0`. Следующий execution plan не создан. `.obsidian/workspace.json` остаётся отдельным pre-existing user-owned изменением и этим milestone не изменялся.
 
 ## Validation strategy
 
@@ -361,4 +375,4 @@ Audit и только минимальные исправления доказа
 
 ## Exact resume point
 
-DFUX-06 — Desktop responsive/accessibility regression. DFUX-06 не начат в этом run.
+Milestone завершён. Active execution plan отсутствует; следующий plan не создан.

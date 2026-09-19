@@ -196,6 +196,7 @@ void main() {
   testWidgets('clear resets query and results and returns focus to the field', (
     tester,
   ) async {
+    final semantics = tester.ensureSemantics();
     final repository = StubLifeOsTaskRepository(
       results: [task(id: 'task-result', title: 'Clearable result')],
     );
@@ -206,6 +207,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Clearable result'), findsOneWidget);
     expect(find.byTooltip('Clear search'), findsOneWidget);
+    expect(find.bySemanticsLabel('Clear search'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('search-clear-button')));
     await tester.pump();
@@ -218,6 +220,7 @@ void main() {
     expect(find.text('Enter a Task title to search'), findsOneWidget);
     expect(find.text('Clearable result'), findsNothing);
     expect(find.byKey(const Key('search-clear-button')), findsNothing);
+    semantics.dispose();
   });
 
   testWidgets('clear invalidates an in-flight search response', (tester) async {

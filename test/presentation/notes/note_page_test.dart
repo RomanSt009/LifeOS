@@ -66,6 +66,7 @@ void main() {
   testWidgets('shows Russian strings and validates an empty Note', (
     tester,
   ) async {
+    final semantics = tester.ensureSemantics();
     final repository = _MemoryNoteRepository();
     await tester.pumpWidget(
       _testApp(
@@ -79,6 +80,8 @@ void main() {
     expect(find.text('Заметки'), findsOneWidget);
     expect(find.byTooltip('Новая заметка'), findsOneWidget);
     expect(find.byTooltip('Корзина'), findsOneWidget);
+    expect(find.bySemanticsLabel('Новая заметка'), findsOneWidget);
+    expect(find.bySemanticsLabel('Корзина'), findsOneWidget);
     expect(
       (tester.widget<IconButton>(find.byKey(const Key('new-note-button'))).icon
               as Icon)
@@ -89,6 +92,7 @@ void main() {
     await tester.pump();
     expect(find.text('Введите название или текст'), findsOneWidget);
     expect(repository.notes, isEmpty);
+    semantics.dispose();
   });
 
   testWidgets('guards dirty selection with Cancel, Discard, and Save', (

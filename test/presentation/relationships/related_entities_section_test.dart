@@ -82,6 +82,7 @@ void main() {
   });
 
   testWidgets('Task context exposes localized Related section', (tester) async {
+    final semantics = tester.ensureSemantics();
     final taskRepository = _TaskRepository([_task('task-a', 'Task A')]);
     final noteRepository = _NoteRepository([_note('note-a', 'Заметка А')]);
     final relationshipRepository = _RelationshipRepository()
@@ -102,6 +103,7 @@ void main() {
 
     expect(find.text('Связанные'), findsOneWidget);
     expect(find.byTooltip('Добавить связь'), findsOneWidget);
+    expect(find.bySemanticsLabel('Добавить связь'), findsOneWidget);
     expect(
       (tester
                   .widget<IconButton>(
@@ -113,6 +115,7 @@ void main() {
       'Добавить связь',
     );
     expect(find.text('Заметка: Заметка А'), findsOneWidget);
+    semantics.dispose();
   });
 
   for (final size in [const Size(1280, 800), const Size(640, 600)]) {

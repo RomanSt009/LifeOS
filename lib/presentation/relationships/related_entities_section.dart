@@ -303,7 +303,10 @@ class _RelatedEntityTileState extends ConsumerState<_RelatedEntityTile> {
           key: ValueKey('unlink-relationship-${widget.relationship.id.value}'),
           tooltip: localizations.relationshipUnlinkAction,
           onPressed: widget.onUnlink,
-          icon: const Icon(Icons.link_off),
+          icon: Icon(
+            Icons.link_off,
+            semanticLabel: localizations.relationshipUnlinkAction,
+          ),
         ),
       ),
     );

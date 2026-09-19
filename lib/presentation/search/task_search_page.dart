@@ -83,7 +83,10 @@ class _TaskSearchPageState extends ConsumerState<TaskSearchPage> {
                               key: const Key('search-clear-button'),
                               tooltip: localizations.searchClearAction,
                               onPressed: _clear,
-                              icon: const Icon(Icons.clear),
+                              icon: Icon(
+                                Icons.clear,
+                                semanticLabel: localizations.searchClearAction,
+                              ),
                             ),
                     ),
                     onSubmitted: (_) => _search(),

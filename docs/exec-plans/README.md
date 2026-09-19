@@ -6,11 +6,7 @@
 
 ## Где Codex хранит прогресс
 
-Текущий основной активный план:
-
-`docs/exec-plans/active/dogfooding-ux-improvements-1.md`
-
-Текущий checkpoint и точная точка возобновления записаны внутри плана.
+Текущий основной активный план отсутствует. Следующий execution plan ещё не создан.
 
 Структура каталогов:
 
@@ -18,7 +14,7 @@
 docs/exec-plans/
 ├── README.md
 ├── active/
-│   └── dogfooding-ux-improvements-1.md
+│   └── (пусто)
 └── completed/
     ├── backup-export.md
     ├── documentation-reconciliation.md
@@ -27,7 +23,8 @@ docs/exec-plans/
     ├── lifeos-mvp.md
     ├── notes-vertical-slice.md
     ├── relationships-vertical-slice.md
-    └── desktop-usability-dogfooding-alpha.md
+    ├── desktop-usability-dogfooding-alpha.md
+    └── dogfooding-ux-improvements-1.md
 ```
 
 - `active/` содержит планы, которые Codex может выполнять сейчас;

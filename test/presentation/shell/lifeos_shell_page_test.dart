@@ -60,10 +60,43 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Layout check'), findsOneWidget);
 
-      final searchLabel = scenario.locale.languageCode == 'ru'
-          ? 'Поиск'
-          : 'Search';
-      await tester.tap(find.text(searchLabel));
+      await tester.tap(find.byKey(const Key('navigation-home-label')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('home-new-task-action')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home-settings-action')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.byKey(const Key('navigation-tasks-label')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('task-trash-toggle')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('task-trash-toggle')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.byKey(const Key('navigation-notes-label')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('note-title-field')).hitTestable(),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('note-trash-toggle')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('note-trash-toggle')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.byKey(const Key('navigation-search-label')));
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
@@ -76,10 +109,7 @@ void main() {
         findsOneWidget,
       );
 
-      final settingsLabel = scenario.locale.languageCode == 'ru'
-          ? 'Настройки'
-          : 'Settings';
-      await tester.tap(find.text(settingsLabel));
+      await tester.tap(find.byKey(const Key('navigation-settings-label')));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(

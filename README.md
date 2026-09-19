@@ -10,7 +10,7 @@ LifeOS уже имеет рабочую local-first реализацию на Fl
 
 Реализованы:
 
-- desktop shell и навигация Home / Tasks / Notes / Search / Settings;
+- desktop shell и навигация Home / Tasks / Notes / Search / Settings, включая Home quick actions к существующим функциям;
 - создание, редактирование, completion/reopen и recoverable Trash/Restore для Tasks;
 - создание, выбор, редактирование и локальное хранение Notes с explicit save, dirty-draft guard и recoverable Trash/Restore;
 - production schema v3 для Tasks, Notes, Relationships и атомарного Outbox;
@@ -20,7 +20,7 @@ LifeOS уже имеет рабочую local-first реализацию на Fl
 - ненаправленные Relationships типа `related` между Tasks/Notes с contextual UI и lifecycle unlink;
 - Backup / Export v3 с Tasks, Notes и Relationships и Restore совместимых v1/v2/v3 Backup.
 
-Пока не реализованы Sync, AI, Projects и Documents. Note/unified Search, graph visualization и дополнительные Relationship kinds остаются отложенным scope; Home остаётся минимальным placeholder.
+Пока не реализованы Sync, AI, Projects и Documents. Note/unified Search, graph visualization и дополнительные Relationship kinds остаются отложенным scope; Home остаётся минимальной Presentation-only точкой входа без Dashboard.
 
 `version: 1.0.0+1` в `pubspec.yaml` является текущей package/application metadata. Формальные критерии релиза LifeOS v1.0 отдельным решением пока не определены.
 

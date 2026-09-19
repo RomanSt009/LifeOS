@@ -273,6 +273,9 @@ class _TaskListState extends ConsumerState<TaskList> {
                             task.isCompleted
                                 ? Icons.check_circle
                                 : Icons.radio_button_unchecked,
+                            semanticLabel: task.isCompleted
+                                ? localizations.taskCompletionMarkIncomplete
+                                : localizations.taskCompletionMarkComplete,
                           ),
                           onPressed: _completionMutations.contains(task.id)
                               ? null
@@ -284,7 +287,10 @@ class _TaskListState extends ConsumerState<TaskList> {
                             IconButton(
                               key: ValueKey('edit-task-${task.id.value}'),
                               tooltip: localizations.taskEditAction,
-                              icon: const Icon(Icons.edit_outlined),
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                semanticLabel: localizations.taskEditAction,
+                              ),
                               onPressed:
                                   task.lifecycle == LifeOsEntityLifecycle.active
                                   ? () => _editTask(task)
@@ -293,7 +299,10 @@ class _TaskListState extends ConsumerState<TaskList> {
                             IconButton(
                               key: ValueKey('delete-task-${task.id.value}'),
                               tooltip: localizations.deleteTaskAction,
-                              icon: const Icon(Icons.delete_outline),
+                              icon: Icon(
+                                Icons.delete_outline,
+                                semanticLabel: localizations.deleteTaskAction,
+                              ),
                               onPressed: () => _confirmDeleteTask(task),
                             ),
                           ],

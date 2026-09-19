@@ -33,6 +33,7 @@ void main() {
   });
 
   testWidgets('renders persisted Tasks', (tester) async {
+    final semantics = tester.ensureSemantics();
     final repository = FakeLifeOsTaskRepository(
       () async => [
         createTask('task-1', 'Plan the day', isCompleted: false),
@@ -48,6 +49,11 @@ void main() {
     expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
     expect(find.byIcon(Icons.check_circle), findsOneWidget);
     expect(find.byTooltip('Trash'), findsOneWidget);
+    expect(find.bySemanticsLabel('Trash'), findsOneWidget);
+    expect(find.bySemanticsLabel('Mark complete'), findsOneWidget);
+    expect(find.bySemanticsLabel('Mark incomplete'), findsOneWidget);
+    expect(find.bySemanticsLabel('Edit Task'), findsNWidgets(2));
+    expect(find.bySemanticsLabel('Delete Task'), findsNWidgets(2));
     expect(
       (tester
                   .widget<IconButton>(
@@ -58,6 +64,7 @@ void main() {
           .semanticLabel,
       'Trash',
     );
+    semantics.dispose();
   });
 
   testWidgets('filters active Tasks locally and preserves provider ordering', (
