@@ -463,7 +463,9 @@ String _writeUtcTimestamp(DateTime timestamp, String field) {
 String _writeEntityType(LifeOsEntityType type) => switch (type) {
   LifeOsEntityType.task => 'task',
   LifeOsEntityType.note => 'note',
-  LifeOsEntityType.relationship => throw _invalidField(
+  LifeOsEntityType.relationship ||
+  LifeOsEntityType.workspace ||
+  LifeOsEntityType.workspaceMembership => throw _invalidField(
     'entityType',
     'is not supported by this format version',
   ),

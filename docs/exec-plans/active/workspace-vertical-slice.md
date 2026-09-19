@@ -2,11 +2,11 @@
 
 Статус плана: active
 
-Текущий checkpoint: WS-03 — Workspace/Membership Domain + Persistence (pending)
+Текущий checkpoint: WS-04 — Application + production composition (pending)
 
-Точная точка возобновления: начать WS-03 с повторной сверки Git, ADR-0023,
-ADR-0026, ADR-0033, ADR-0034, schema v4 и generated API; до изменения Domain
-отметить WS-03 active. WS-04 не начинать без отдельного указания.
+Точная точка возобновления: начать WS-04 с повторной сверки Git, ADR-0022,
+ADR-0023, ADR-0024, ADR-0026, ADR-0033, ADR-0034 и готовых WS-03 contracts;
+до implementation отметить WS-04 active. WS-05 не начинать.
 
 ## Goal
 
@@ -611,7 +611,7 @@ Validation:
 
 ## WS-03 — Workspace/Membership Domain + Persistence
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -659,11 +659,61 @@ Presentation, Search и WS-04.
 
 ### Result / evidence
 
-Pending.
+Pre-flight: `main`, HEAD `386cd49`, upstream divergence `0 0`; WS-01/WS-02,
+ADR-0034, schema v4 и migration v3 -> v4 присутствовали в HEAD.
+Единственным исходным working-tree change оставался user-owned
+`.obsidian/workspace.json`; он не изменялся.
+
+`LifeOsEntityType` дополнен `workspace` и `workspaceMembership`.
+`LifeOsWorkspace` реализует typed identity, normalized non-empty title,
+literal nullable description, ADR-0026 creation defaults, immutable atomic edit,
+true no-op и полную ADR-0033 lifecycle state machine без cascade.
+`LifeOsWorkspaceMembership` имеет immutable Workspace/Task-or-Note endpoints,
+active/deleted-only lifecycle, identity-preserving remove/reattach, versioned UTC
+mutations и no-op semantics; archived membership отклоняется.
+
+Добавлены отдельные typed `LifeOsWorkspaceRepository` и
+`LifeOsWorkspaceMembershipRepository`; generic Entity repository не вводился.
+Workspace reads и membership all-state/pair/active Workspace/member reads имеют
+deterministic `updatedAt DESC`, затем `id ASC` ordering.
+
+Drift mappers объединяют common Entity metadata с typed rows, проверяют
+endpoint records/types и преобразуют corrupt persisted state в typed mapping
+exceptions. Workspace `save` атомарно записывает Entity + typed row +
+full-snapshot Outbox CREATE/UPDATE; direct identical save является no-op.
+
+Membership `attach` в одной transaction проверяет complete active
+Workspace и active Task/Note, ищет unique pair независимо от
+lifecycle, затем выполняет CREATE, active no-op или identity-preserving
+reattach UPDATE. Concurrent duplicate attach образует одну pair и один
+Outbox record. `remove` soft-deletes только membership; repeated remove не
+пишет state/Outbox. CREATE/UPDATE payload содержит full camelCase snapshot,
+`schema_version == 1`; injected Outbox failures откатывают Entity и typed row.
+Task/Note и Workspace не мутируются attach/detach operations.
+
+Exhaustive enum consumers обновлены только для явного rejection:
+Workspace/Membership не стали Relationship endpoints, и historical Backup v1
+их не принимает. Application use cases, production composition, quick-create
+store, mixed queries, Backup v4 и Presentation не реализовывались.
+
+Validation:
+
+- focused Workspace/Membership Domain + persistence/Outbox suite PASS: 26 tests;
+- Task/Note/Relationship repository + migration/schema regression PASS: 40 tests;
+- `flutter analyze` PASS (`No issues found`);
+- full `flutter test --reporter compact` PASS: 289 tests;
+- Domain/Application import-boundary scans PASS;
+- Relationship Task/Note endpoint allowlist preserved;
+- `schemaVersion == 4`, schema v5 absent, v3 -> v4 migration и frozen schemas
+  v1-v4 unchanged;
+- production writer остался `V3BackupExportEncoder`; Backup format v4 не
+  реализован;
+- `pubspec.yaml`/`pubspec.lock` unchanged; new dependencies absent;
+- `git diff --check` PASS.
 
 ### Blocker
 
-Отсутствует до architecture gate.
+Отсутствует.
 
 ## WS-04 — Application + production composition
 
@@ -992,7 +1042,8 @@ rollback и layer-boundary regressions локализуемыми и снижа�
 
 ## Exact resume point
 
-WS-02 завершён. Возобновить с WS-03 — Workspace/Membership Domain + Persistence.
-Перед изменением Domain отметить WS-03 active, перечитать ADR-0023, ADR-0026,
-ADR-0033 и ADR-0034, сверить HEAD/Git, schema v4 generated API и migration
-evidence. Не начинать WS-04.
+WS-03 завершён. Возобновить с WS-04 — Application, mixed queries,
+atomic quick-create store and production composition. Перед implementation
+отметить WS-04 active, перечитать ADR-0022, ADR-0023, ADR-0024, ADR-0026,
+ADR-0033 и ADR-0034, сверить HEAD/Git и WS-03 repository contracts. WS-05 не
+начинать.

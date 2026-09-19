@@ -336,6 +336,8 @@ class _RelatedEntityTileState extends ConsumerState<_RelatedEntityTile> {
                 note.title.isEmpty ? localizations.noteUntitled : note.title,
               );
       case LifeOsEntityType.relationship:
+      case LifeOsEntityType.workspace:
+      case LifeOsEntityType.workspaceMembership:
         return localizations.relationshipUnavailable;
     }
   }

@@ -56,7 +56,9 @@ class CreateLifeOsRelationship {
     final endpoint = switch (id.entityType) {
       LifeOsEntityType.task => await taskRepository.getById(id),
       LifeOsEntityType.note => await noteRepository.getById(id),
-      LifeOsEntityType.relationship => null,
+      LifeOsEntityType.relationship ||
+      LifeOsEntityType.workspace ||
+      LifeOsEntityType.workspaceMembership => null,
     };
     if (endpoint == null ||
         endpoint.lifecycle != LifeOsEntityLifecycle.active) {
