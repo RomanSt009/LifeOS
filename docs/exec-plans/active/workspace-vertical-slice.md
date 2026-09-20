@@ -2,11 +2,11 @@
 
 Статус плана: active
 
-Текущий checkpoint: WS-04 — Application + production composition (pending)
+Текущий checkpoint: WS-05 — Backup/Export/Restore v4 (pending)
 
-Точная точка возобновления: начать WS-04 с повторной сверки Git, ADR-0022,
-ADR-0023, ADR-0024, ADR-0026, ADR-0033, ADR-0034 и готовых WS-03 contracts;
-до implementation отметить WS-04 active. WS-05 не начинать.
+Точная точка возобновления: начать WS-05 с повторной сверки Git, ADR-0028,
+ADR-0029, ADR-0031, ADR-0034 и готовых WS-04 Application/composition contracts;
+до implementation отметить WS-05 active. WS-06 не начинать.
 
 ## Goal
 
@@ -717,7 +717,7 @@ Validation:
 
 ## WS-04 — Application + production composition
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -766,7 +766,31 @@ Presentation, Backup v4, Search, Relationship expansion и WS-05.
 
 ### Result / evidence
 
-Pending.
+- Добавлены typed Application use cases для create/edit/get/list active/list
+  deleted/delete/restore Workspace и attach/detach member. No-op edit/lifecycle
+  не вызывает repository write; attach/detach делегирует atomic pair semantics
+  готовому Domain repository boundary.
+- Добавлен sealed mixed read model `LifeOsWorkspaceMember` с Task/Note variants
+  и Application query port. Drift reader возвращает exact active direct members
+  без Relationship traversal; ordering — member `updatedAt DESC`, затем ID ASC.
+  Unassigned возвращает active Task/Note без effective active membership в
+  active Workspace; deleted membership и membership в inactive Workspace не
+  исключают Entity, inactive member не показывается.
+- Добавлен узкий Application port `LifeOsWorkspaceMemberCreationStore` и Drift
+  implementation. Task/Note Entity + typed row + Outbox CREATE и Membership
+  Entity + typed row + Outbox CREATE записываются в одной transaction. Workspace
+  не мутируется; semantic Relationship не создаётся.
+- Rollback проверен при ошибке Task/Note typed write, Membership write, первого
+  и второго Outbox write: orphan Entity/typed/membership/Outbox rows отсутствуют.
+  Task + Membership также проверены после close/reopen.
+- Production composition создаёт Workspace repositories, mixed reader, atomic
+  store и use cases поверх одной принадлежащей composition root database.
+- Focused Application/persistence/composition и regression набор: PASS, 126
+  tests. Полный `flutter test --reporter compact`: PASS, 307 tests.
+- `flutter analyze`: PASS. Domain/Application/Presentation import scans: PASS.
+  Relationship endpoints остаются Task/Note. `schemaVersion == 4`, schema v5
+  отсутствует, v3->v4/frozen schemas и dependencies без diff. Production writer
+  остаётся `V3BackupExportEncoder`. `git diff --check`: PASS.
 
 ### Blocker
 

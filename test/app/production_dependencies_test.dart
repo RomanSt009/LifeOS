@@ -8,6 +8,54 @@ import 'package:path/path.dart' as path;
 
 void main() {
   test(
+    'composes Workspace quick create over the single production database',
+    () async {
+      final supportDirectory = await Directory.systemTemp.createTemp(
+        'lifeos-workspace-composition-',
+      );
+      addTearDown(() => supportDirectory.delete(recursive: true));
+      var infrastructureId = 0;
+      final entityIds = ['workspace-1', 'task-1', 'membership-1'];
+      final dependencies = await createProductionDependencies(
+        applicationSupportDirectoryProvider: () async => supportDirectory,
+        identifierGenerator: () => 'infrastructure-${++infrastructureId}',
+        entityIdGenerator: () => entityIds.removeAt(0),
+        utcClock: () => DateTime.utc(2026, 9, 20, 12),
+      );
+      addTearDown(dependencies.close);
+
+      final workspace = await dependencies.createWorkspace(
+        title: 'Home',
+        description: null,
+      );
+      final result = await dependencies.createTaskInWorkspace(
+        workspaceId: workspace.id,
+        title: 'Inside Workspace',
+      );
+      final members = await dependencies.getWorkspaceMembers(workspace.id);
+
+      expect(members, hasLength(1));
+      expect(members.single.entityId, result.task.id);
+      expect(
+        await dependencies.taskRepository.getById(result.task.id),
+        result.task,
+      );
+      expect(
+        await dependencies.workspaceMembershipRepository.getById(
+          result.membership.id,
+        ),
+        result.membership,
+      );
+      expect(
+        await dependencies.database
+            .select(dependencies.database.outboxEntries)
+            .get(),
+        hasLength(3),
+      );
+    },
+  );
+
+  test(
     'composes a repository with stable production identity inputs',
     () async {
       final supportDirectory = await Directory.systemTemp.createTemp(

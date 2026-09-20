@@ -9,6 +9,8 @@ import 'package:lifeos/application/use_cases/create_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_relationship.dart';
 import 'package:lifeos/application/backup/lifeos_backup_operations.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
+import 'package:lifeos/application/use_cases/create_lifeos_entity_in_workspace.dart';
+import 'package:lifeos/application/use_cases/create_lifeos_workspace.dart';
 import 'package:lifeos/application/use_cases/export_lifeos_data.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_task_title.dart';
@@ -19,13 +21,22 @@ import 'package:lifeos/application/use_cases/restore_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_backup.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
 import 'package:lifeos/application/use_cases/unlink_lifeos_relationship.dart';
+import 'package:lifeos/application/use_cases/edit_lifeos_workspace.dart';
+import 'package:lifeos/application/use_cases/get_lifeos_workspace_context.dart';
+import 'package:lifeos/application/use_cases/get_lifeos_workspaces.dart';
+import 'package:lifeos/application/use_cases/lifeos_workspace_lifecycle.dart';
+import 'package:lifeos/application/use_cases/lifeos_workspace_membership.dart';
 import 'package:lifeos/infrastructure/backup/files/lifeos_backup_file_reader.dart';
 import 'package:lifeos/infrastructure/backup/formats/v1_backup_export_encoder.dart';
 import 'package:lifeos/infrastructure/persistence/drift/lifeos_database.dart';
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_task_repository.dart';
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_note_repository.dart';
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_relationship_repository.dart';
+import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_workspace_membership_repository.dart';
+import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_workspace_repository.dart';
 import 'package:lifeos/infrastructure/persistence/drift/restore/drift_lifeos_backup_restore_store.dart';
+import 'package:lifeos/infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_context_reader.dart';
+import 'package:lifeos/infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_member_creation_store.dart';
 import 'package:lifeos/presentation/search/task_search_providers.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list_providers.dart';
@@ -35,91 +46,7 @@ void main() {
     tester,
   ) async {
     final database = LifeOsDatabase(NativeDatabase.memory());
-    final repository = DriftLifeOsTaskRepository(
-      database,
-      () => 'change-test',
-      'device-test',
-    );
-    final noteRepository = DriftLifeOsNoteRepository(
-      database,
-      () => 'note-change-test',
-      'device-test',
-    );
-    final relationshipRepository = DriftLifeOsRelationshipRepository(
-      database,
-      () => 'relationship-change-test',
-      'device-test',
-    );
-    const backupExportEncoder = V1BackupExportEncoder();
-    final dependencies = LifeOsAppDependencies(
-      database: database,
-      taskRepository: repository,
-      noteRepository: noteRepository,
-      relationshipRepository: relationshipRepository,
-      createTask: CreateLifeOsTask(
-        repository: repository,
-        entityIdGenerator: () => 'task-test',
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      editTaskTitle: EditLifeOsTaskTitle(
-        repository: repository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      deleteTask: DeleteLifeOsTask(
-        repository: repository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      restoreTask: RestoreLifeOsTask(
-        repository: repository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      createNote: CreateLifeOsNote(
-        repository: noteRepository,
-        entityIdGenerator: () => 'note-test',
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      editNote: EditLifeOsNote(
-        repository: noteRepository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      deleteNote: DeleteLifeOsNote(
-        repository: noteRepository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      restoreNote: RestoreLifeOsNote(
-        repository: noteRepository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      createRelationship: CreateLifeOsRelationship(
-        relationshipRepository: relationshipRepository,
-        taskRepository: repository,
-        noteRepository: noteRepository,
-        entityIdGenerator: () => 'relationship-test',
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      unlinkRelationship: UnlinkLifeOsRelationship(
-        repository: relationshipRepository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      searchTasks: SearchLifeOsTasks(repository),
-      createBackup: CreateLifeOsBackup(
-        taskRepository: repository,
-        encoder: backupExportEncoder,
-        utcClock: () => DateTime.utc(2026, 9, 11),
-        applicationVersion: lifeOsApplicationVersion,
-      ),
-      exportData: ExportLifeOsData(
-        taskRepository: repository,
-        encoder: backupExportEncoder,
-        utcClock: () => DateTime.utc(2026, 9, 11),
-        applicationVersion: lifeOsApplicationVersion,
-      ),
-      restoreBackup: RestoreLifeOsBackup(
-        reader: const LifeOsBackupFileReader(),
-        restoreStore: DriftLifeOsBackupRestoreStore(database),
-      ),
-      backupOperations: const _NoopBackupOperations(),
-    );
+    final dependencies = _createTestDependencies(database);
 
     await tester.pumpWidget(LifeOSApp(dependencies: dependencies));
     await database.customSelect('SELECT 1').get();
@@ -137,91 +64,8 @@ void main() {
     tester,
   ) async {
     final database = LifeOsDatabase(NativeDatabase.memory());
-    final repository = DriftLifeOsTaskRepository(
-      database,
-      () => 'change-test',
-      'device-test',
-    );
-    final noteRepository = DriftLifeOsNoteRepository(
-      database,
-      () => 'note-change-test',
-      'device-test',
-    );
-    final relationshipRepository = DriftLifeOsRelationshipRepository(
-      database,
-      () => 'relationship-change-test',
-      'device-test',
-    );
-    const backupExportEncoder = V1BackupExportEncoder();
-    final dependencies = LifeOsAppDependencies(
-      database: database,
-      taskRepository: repository,
-      noteRepository: noteRepository,
-      relationshipRepository: relationshipRepository,
-      createTask: CreateLifeOsTask(
-        repository: repository,
-        entityIdGenerator: () => 'task-test',
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      editTaskTitle: EditLifeOsTaskTitle(
-        repository: repository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      deleteTask: DeleteLifeOsTask(
-        repository: repository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      restoreTask: RestoreLifeOsTask(
-        repository: repository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      createNote: CreateLifeOsNote(
-        repository: noteRepository,
-        entityIdGenerator: () => 'note-test',
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      editNote: EditLifeOsNote(
-        repository: noteRepository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      deleteNote: DeleteLifeOsNote(
-        repository: noteRepository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      restoreNote: RestoreLifeOsNote(
-        repository: noteRepository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      createRelationship: CreateLifeOsRelationship(
-        relationshipRepository: relationshipRepository,
-        taskRepository: repository,
-        noteRepository: noteRepository,
-        entityIdGenerator: () => 'relationship-test',
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      unlinkRelationship: UnlinkLifeOsRelationship(
-        repository: relationshipRepository,
-        utcClock: () => DateTime.utc(2026, 9, 9),
-      ),
-      searchTasks: SearchLifeOsTasks(repository),
-      createBackup: CreateLifeOsBackup(
-        taskRepository: repository,
-        encoder: backupExportEncoder,
-        utcClock: () => DateTime.utc(2026, 9, 11),
-        applicationVersion: lifeOsApplicationVersion,
-      ),
-      exportData: ExportLifeOsData(
-        taskRepository: repository,
-        encoder: backupExportEncoder,
-        utcClock: () => DateTime.utc(2026, 9, 11),
-        applicationVersion: lifeOsApplicationVersion,
-      ),
-      restoreBackup: RestoreLifeOsBackup(
-        reader: const LifeOsBackupFileReader(),
-        restoreStore: DriftLifeOsBackupRestoreStore(database),
-      ),
-      backupOperations: const _NoopBackupOperations(),
-    );
+    final dependencies = _createTestDependencies(database);
+    final repository = dependencies.taskRepository;
 
     await tester.pumpWidget(LifeOSApp(dependencies: dependencies));
     final container = ProviderScope.containerOf(
@@ -241,6 +85,143 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await dependencies.close();
   });
+}
+
+LifeOsAppDependencies _createTestDependencies(LifeOsDatabase database) {
+  final taskRepository = DriftLifeOsTaskRepository(
+    database,
+    () => 'task-change',
+    'device-test',
+  );
+  final noteRepository = DriftLifeOsNoteRepository(
+    database,
+    () => 'note-change',
+    'device-test',
+  );
+  final relationshipRepository = DriftLifeOsRelationshipRepository(
+    database,
+    () => 'relationship-change',
+    'device-test',
+  );
+  final workspaceRepository = DriftLifeOsWorkspaceRepository(
+    database,
+    () => 'workspace-change',
+    'device-test',
+  );
+  final membershipRepository = DriftLifeOsWorkspaceMembershipRepository(
+    database,
+    () => 'membership-change',
+    'device-test',
+  );
+  final contextReader = DriftLifeOsWorkspaceContextReader(database);
+  final creationStore = DriftLifeOsWorkspaceMemberCreationStore(
+    database,
+    () => 'quick-change',
+    'device-test',
+  );
+  DateTime clock() => DateTime.utc(2026, 9, 9);
+  const backupExportEncoder = V1BackupExportEncoder();
+  return LifeOsAppDependencies(
+    database: database,
+    taskRepository: taskRepository,
+    noteRepository: noteRepository,
+    relationshipRepository: relationshipRepository,
+    workspaceRepository: workspaceRepository,
+    workspaceMembershipRepository: membershipRepository,
+    createTask: CreateLifeOsTask(
+      repository: taskRepository,
+      entityIdGenerator: () => 'task-test',
+      utcClock: clock,
+    ),
+    editTaskTitle: EditLifeOsTaskTitle(
+      repository: taskRepository,
+      utcClock: clock,
+    ),
+    deleteTask: DeleteLifeOsTask(repository: taskRepository, utcClock: clock),
+    restoreTask: RestoreLifeOsTask(repository: taskRepository, utcClock: clock),
+    createNote: CreateLifeOsNote(
+      repository: noteRepository,
+      entityIdGenerator: () => 'note-test',
+      utcClock: clock,
+    ),
+    editNote: EditLifeOsNote(repository: noteRepository, utcClock: clock),
+    deleteNote: DeleteLifeOsNote(repository: noteRepository, utcClock: clock),
+    restoreNote: RestoreLifeOsNote(repository: noteRepository, utcClock: clock),
+    createRelationship: CreateLifeOsRelationship(
+      relationshipRepository: relationshipRepository,
+      taskRepository: taskRepository,
+      noteRepository: noteRepository,
+      entityIdGenerator: () => 'relationship-test',
+      utcClock: clock,
+    ),
+    unlinkRelationship: UnlinkLifeOsRelationship(
+      repository: relationshipRepository,
+      utcClock: clock,
+    ),
+    searchTasks: SearchLifeOsTasks(taskRepository),
+    createWorkspace: CreateLifeOsWorkspace(
+      repository: workspaceRepository,
+      entityIdGenerator: () => 'workspace-test',
+      utcClock: clock,
+    ),
+    editWorkspace: EditLifeOsWorkspace(
+      repository: workspaceRepository,
+      utcClock: clock,
+    ),
+    getWorkspace: GetLifeOsWorkspace(workspaceRepository),
+    getWorkspaces: GetLifeOsWorkspaces(workspaceRepository),
+    getDeletedWorkspaces: GetDeletedLifeOsWorkspaces(workspaceRepository),
+    deleteWorkspace: DeleteLifeOsWorkspace(
+      repository: workspaceRepository,
+      utcClock: clock,
+    ),
+    restoreWorkspace: RestoreLifeOsWorkspace(
+      repository: workspaceRepository,
+      utcClock: clock,
+    ),
+    attachWorkspaceMember: AttachLifeOsWorkspaceMember(
+      repository: membershipRepository,
+      entityIdGenerator: () => 'membership-test',
+      utcClock: clock,
+    ),
+    detachWorkspaceMember: DetachLifeOsWorkspaceMember(
+      repository: membershipRepository,
+      utcClock: clock,
+    ),
+    getWorkspaceMembers: GetLifeOsWorkspaceMembers(contextReader),
+    getUnassignedWorkspaceMembers: GetUnassignedLifeOsWorkspaceMembers(
+      contextReader,
+    ),
+    createTaskInWorkspace: CreateLifeOsTaskInWorkspace(
+      workspaceRepository: workspaceRepository,
+      store: creationStore,
+      entityIdGenerator: () => 'quick-task-test',
+      utcClock: clock,
+    ),
+    createNoteInWorkspace: CreateLifeOsNoteInWorkspace(
+      workspaceRepository: workspaceRepository,
+      store: creationStore,
+      entityIdGenerator: () => 'quick-note-test',
+      utcClock: clock,
+    ),
+    createBackup: CreateLifeOsBackup(
+      taskRepository: taskRepository,
+      encoder: backupExportEncoder,
+      utcClock: () => DateTime.utc(2026, 9, 11),
+      applicationVersion: lifeOsApplicationVersion,
+    ),
+    exportData: ExportLifeOsData(
+      taskRepository: taskRepository,
+      encoder: backupExportEncoder,
+      utcClock: () => DateTime.utc(2026, 9, 11),
+      applicationVersion: lifeOsApplicationVersion,
+    ),
+    restoreBackup: RestoreLifeOsBackup(
+      reader: const LifeOsBackupFileReader(),
+      restoreStore: DriftLifeOsBackupRestoreStore(database),
+    ),
+    backupOperations: const _NoopBackupOperations(),
+  );
 }
 
 class _NoopBackupOperations implements LifeOsBackupOperations {

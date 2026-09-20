@@ -2,6 +2,13 @@ import '../application/use_cases/create_lifeos_backup.dart';
 import '../application/use_cases/create_lifeos_note.dart';
 import '../application/use_cases/create_lifeos_relationship.dart';
 import '../application/use_cases/create_lifeos_task.dart';
+import '../application/use_cases/create_lifeos_entity_in_workspace.dart';
+import '../application/use_cases/create_lifeos_workspace.dart';
+import '../application/use_cases/edit_lifeos_workspace.dart';
+import '../application/use_cases/get_lifeos_workspace_context.dart';
+import '../application/use_cases/get_lifeos_workspaces.dart';
+import '../application/use_cases/lifeos_workspace_lifecycle.dart';
+import '../application/use_cases/lifeos_workspace_membership.dart';
 import '../application/use_cases/edit_lifeos_note.dart';
 import '../application/use_cases/edit_lifeos_task_title.dart';
 import '../application/use_cases/delete_lifeos_task.dart';
@@ -16,6 +23,8 @@ import '../application/backup/lifeos_backup_operations.dart';
 import '../domain/repositories/lifeos_task_repository.dart';
 import '../domain/repositories/lifeos_note_repository.dart';
 import '../domain/repositories/lifeos_relationship_repository.dart';
+import '../domain/repositories/lifeos_workspace_membership_repository.dart';
+import '../domain/repositories/lifeos_workspace_repository.dart';
 import '../infrastructure/backup/files/lifeos_backup_file_reader.dart';
 import '../infrastructure/backup/formats/v3_backup_export_encoder.dart';
 import '../infrastructure/identity/file_device_identity_store.dart';
@@ -25,7 +34,11 @@ import '../infrastructure/persistence/drift/production_database.dart';
 import '../infrastructure/persistence/drift/repositories/drift_lifeos_task_repository.dart';
 import '../infrastructure/persistence/drift/repositories/drift_lifeos_note_repository.dart';
 import '../infrastructure/persistence/drift/repositories/drift_lifeos_relationship_repository.dart';
+import '../infrastructure/persistence/drift/repositories/drift_lifeos_workspace_membership_repository.dart';
+import '../infrastructure/persistence/drift/repositories/drift_lifeos_workspace_repository.dart';
 import '../infrastructure/persistence/drift/restore/drift_lifeos_backup_restore_store.dart';
+import '../infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_context_reader.dart';
+import '../infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_member_creation_store.dart';
 import 'backup_operations.dart';
 
 class LifeOsAppDependencies {
@@ -34,6 +47,8 @@ class LifeOsAppDependencies {
     required this.taskRepository,
     required this.noteRepository,
     required this.relationshipRepository,
+    required this.workspaceRepository,
+    required this.workspaceMembershipRepository,
     required this.createTask,
     required this.editTaskTitle,
     required this.deleteTask,
@@ -45,6 +60,19 @@ class LifeOsAppDependencies {
     required this.createRelationship,
     required this.unlinkRelationship,
     required this.searchTasks,
+    required this.createWorkspace,
+    required this.editWorkspace,
+    required this.getWorkspace,
+    required this.getWorkspaces,
+    required this.getDeletedWorkspaces,
+    required this.deleteWorkspace,
+    required this.restoreWorkspace,
+    required this.attachWorkspaceMember,
+    required this.detachWorkspaceMember,
+    required this.getWorkspaceMembers,
+    required this.getUnassignedWorkspaceMembers,
+    required this.createTaskInWorkspace,
+    required this.createNoteInWorkspace,
     required this.createBackup,
     required this.exportData,
     required this.restoreBackup,
@@ -55,6 +83,8 @@ class LifeOsAppDependencies {
   final LifeOsTaskRepository taskRepository;
   final LifeOsNoteRepository noteRepository;
   final LifeOsRelationshipRepository relationshipRepository;
+  final LifeOsWorkspaceRepository workspaceRepository;
+  final LifeOsWorkspaceMembershipRepository workspaceMembershipRepository;
   final CreateLifeOsTask createTask;
   final EditLifeOsTaskTitle editTaskTitle;
   final DeleteLifeOsTask deleteTask;
@@ -66,6 +96,19 @@ class LifeOsAppDependencies {
   final CreateLifeOsRelationship createRelationship;
   final UnlinkLifeOsRelationship unlinkRelationship;
   final SearchLifeOsTasks searchTasks;
+  final CreateLifeOsWorkspace createWorkspace;
+  final EditLifeOsWorkspace editWorkspace;
+  final GetLifeOsWorkspace getWorkspace;
+  final GetLifeOsWorkspaces getWorkspaces;
+  final GetDeletedLifeOsWorkspaces getDeletedWorkspaces;
+  final DeleteLifeOsWorkspace deleteWorkspace;
+  final RestoreLifeOsWorkspace restoreWorkspace;
+  final AttachLifeOsWorkspaceMember attachWorkspaceMember;
+  final DetachLifeOsWorkspaceMember detachWorkspaceMember;
+  final GetLifeOsWorkspaceMembers getWorkspaceMembers;
+  final GetUnassignedLifeOsWorkspaceMembers getUnassignedWorkspaceMembers;
+  final CreateLifeOsTaskInWorkspace createTaskInWorkspace;
+  final CreateLifeOsNoteInWorkspace createNoteInWorkspace;
   final CreateLifeOsBackup createBackup;
   final ExportLifeOsData exportData;
   final RestoreLifeOsBackup restoreBackup;
@@ -101,6 +144,23 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     deviceId,
   );
   final relationshipRepository = DriftLifeOsRelationshipRepository(
+    database,
+    identifierGenerator,
+    deviceId,
+  );
+  final workspaceRepository = DriftLifeOsWorkspaceRepository(
+    database,
+    identifierGenerator,
+    deviceId,
+  );
+  final workspaceMembershipRepository =
+      DriftLifeOsWorkspaceMembershipRepository(
+        database,
+        identifierGenerator,
+        deviceId,
+      );
+  final workspaceContextReader = DriftLifeOsWorkspaceContextReader(database);
+  final workspaceMemberCreationStore = DriftLifeOsWorkspaceMemberCreationStore(
     database,
     identifierGenerator,
     deviceId,
@@ -151,6 +211,51 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     repository: relationshipRepository,
     utcClock: utcClock,
   );
+  final createWorkspace = CreateLifeOsWorkspace(
+    repository: workspaceRepository,
+    entityIdGenerator: entityIdGenerator,
+    utcClock: utcClock,
+  );
+  final editWorkspace = EditLifeOsWorkspace(
+    repository: workspaceRepository,
+    utcClock: utcClock,
+  );
+  final getWorkspace = GetLifeOsWorkspace(workspaceRepository);
+  final getWorkspaces = GetLifeOsWorkspaces(workspaceRepository);
+  final getDeletedWorkspaces = GetDeletedLifeOsWorkspaces(workspaceRepository);
+  final deleteWorkspace = DeleteLifeOsWorkspace(
+    repository: workspaceRepository,
+    utcClock: utcClock,
+  );
+  final restoreWorkspace = RestoreLifeOsWorkspace(
+    repository: workspaceRepository,
+    utcClock: utcClock,
+  );
+  final attachWorkspaceMember = AttachLifeOsWorkspaceMember(
+    repository: workspaceMembershipRepository,
+    entityIdGenerator: entityIdGenerator,
+    utcClock: utcClock,
+  );
+  final detachWorkspaceMember = DetachLifeOsWorkspaceMember(
+    repository: workspaceMembershipRepository,
+    utcClock: utcClock,
+  );
+  final getWorkspaceMembers = GetLifeOsWorkspaceMembers(workspaceContextReader);
+  final getUnassignedWorkspaceMembers = GetUnassignedLifeOsWorkspaceMembers(
+    workspaceContextReader,
+  );
+  final createTaskInWorkspace = CreateLifeOsTaskInWorkspace(
+    workspaceRepository: workspaceRepository,
+    store: workspaceMemberCreationStore,
+    entityIdGenerator: entityIdGenerator,
+    utcClock: utcClock,
+  );
+  final createNoteInWorkspace = CreateLifeOsNoteInWorkspace(
+    workspaceRepository: workspaceRepository,
+    store: workspaceMemberCreationStore,
+    entityIdGenerator: entityIdGenerator,
+    utcClock: utcClock,
+  );
   const backupExportEncoder = V3BackupExportEncoder();
   final createBackup = CreateLifeOsBackup(
     taskRepository: taskRepository,
@@ -185,6 +290,8 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     taskRepository: taskRepository,
     noteRepository: noteRepository,
     relationshipRepository: relationshipRepository,
+    workspaceRepository: workspaceRepository,
+    workspaceMembershipRepository: workspaceMembershipRepository,
     createTask: createTask,
     editTaskTitle: editTaskTitle,
     deleteTask: deleteTask,
@@ -196,6 +303,19 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     createRelationship: createRelationship,
     unlinkRelationship: unlinkRelationship,
     searchTasks: searchTasks,
+    createWorkspace: createWorkspace,
+    editWorkspace: editWorkspace,
+    getWorkspace: getWorkspace,
+    getWorkspaces: getWorkspaces,
+    getDeletedWorkspaces: getDeletedWorkspaces,
+    deleteWorkspace: deleteWorkspace,
+    restoreWorkspace: restoreWorkspace,
+    attachWorkspaceMember: attachWorkspaceMember,
+    detachWorkspaceMember: detachWorkspaceMember,
+    getWorkspaceMembers: getWorkspaceMembers,
+    getUnassignedWorkspaceMembers: getUnassignedWorkspaceMembers,
+    createTaskInWorkspace: createTaskInWorkspace,
+    createNoteInWorkspace: createNoteInWorkspace,
     createBackup: createBackup,
     exportData: exportData,
     restoreBackup: restoreBackup,
