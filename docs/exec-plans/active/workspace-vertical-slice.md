@@ -2,11 +2,11 @@
 
 Статус плана: active
 
-Текущий checkpoint: WS-05 — Backup/Export/Restore v4 (pending)
+Текущий checkpoint: WS-06 — Workspace Presentation (pending)
 
-Точная точка возобновления: начать WS-05 с повторной сверки Git, ADR-0028,
-ADR-0029, ADR-0031, ADR-0034 и готовых WS-04 Application/composition contracts;
-до implementation отметить WS-05 active. WS-06 не начинать.
+Точная точка возобновления: начать WS-06 с повторной сверки Git, ADR-0022,
+ADR-0027, ADR-0034 и готовых WS-04 Application/composition contracts; до
+implementation отметить WS-06 active. WS-07 не начинать.
 
 ## Goal
 
@@ -798,7 +798,7 @@ Presentation, Backup v4, Search, Relationship expansion и WS-05.
 
 ## WS-05 — Backup/Export/Restore v4
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -845,11 +845,37 @@ Presentation и WS-06.
 
 ### Result / evidence
 
-Pending.
+- `LifeOsDataSnapshot`, Backup и Export use cases теперь собирают all-state
+  Tasks, Notes, Relationships, Workspaces и memberships через существующие typed
+  repository abstractions; Application не знает о codec, ZIP, Drift или SQLite.
+- Добавлены v4 DTO/codec/encoder и production composition переключён на запись
+  Backup/Export format v4. Physical Backup по-прежнему содержит только
+  `manifest.json` и `data.json`; frozen v1/v2/v3 contracts не изменены.
+- v4 сохраняет Entity metadata, exact nullable Workspace description, Note
+  whitespace, Workspace lifecycle и active/deleted membership identity. Decoder
+  до mutation отклоняет malformed metadata/type/ref, duplicate Entity IDs и
+  duplicate Workspace/member pairs.
+- Reader распознаёт v1/v2/v3/v4. Restore старых форматов сохраняет прежние
+  Task/Note/Relationship semantics и очищает отсутствующий в них Workspace
+  context без synthetic rows.
+- Restore v4 сначала полностью декодирует и валидирует snapshot, затем в одной
+  SQLite transaction очищает `outbox -> workspace_memberships -> relationships
+  -> tasks/notes/workspaces -> entities` и вставляет Entities до typed/edge rows.
+  `device_id` сохраняется, Outbox после Restore пуст, repository `save()` не
+  используется.
+- Focused Backup/Export/Restore/Application/persistence validation: 125 tests,
+  PASS. Покрыты exact round-trip, v1/v2/v3 compatibility, malformed refs,
+  duplicate pairs, checksum/version prevalidation, transactional rollback,
+  file-backed close/reopen, `foreign_key_check`, `quick_check`, no-Outbox и
+  detach/reattach same identity.
+- `dart format`: PASS. `flutter analyze`: PASS (`No issues found`). Полный
+  `flutter test`: PASS, 314 tests. Import-boundary scan: PASS. Dependency/schema
+  scan: PASS; `schemaVersion == 4`, schema v5 отсутствует, dependencies и frozen
+  migration artifacts не изменены. `git diff --check`: PASS.
 
 ### Blocker
 
-Отсутствует до architecture gate.
+Отсутствует; architecture gate пройден без нового ADR.
 
 ## WS-06 — Workspace Presentation
 
@@ -1066,8 +1092,7 @@ rollback и layer-boundary regressions локализуемыми и снижа�
 
 ## Exact resume point
 
-WS-03 завершён. Возобновить с WS-04 — Application, mixed queries,
-atomic quick-create store and production composition. Перед implementation
-отметить WS-04 active, перечитать ADR-0022, ADR-0023, ADR-0024, ADR-0026,
-ADR-0033 и ADR-0034, сверить HEAD/Git и WS-03 repository contracts. WS-05 не
+WS-05 завершён. Возобновить с WS-06 — Workspace Presentation. Перед
+implementation отметить WS-06 active, перечитать ADR-0022, ADR-0027 и ADR-0034,
+сверить HEAD/Git и готовые WS-04 Application/composition contracts. WS-07 не
 начинать.

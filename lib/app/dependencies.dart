@@ -26,7 +26,7 @@ import '../domain/repositories/lifeos_relationship_repository.dart';
 import '../domain/repositories/lifeos_workspace_membership_repository.dart';
 import '../domain/repositories/lifeos_workspace_repository.dart';
 import '../infrastructure/backup/files/lifeos_backup_file_reader.dart';
-import '../infrastructure/backup/formats/v3_backup_export_encoder.dart';
+import '../infrastructure/backup/formats/v4_backup_export_encoder.dart';
 import '../infrastructure/identity/file_device_identity_store.dart';
 import '../infrastructure/identity/uuid_v4_generator.dart';
 import '../infrastructure/persistence/drift/lifeos_database.dart';
@@ -256,20 +256,24 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     entityIdGenerator: entityIdGenerator,
     utcClock: utcClock,
   );
-  const backupExportEncoder = V3BackupExportEncoder();
+  const backupExportEncoder = V4BackupExportEncoder();
   final createBackup = CreateLifeOsBackup(
     taskRepository: taskRepository,
     noteRepository: noteRepository,
     relationshipRepository: relationshipRepository,
+    workspaceRepository: workspaceRepository,
+    workspaceMembershipRepository: workspaceMembershipRepository,
     encoder: backupExportEncoder,
     utcClock: utcClock,
     applicationVersion: applicationVersion,
-    backupFormatVersion: 3,
+    backupFormatVersion: 4,
   );
   final exportData = ExportLifeOsData(
     taskRepository: taskRepository,
     noteRepository: noteRepository,
     relationshipRepository: relationshipRepository,
+    workspaceRepository: workspaceRepository,
+    workspaceMembershipRepository: workspaceMembershipRepository,
     encoder: backupExportEncoder,
     utcClock: utcClock,
     applicationVersion: applicationVersion,

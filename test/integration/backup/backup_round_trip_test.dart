@@ -10,7 +10,7 @@ import 'package:lifeos/domain/entities/lifeos_note.dart';
 import 'package:lifeos/domain/entities/lifeos_relationship.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/infrastructure/backup/formats/backup_export_format_v1.dart';
-import 'package:lifeos/infrastructure/backup/formats/backup_export_format_v3.dart';
+import 'package:lifeos/infrastructure/backup/formats/backup_export_format_v4.dart';
 import 'package:lifeos/infrastructure/identity/file_device_identity_store.dart';
 import 'package:path/path.dart' as path;
 
@@ -326,9 +326,9 @@ void main() {
     expect(await File(secondPath).readAsBytes(), firstBytes);
     final source = utf8.decode(firstBytes);
     final json = jsonDecode(source) as Map<String, dynamic>;
-    final document = LifeOsDataFormatV3.decodeExport(source);
+    final document = LifeOsDataFormatV4.decodeExport(source);
     expect(json['format'], lifeOsExportFormatKind);
-    expect(json['formatVersion'], lifeOsExportFormatVersionV3);
+    expect(json['formatVersion'], lifeOsExportFormatVersionV4);
     expect(document.tasks.map((task) => task.id), [
       '00000000-0000-4000-8000-000000000031',
       '00000000-0000-4000-8000-000000000032',

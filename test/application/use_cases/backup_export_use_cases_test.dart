@@ -5,8 +5,12 @@ import 'package:lifeos/application/use_cases/export_lifeos_data.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_note.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
+import 'package:lifeos/domain/entities/lifeos_workspace.dart';
+import 'package:lifeos/domain/entities/lifeos_workspace_membership.dart';
 import 'package:lifeos/domain/repositories/lifeos_note_repository.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
+import 'package:lifeos/domain/repositories/lifeos_workspace_membership_repository.dart';
+import 'package:lifeos/domain/repositories/lifeos_workspace_repository.dart';
 
 void main() {
   final timestamp = DateTime.utc(2026, 9, 11, 14);
@@ -142,6 +146,60 @@ void main() {
     expect(noteRepository.getAllCalls, 2);
   });
 
+  test(
+    'includes all-state Workspaces and Memberships in Backup and Export',
+    () async {
+      final workspace = LifeOsWorkspace.createUserWorkspace(
+        id: const LifeOsEntityId(
+          value: '00000000-0000-4000-8000-000000000010',
+          entityType: LifeOsEntityType.workspace,
+        ),
+        title: 'Workspace',
+        description: null,
+        timestamp: timestamp,
+      ).delete(updatedAt: timestamp);
+      final membership = LifeOsWorkspaceMembership.createUserMembership(
+        id: const LifeOsEntityId(
+          value: '00000000-0000-4000-8000-000000000011',
+          entityType: LifeOsEntityType.workspaceMembership,
+        ),
+        workspaceId: workspace.id,
+        memberEntityId: earlierIdTask.id,
+        timestamp: timestamp,
+      ).remove(updatedAt: timestamp);
+      final workspaceRepository = FakeLifeOsWorkspaceRepository([workspace]);
+      final membershipRepository = FakeLifeOsWorkspaceMembershipRepository([
+        membership,
+      ]);
+      final encoder = RecordingBackupExportEncoder();
+
+      await CreateLifeOsBackup(
+        taskRepository: FakeLifeOsTaskRepository([earlierIdTask]),
+        workspaceRepository: workspaceRepository,
+        workspaceMembershipRepository: membershipRepository,
+        encoder: encoder,
+        utcClock: () => timestamp,
+        applicationVersion: '1.0.0+1',
+        backupFormatVersion: 4,
+      )();
+      await ExportLifeOsData(
+        taskRepository: FakeLifeOsTaskRepository([earlierIdTask]),
+        workspaceRepository: workspaceRepository,
+        workspaceMembershipRepository: membershipRepository,
+        encoder: encoder,
+        utcClock: () => timestamp,
+        applicationVersion: '1.0.0+1',
+      )();
+
+      expect(encoder.backupSnapshots.single.workspaces, [workspace]);
+      expect(encoder.backupSnapshots.single.workspaceMemberships, [membership]);
+      expect(encoder.exportSnapshots.single.workspaces, [workspace]);
+      expect(encoder.exportSnapshots.single.workspaceMemberships, [membership]);
+      expect(workspaceRepository.getAllCalls, 2);
+      expect(membershipRepository.getAllCalls, 2);
+    },
+  );
+
   test('propagates repository errors without invoking serialization', () async {
     final error = StateError('repository failed');
     final repository = FakeLifeOsTaskRepository([], getAllError: error);
@@ -245,6 +303,66 @@ class FakeLifeOsNoteRepository implements LifeOsNoteRepository {
 
   @override
   Future<void> save(LifeOsNote note) async {}
+}
+
+class FakeLifeOsWorkspaceRepository implements LifeOsWorkspaceRepository {
+  FakeLifeOsWorkspaceRepository(this.values);
+  final List<LifeOsWorkspace> values;
+  int getAllCalls = 0;
+  @override
+  Future<List<LifeOsWorkspace>> getAll() async {
+    getAllCalls++;
+    return values;
+  }
+
+  @override
+  Future<LifeOsWorkspace?> getById(LifeOsEntityId id) async => null;
+  @override
+  Future<List<LifeOsWorkspace>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async => [];
+  @override
+  Future<void> save(LifeOsWorkspace workspace) async {}
+}
+
+class FakeLifeOsWorkspaceMembershipRepository
+    implements LifeOsWorkspaceMembershipRepository {
+  FakeLifeOsWorkspaceMembershipRepository(this.values);
+  final List<LifeOsWorkspaceMembership> values;
+  int getAllCalls = 0;
+  @override
+  Future<List<LifeOsWorkspaceMembership>> getAll() async {
+    getAllCalls++;
+    return values;
+  }
+
+  @override
+  Future<LifeOsWorkspaceMembership> attach({
+    required LifeOsEntityId workspaceId,
+    required LifeOsEntityId memberEntityId,
+    required LifeOsEntityId newMembershipId,
+    required DateTime timestamp,
+  }) => throw UnimplementedError();
+  @override
+  Future<LifeOsWorkspaceMembership?> getById(LifeOsEntityId id) async => null;
+  @override
+  Future<LifeOsWorkspaceMembership?> getByPair(
+    LifeOsEntityId workspaceId,
+    LifeOsEntityId memberEntityId,
+  ) async => null;
+  @override
+  Future<List<LifeOsWorkspaceMembership>> getActiveForMember(
+    LifeOsEntityId memberEntityId,
+  ) async => [];
+  @override
+  Future<List<LifeOsWorkspaceMembership>> getActiveForWorkspace(
+    LifeOsEntityId workspaceId,
+  ) async => [];
+  @override
+  Future<LifeOsWorkspaceMembership?> remove({
+    required LifeOsEntityId membershipId,
+    required DateTime timestamp,
+  }) async => null;
 }
 
 class RecordingBackupExportEncoder implements LifeOsBackupExportEncoder {

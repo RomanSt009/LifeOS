@@ -9,6 +9,7 @@ import '../../../application/backup/lifeos_backup_restore_contracts.dart';
 import '../formats/backup_export_format_v1.dart';
 import '../formats/backup_export_format_v2.dart';
 import '../formats/backup_export_format_v3.dart';
+import '../formats/backup_export_format_v4.dart';
 
 class LifeOsBackupFileReader implements LifeOsBackupReader {
   const LifeOsBackupFileReader();
@@ -58,6 +59,7 @@ class LifeOsBackupFileReader implements LifeOsBackupReader {
         1 => LifeOsDataFormatV1.decodeBackupManifest(manifestSource),
         2 => LifeOsDataFormatV2.decodeManifest(manifestSource),
         3 => LifeOsDataFormatV3.decodeManifest(manifestSource),
+        4 => LifeOsDataFormatV4.decodeManifest(manifestSource),
         _ => throw const LifeOsDataFormatException(
           code: LifeOsDataFormatErrorCode.unsupportedVersion,
           message: 'Unsupported Backup format version.',
@@ -94,7 +96,20 @@ class LifeOsBackupFileReader implements LifeOsBackupReader {
           notes: backup.notes.map((record) => record.toDomain()),
         );
       }
-      final backup = LifeOsDataFormatV3.decodeBackupData(source);
+      if (formatVersion == 3) {
+        final backup = LifeOsDataFormatV3.decodeBackupData(source);
+        return LifeOsDataSnapshot(
+          tasks: backup.tasks.map((record) => record.toDomain()),
+          notes: backup.notes.map((record) => record.toDomain()),
+          relationships: backup.relationships.map(
+            (record) => record.toDomain(
+              firstEntityType: backup.entityTypesById[record.firstEntityId]!,
+              secondEntityType: backup.entityTypesById[record.secondEntityId]!,
+            ),
+          ),
+        );
+      }
+      final backup = LifeOsDataFormatV4.decodeBackupData(source);
       return LifeOsDataSnapshot(
         tasks: backup.tasks.map((record) => record.toDomain()),
         notes: backup.notes.map((record) => record.toDomain()),
@@ -102,6 +117,12 @@ class LifeOsBackupFileReader implements LifeOsBackupReader {
           (record) => record.toDomain(
             firstEntityType: backup.entityTypesById[record.firstEntityId]!,
             secondEntityType: backup.entityTypesById[record.secondEntityId]!,
+          ),
+        ),
+        workspaces: backup.workspaces.map((record) => record.toDomain()),
+        workspaceMemberships: backup.workspaceMemberships.map(
+          (record) => record.toDomain(
+            memberType: backup.entityTypesById[record.memberEntityId]!,
           ),
         ),
       );

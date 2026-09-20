@@ -1,6 +1,8 @@
 import '../../domain/repositories/lifeos_task_repository.dart';
 import '../../domain/repositories/lifeos_note_repository.dart';
 import '../../domain/repositories/lifeos_relationship_repository.dart';
+import '../../domain/repositories/lifeos_workspace_membership_repository.dart';
+import '../../domain/repositories/lifeos_workspace_repository.dart';
 import '../backup/lifeos_backup_export_contracts.dart';
 import 'create_lifeos_backup.dart';
 
@@ -12,6 +14,8 @@ class ExportLifeOsData {
     required this.applicationVersion,
     this.noteRepository,
     this.relationshipRepository,
+    this.workspaceRepository,
+    this.workspaceMembershipRepository,
   });
 
   final LifeOsTaskRepository taskRepository;
@@ -20,6 +24,8 @@ class ExportLifeOsData {
   final String applicationVersion;
   final LifeOsNoteRepository? noteRepository;
   final LifeOsRelationshipRepository? relationshipRepository;
+  final LifeOsWorkspaceRepository? workspaceRepository;
+  final LifeOsWorkspaceMembershipRepository? workspaceMembershipRepository;
 
   Future<String> call() async {
     final createdAt = utcClock();
@@ -33,6 +39,9 @@ class ExportLifeOsData {
       tasks: await taskRepository.getAll(),
       notes: await noteRepository?.getAll() ?? const [],
       relationships: await relationshipRepository?.getAll() ?? const [],
+      workspaces: await workspaceRepository?.getAll() ?? const [],
+      workspaceMemberships:
+          await workspaceMembershipRepository?.getAll() ?? const [],
     );
 
     return encoder.encodeExport(
