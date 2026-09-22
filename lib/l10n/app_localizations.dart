@@ -805,6 +805,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note: {title}'**
   String relationshipNoteLabel(String title);
+
+  /// No description provided for @workspaceListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspaces'**
+  String get workspaceListTitle;
+
+  /// No description provided for @workspaceListEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No Workspaces yet'**
+  String get workspaceListEmpty;
+
+  /// No description provided for @workspaceLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load Workspaces'**
+  String get workspaceLoadError;
+
+  /// No description provided for @workspaceCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'New Workspace'**
+  String get workspaceCreateAction;
+
+  /// No description provided for @workspaceEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Workspace'**
+  String get workspaceEditAction;
+
+  /// No description provided for @workspaceActionsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace actions'**
+  String get workspaceActionsTooltip;
+
+  /// No description provided for @workspaceTitleFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace title'**
+  String get workspaceTitleFieldLabel;
+
+  /// No description provided for @workspaceTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a Workspace title'**
+  String get workspaceTitleRequired;
+
+  /// No description provided for @workspaceDescriptionFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get workspaceDescriptionFieldLabel;
+
+  /// No description provided for @workspaceNoDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description'**
+  String get workspaceNoDescription;
+
+  /// No description provided for @workspaceSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to save Workspace'**
+  String get workspaceSaveError;
+
+  /// No description provided for @workspaceMoveToTrashAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Workspace to Trash'**
+  String get workspaceMoveToTrashAction;
+
+  /// No description provided for @workspaceDeleteDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Workspace to Trash?'**
+  String get workspaceDeleteDialogTitle;
+
+  /// No description provided for @workspaceMoveToTrashConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} will be moved to Trash. Its Tasks, Notes, memberships, and relationships will not be deleted.'**
+  String workspaceMoveToTrashConfirmation(String title);
+
+  /// No description provided for @workspaceDeleteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to move Workspace to Trash'**
+  String get workspaceDeleteError;
+
+  /// No description provided for @workspaceTrashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace Trash'**
+  String get workspaceTrashTitle;
+
+  /// No description provided for @workspaceTrashEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No deleted Workspaces'**
+  String get workspaceTrashEmpty;
+
+  /// No description provided for @workspaceRestoreAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Workspace'**
+  String get workspaceRestoreAction;
+
+  /// No description provided for @workspaceRestoreError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to restore Workspace'**
+  String get workspaceRestoreError;
+
+  /// No description provided for @backToWorkspacesAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Workspaces'**
+  String get backToWorkspacesAction;
+
+  /// No description provided for @workspaceSelectPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a Workspace'**
+  String get workspaceSelectPrompt;
+
+  /// No description provided for @workspaceAddTaskAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Task'**
+  String get workspaceAddTaskAction;
+
+  /// No description provided for @workspaceAddNoteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Note'**
+  String get workspaceAddNoteAction;
+
+  /// No description provided for @workspaceAttachExistingAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add existing'**
+  String get workspaceAttachExistingAction;
+
+  /// No description provided for @workspaceTasksEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No Tasks in this Workspace'**
+  String get workspaceTasksEmpty;
+
+  /// No description provided for @workspaceNotesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No Notes in this Workspace'**
+  String get workspaceNotesEmpty;
+
+  /// No description provided for @workspaceMembersLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load Workspace members'**
+  String get workspaceMembersLoadError;
+
+  /// No description provided for @workspaceTaskCreateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to create Task in Workspace'**
+  String get workspaceTaskCreateError;
+
+  /// No description provided for @workspaceNoteCreateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to create Note in Workspace'**
+  String get workspaceNoteCreateError;
+
+  /// No description provided for @workspaceAttachPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a Task or Note'**
+  String get workspaceAttachPickerTitle;
+
+  /// No description provided for @workspaceAttachPickerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No unattached active Tasks or Notes are available'**
+  String get workspaceAttachPickerEmpty;
+
+  /// No description provided for @workspaceAttachError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to add item to Workspace'**
+  String get workspaceAttachError;
+
+  /// No description provided for @workspaceDetachAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Workspace'**
+  String get workspaceDetachAction;
+
+  /// No description provided for @workspaceDetachDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Workspace?'**
+  String get workspaceDetachDialogTitle;
+
+  /// No description provided for @workspaceDetachDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The Task or Note will remain available outside this Workspace. Its relationships will not be changed.'**
+  String get workspaceDetachDialogMessage;
+
+  /// No description provided for @workspaceDetachError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to remove item from Workspace'**
+  String get workspaceDetachError;
 }
 
 class _AppLocalizationsDelegate

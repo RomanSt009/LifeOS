@@ -9,6 +9,7 @@ import '../../domain/entities/lifeos_entity.dart';
 import '../../domain/entities/lifeos_note.dart';
 import '../../domain/repositories/lifeos_note_repository.dart';
 import '../relationships/relationship_providers.dart';
+import '../workspaces/workspace_member_refresh.dart';
 
 final lifeOsNoteRepositoryProvider = Provider<LifeOsNoteRepository>((ref) {
   throw UnimplementedError(
@@ -101,6 +102,7 @@ class NoteListController extends AsyncNotifier<List<LifeOsNote>> {
     ]);
     ref.invalidate(noteTrashControllerProvider);
     ref.invalidate(relationshipsForEntityProvider);
+    ref.read(workspaceMemberRevisionProvider.notifier).advance();
   }
 }
 
@@ -125,6 +127,7 @@ class NoteTrashController extends AsyncNotifier<List<LifeOsNote>> {
     ]);
     ref.invalidate(noteListControllerProvider);
     ref.invalidate(relationshipsForEntityProvider);
+    ref.read(workspaceMemberRevisionProvider.notifier).advance();
   }
 }
 

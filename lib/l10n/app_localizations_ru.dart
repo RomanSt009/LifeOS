@@ -385,4 +385,124 @@ class AppLocalizationsRu extends AppLocalizations {
   String relationshipNoteLabel(String title) {
     return 'Заметка: $title';
   }
+
+  @override
+  String get workspaceListTitle => 'Рабочие пространства';
+
+  @override
+  String get workspaceListEmpty => 'Рабочих пространств пока нет';
+
+  @override
+  String get workspaceLoadError => 'Не удалось загрузить рабочие пространства';
+
+  @override
+  String get workspaceCreateAction => 'Новое рабочее пространство';
+
+  @override
+  String get workspaceEditAction => 'Изменить рабочее пространство';
+
+  @override
+  String get workspaceActionsTooltip => 'Действия с рабочим пространством';
+
+  @override
+  String get workspaceTitleFieldLabel => 'Название рабочего пространства';
+
+  @override
+  String get workspaceTitleRequired => 'Введите название рабочего пространства';
+
+  @override
+  String get workspaceDescriptionFieldLabel => 'Описание';
+
+  @override
+  String get workspaceNoDescription => 'Без описания';
+
+  @override
+  String get workspaceSaveError => 'Не удалось сохранить рабочее пространство';
+
+  @override
+  String get workspaceMoveToTrashAction => 'Переместить пространство в корзину';
+
+  @override
+  String get workspaceDeleteDialogTitle =>
+      'Переместить пространство в корзину?';
+
+  @override
+  String workspaceMoveToTrashConfirmation(String title) {
+    return 'Рабочее пространство «$title» будет перемещено в корзину. Его задачи, заметки, принадлежность и связи не будут удалены.';
+  }
+
+  @override
+  String get workspaceDeleteError =>
+      'Не удалось переместить пространство в корзину';
+
+  @override
+  String get workspaceTrashTitle => 'Корзина рабочих пространств';
+
+  @override
+  String get workspaceTrashEmpty => 'Удалённых рабочих пространств нет';
+
+  @override
+  String get workspaceRestoreAction => 'Восстановить рабочее пространство';
+
+  @override
+  String get workspaceRestoreError =>
+      'Не удалось восстановить рабочее пространство';
+
+  @override
+  String get backToWorkspacesAction => 'Назад к рабочим пространствам';
+
+  @override
+  String get workspaceSelectPrompt => 'Выберите рабочее пространство';
+
+  @override
+  String get workspaceAddTaskAction => 'Добавить задачу';
+
+  @override
+  String get workspaceAddNoteAction => 'Добавить заметку';
+
+  @override
+  String get workspaceAttachExistingAction => 'Добавить существующее';
+
+  @override
+  String get workspaceTasksEmpty => 'В этом рабочем пространстве нет задач';
+
+  @override
+  String get workspaceNotesEmpty => 'В этом рабочем пространстве нет заметок';
+
+  @override
+  String get workspaceMembersLoadError =>
+      'Не удалось загрузить содержимое рабочего пространства';
+
+  @override
+  String get workspaceTaskCreateError =>
+      'Не удалось создать задачу в рабочем пространстве';
+
+  @override
+  String get workspaceNoteCreateError =>
+      'Не удалось создать заметку в рабочем пространстве';
+
+  @override
+  String get workspaceAttachPickerTitle => 'Выберите задачу или заметку';
+
+  @override
+  String get workspaceAttachPickerEmpty =>
+      'Нет доступных активных задач или заметок вне этого пространства';
+
+  @override
+  String get workspaceAttachError =>
+      'Не удалось добавить объект в рабочее пространство';
+
+  @override
+  String get workspaceDetachAction => 'Убрать из рабочего пространства';
+
+  @override
+  String get workspaceDetachDialogTitle => 'Убрать из рабочего пространства?';
+
+  @override
+  String get workspaceDetachDialogMessage =>
+      'Задача или заметка останется доступна вне этого рабочего пространства. Её связи не изменятся.';
+
+  @override
+  String get workspaceDetachError =>
+      'Не удалось убрать объект из рабочего пространства';
 }

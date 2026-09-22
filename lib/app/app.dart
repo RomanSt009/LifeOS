@@ -12,6 +12,7 @@ import '../presentation/search/task_search_providers.dart';
 import '../presentation/settings/backup_settings_providers.dart';
 import '../presentation/tasks/task_completion_providers.dart';
 import '../presentation/tasks/task_list_providers.dart';
+import '../presentation/workspaces/workspace_providers.dart';
 import 'dependencies.dart';
 
 class LifeOSApp extends StatefulWidget {
@@ -90,6 +91,39 @@ class _LifeOSAppState extends State<LifeOSApp> {
         ),
         lifeOsBackupOperationsProvider.overrideWithValue(
           widget.dependencies.backupOperations,
+        ),
+        createLifeOsWorkspaceProvider.overrideWithValue(
+          widget.dependencies.createWorkspace,
+        ),
+        editLifeOsWorkspaceProvider.overrideWithValue(
+          widget.dependencies.editWorkspace,
+        ),
+        getLifeOsWorkspacesProvider.overrideWithValue(
+          widget.dependencies.getWorkspaces,
+        ),
+        getDeletedLifeOsWorkspacesProvider.overrideWithValue(
+          widget.dependencies.getDeletedWorkspaces,
+        ),
+        deleteLifeOsWorkspaceProvider.overrideWithValue(
+          widget.dependencies.deleteWorkspace,
+        ),
+        restoreLifeOsWorkspaceProvider.overrideWithValue(
+          widget.dependencies.restoreWorkspace,
+        ),
+        getLifeOsWorkspaceMembersProvider.overrideWithValue(
+          widget.dependencies.getWorkspaceMembers,
+        ),
+        attachLifeOsWorkspaceMemberProvider.overrideWithValue(
+          widget.dependencies.attachWorkspaceMember,
+        ),
+        detachLifeOsWorkspaceMemberProvider.overrideWithValue(
+          widget.dependencies.detachWorkspaceMember,
+        ),
+        createLifeOsTaskInWorkspaceProvider.overrideWithValue(
+          widget.dependencies.createTaskInWorkspace,
+        ),
+        createLifeOsNoteInWorkspaceProvider.overrideWithValue(
+          widget.dependencies.createNoteInWorkspace,
         ),
       ],
       child: MaterialApp(

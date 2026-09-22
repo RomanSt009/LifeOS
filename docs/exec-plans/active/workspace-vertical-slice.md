@@ -2,11 +2,11 @@
 
 Статус плана: active
 
-Текущий checkpoint: WS-06 — Workspace Presentation (pending)
+Текущий checkpoint: WS-07 — Context-centric shell + Unassigned (pending)
 
-Точная точка возобновления: начать WS-06 с повторной сверки Git, ADR-0022,
-ADR-0027, ADR-0034 и готовых WS-04 Application/composition contracts; до
-implementation отметить WS-06 active. WS-07 не начинать.
+Точная точка возобновления: начать WS-07 с повторной сверки Git, ADR-0022,
+ADR-0027, ADR-0034, готовой WS-06 Workspace Presentation и текущего shell/Home;
+до implementation отметить WS-07 active. WS-08 не начинать.
 
 ## Goal
 
@@ -879,7 +879,7 @@ Presentation и WS-06.
 
 ## WS-06 — Workspace Presentation
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -924,11 +924,51 @@ Dashboard, routing package и WS-07.
 
 ### Result / evidence
 
-Pending.
+- Добавлена самостоятельная feature area `presentation/workspaces`: typed
+  providers/controllers, feature-local selected Workspace state, active/Trash
+  lists, detail и mixed members surface. Composition root предоставляет только
+  готовые Application use cases; Presentation не импортирует Infrastructure,
+  Drift, SQLite, repositories implementations или Backup codec.
+- Active list имеет loading/empty/error/retry, left-click selection, popup actions
+  и stale-selection cleanup. Create/edit dialogs выполняют title validation,
+  сохраняют literal nullable description semantics, блокируют duplicate submit и
+  показывают bounded recoverable errors.
+- Soft delete использует confirmation и очищает selection; feature-local Trash
+  показывает только deleted Workspaces и позволяет Restore без cascade. Task,
+  Note, Membership и Relationship lifecycle этим UI не меняются.
+- Detail показывает title/description, отдельные Task/Note sections и completion
+  state Task. Источник — единый Application mixed projection; Presentation не
+  читает membership repository и не выполняет joins.
+- Quick-create Task/Note вызывает принятые atomic Application workflows, после
+  success обновляет Workspace и global list providers, а failure не показывает
+  false success. Attach picker использует active Task/Note Application reads,
+  исключает уже attached Entity; detach явно называется «Remove from Workspace»
+  и не удаляет member Entity или semantic Relationship. Reattach остаётся
+  прозрачным для UI и переиспользует membership identity через Application.
+- Общий Presentation revision invalidates Workspace projection после global
+  Task/Note delete/restore; inactive member исчезает без удаления Membership и
+  возвращается после Restore.
+- Layout использует bounded wide master/detail при `1280x800` и отдельный detail
+  с Back при `640x600`; весь detail имеет единый scroll owner. Frequent actions
+  имеют text labels/tooltips, dialogs keyboard reachable и блокируются во время
+  mutation. Direct Task completion и open/edit Note из Workspace осознанно
+  отложены: они не нужны для context membership и потребовали бы cross-feature
+  interaction contract WS-07+.
+- Добавлены EN/RU resources со штатным `flutter gen-l10n`; parity 154/154,
+  hardcoded user-visible Workspace strings отсутствуют. Focused Workspace suite:
+  10 tests, PASS; покрыты states, validation, lifecycle recovery, mixed members,
+  quick create, attach/detach/reattach, duplicate-submit, global lifecycle refresh,
+  EN/RU и оба desktop sizes. Focused Workspace + Task/Note/Relationship/shell/
+  Settings/localization regressions: 100 tests, PASS.
+- `flutter analyze`: PASS. Полный `flutter test --reporter compact`: PASS, 324
+  tests. Import/localization/routing/schema/Backup/dependency/generated-Drift
+  guards: PASS. `schemaVersion == 4`, writer остаётся
+  `V4BackupExportEncoder`, schema/Backup v5 отсутствуют, dependencies и Drift
+  artifacts не изменены. `git diff --check`: PASS.
 
 ### Blocker
 
-Отсутствует до architecture gate.
+Отсутствует; architecture gate пройден без нового ADR.
 
 ## WS-07 — Context-centric shell + Unassigned
 
@@ -1092,7 +1132,7 @@ rollback и layer-boundary regressions локализуемыми и снижа�
 
 ## Exact resume point
 
-WS-05 завершён. Возобновить с WS-06 — Workspace Presentation. Перед
-implementation отметить WS-06 active, перечитать ADR-0022, ADR-0027 и ADR-0034,
-сверить HEAD/Git и готовые WS-04 Application/composition contracts. WS-07 не
-начинать.
+WS-06 завершён. Возобновить с WS-07 — Context-centric shell + Unassigned. Перед
+implementation отметить WS-07 active, перечитать ADR-0022, ADR-0027 и ADR-0034,
+сверить HEAD/Git, готовую Workspace Presentation и текущие shell/Home contracts.
+WS-08 не начинать.

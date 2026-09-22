@@ -381,4 +381,116 @@ class AppLocalizationsEn extends AppLocalizations {
   String relationshipNoteLabel(String title) {
     return 'Note: $title';
   }
+
+  @override
+  String get workspaceListTitle => 'Workspaces';
+
+  @override
+  String get workspaceListEmpty => 'No Workspaces yet';
+
+  @override
+  String get workspaceLoadError => 'Unable to load Workspaces';
+
+  @override
+  String get workspaceCreateAction => 'New Workspace';
+
+  @override
+  String get workspaceEditAction => 'Edit Workspace';
+
+  @override
+  String get workspaceActionsTooltip => 'Workspace actions';
+
+  @override
+  String get workspaceTitleFieldLabel => 'Workspace title';
+
+  @override
+  String get workspaceTitleRequired => 'Enter a Workspace title';
+
+  @override
+  String get workspaceDescriptionFieldLabel => 'Description';
+
+  @override
+  String get workspaceNoDescription => 'No description';
+
+  @override
+  String get workspaceSaveError => 'Unable to save Workspace';
+
+  @override
+  String get workspaceMoveToTrashAction => 'Move Workspace to Trash';
+
+  @override
+  String get workspaceDeleteDialogTitle => 'Move Workspace to Trash?';
+
+  @override
+  String workspaceMoveToTrashConfirmation(String title) {
+    return '$title will be moved to Trash. Its Tasks, Notes, memberships, and relationships will not be deleted.';
+  }
+
+  @override
+  String get workspaceDeleteError => 'Unable to move Workspace to Trash';
+
+  @override
+  String get workspaceTrashTitle => 'Workspace Trash';
+
+  @override
+  String get workspaceTrashEmpty => 'No deleted Workspaces';
+
+  @override
+  String get workspaceRestoreAction => 'Restore Workspace';
+
+  @override
+  String get workspaceRestoreError => 'Unable to restore Workspace';
+
+  @override
+  String get backToWorkspacesAction => 'Back to Workspaces';
+
+  @override
+  String get workspaceSelectPrompt => 'Select a Workspace';
+
+  @override
+  String get workspaceAddTaskAction => 'Add Task';
+
+  @override
+  String get workspaceAddNoteAction => 'Add Note';
+
+  @override
+  String get workspaceAttachExistingAction => 'Add existing';
+
+  @override
+  String get workspaceTasksEmpty => 'No Tasks in this Workspace';
+
+  @override
+  String get workspaceNotesEmpty => 'No Notes in this Workspace';
+
+  @override
+  String get workspaceMembersLoadError => 'Unable to load Workspace members';
+
+  @override
+  String get workspaceTaskCreateError => 'Unable to create Task in Workspace';
+
+  @override
+  String get workspaceNoteCreateError => 'Unable to create Note in Workspace';
+
+  @override
+  String get workspaceAttachPickerTitle => 'Choose a Task or Note';
+
+  @override
+  String get workspaceAttachPickerEmpty =>
+      'No unattached active Tasks or Notes are available';
+
+  @override
+  String get workspaceAttachError => 'Unable to add item to Workspace';
+
+  @override
+  String get workspaceDetachAction => 'Remove from Workspace';
+
+  @override
+  String get workspaceDetachDialogTitle => 'Remove from Workspace?';
+
+  @override
+  String get workspaceDetachDialogMessage =>
+      'The Task or Note will remain available outside this Workspace. Its relationships will not be changed.';
+
+  @override
+  String get workspaceDetachError => 'Unable to remove item from Workspace';
 }

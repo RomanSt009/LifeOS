@@ -9,6 +9,7 @@ import '../../domain/entities/lifeos_entity.dart';
 import '../../domain/entities/lifeos_task.dart';
 import '../relationships/relationship_providers.dart';
 import '../search/task_search_providers.dart';
+import '../workspaces/workspace_member_refresh.dart';
 import 'task_completion_providers.dart';
 
 final createLifeOsTaskProvider = Provider<CreateLifeOsTask>((ref) {
@@ -106,6 +107,7 @@ class TaskListController extends AsyncNotifier<List<LifeOsTask>> {
     ref.invalidate(taskTrashControllerProvider);
     ref.invalidate(relationshipsForEntityProvider);
     ref.read(taskSearchRevisionProvider.notifier).advance();
+    ref.read(workspaceMemberRevisionProvider.notifier).advance();
   }
 }
 
@@ -131,5 +133,6 @@ class TaskTrashController extends AsyncNotifier<List<LifeOsTask>> {
     ref.invalidate(taskListControllerProvider);
     ref.invalidate(relationshipsForEntityProvider);
     ref.read(taskSearchRevisionProvider.notifier).advance();
+    ref.read(workspaceMemberRevisionProvider.notifier).advance();
   }
 }
