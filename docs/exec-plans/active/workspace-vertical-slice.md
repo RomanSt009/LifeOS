@@ -2,11 +2,11 @@
 
 Статус плана: active
 
-Текущий checkpoint: WS-07 — Context-centric shell + Unassigned (pending)
+Текущий checkpoint: WS-08 — Integration + final audit (pending)
 
-Точная точка возобновления: начать WS-07 с повторной сверки Git, ADR-0022,
-ADR-0027, ADR-0034, готовой WS-06 Workspace Presentation и текущего shell/Home;
-до implementation отметить WS-07 active. WS-08 не начинать.
+Точная точка возобновления: начать WS-08 с повторной сверки Git, всех ADR
+milestone, готового context-centric shell, Workspace/Unassigned Presentation,
+schema v4 и Backup v4. WS-08 ещё не начат.
 
 ## Goal
 
@@ -972,7 +972,7 @@ Dashboard, routing package и WS-07.
 
 ## WS-07 — Context-centric shell + Unassigned
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -1018,11 +1018,65 @@ Unified Search, graph integration, AI, dynamic Workspace rail entries и WS-08.
 
 ### Result / evidence
 
-Pending.
+Pre-flight: branch `main`, HEAD `0c6ac6e` (`feat: add workspace presentation`),
+upstream divergence `0 0`. WS-06 находился в HEAD; `schemaVersion == 4`,
+production writer — `V4BackupExportEncoder`. Единственным исходным working-tree
+change был user-owned `.obsidian/workspace.json`; он не изменялся в WS-07.
+
+Shell теперь имеет статический набор `Home`, `Workspaces`, `Tasks`, `Notes`,
+`Search`, `Settings`, использует прежние `NavigationRail` + `IndexedStack` и
+стартует с context-centric Home. Отдельный `Workspaces` destination переиспользует
+готовый `WorkspacePage`; dynamic Workspace rail items, router, deep links и
+global navigation state не добавлены. Global Tasks/Notes остаются secondary
+views; Search остаётся Task-only, Settings — global.
+
+Home показывает только active Workspace entries с title, optional description и
+явным open affordance, затем `New Workspace` и `Unassigned`; прежние New
+Task/New Note/Search/Settings сохранены как secondary actions. Bounded typed
+`LifeOsFeatureCommand` дополнен `newWorkspace`, `openWorkspace` с typed
+`LifeOsEntityId` и `openUnassigned`. Команда передаётся локально shell ->
+Workspace Presentation, проверяется по монотонному ID, consumes exactly once и
+не повторяет create dialog после rebuild/IndexedStack return.
+
+Unassigned реализован как внутренний mode Workspace Presentation, не как Entity,
+Workspace или top-level destination. UI читает готовую Application projection,
+показывает mixed Task/Note loading/empty/error-retry states и различает типы и
+Task completion. Assign dialog загружает active Workspaces и вызывает готовый
+attach use case; Task/Note не мутируется, zero-to-many semantics сохраняется.
+Membership в inactive Workspace не исключает member из Unassigned; membership в
+любом active Workspace исключает; inactive member скрыт. Restore Workspace снова
+делает сохранённые Membership effective без remap/cascade.
+
+Workspace/member revision обновляет Workspace members и Unassigned после
+attach/detach/lifecycle операций. Successful Backup Restore дополнительно
+invalidates active/deleted Workspace lists и advances member revision, поэтому
+Home, Workspace selection/projections и Unassigned перечитывают restored state;
+добавлена regression на Home Workspace replacement.
+
+Responsive widget coverage проходит на `1280x800` и `640x600` без overflow;
+Workspace rows, localized text buttons, tooltips/semantic icon labels и
+dialog/list actions остаются keyboard/focus accessible через стандартные Flutter
+controls. Все новые static strings добавлены в EN/RU ARB; key parity — 167/167;
+generated localization files обновлены только `flutter gen-l10n`.
+
+Validation:
+
+- focused shell/Home/Workspace/Unassigned suite PASS: 29 tests;
+- focused Task/Note/Backup Restore/localization regressions PASS: 65 tests;
+- `flutter analyze` PASS (`No issues found`);
+- full `flutter test --reporter compact` PASS: 329 tests;
+- Domain/Application/Presentation import-boundary scans PASS;
+- hardcoded changed-Presentation string scan, routing dependency scan and EN/RU
+  parity check PASS;
+- `schemaVersion == 4`; schema/Backup v5 absent; production writer remains
+  `V4BackupExportEncoder`;
+- `pubspec.yaml`, `pubspec.lock`, Drift generated/schema artifacts and frozen
+  migrations unchanged;
+- `git diff --check` PASS.
 
 ### Blocker
 
-Отсутствует до architecture gate.
+Отсутствует; architecture gate пройден без нового ADR.
 
 ## WS-08 — Integration + final audit
 

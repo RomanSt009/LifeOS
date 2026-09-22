@@ -8,12 +8,21 @@ import '../../domain/entities/lifeos_task.dart';
 import '../../domain/entities/lifeos_workspace.dart';
 import '../../l10n/app_localizations.dart';
 import '../notes/note_providers.dart';
+import '../navigation/lifeos_feature_command.dart';
 import '../tasks/task_list_providers.dart';
+import 'unassigned_workspace_view.dart';
 import 'workspace_member_refresh.dart';
 import 'workspace_providers.dart';
 
 class WorkspacePage extends ConsumerStatefulWidget {
-  const WorkspacePage({super.key});
+  const WorkspacePage({
+    this.featureCommand,
+    this.onFeatureCommandHandled,
+    super.key,
+  });
+
+  final LifeOsFeatureCommand? featureCommand;
+  final ValueChanged<int>? onFeatureCommandHandled;
 
   @override
   ConsumerState<WorkspacePage> createState() => _WorkspacePageState();
@@ -22,18 +31,66 @@ class WorkspacePage extends ConsumerStatefulWidget {
 class _WorkspacePageState extends ConsumerState<WorkspacePage> {
   LifeOsEntityId? _selectedWorkspaceId;
   bool _showTrash = false;
+  bool _showUnassigned = false;
   bool _restoreFailed = false;
   LifeOsEntityId? _restoringId;
 
+  @override
+  void didUpdateWidget(covariant WorkspacePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final command = widget.featureCommand;
+    if (command == null || command.id == oldWidget.featureCommand?.id) return;
+    switch (command.type) {
+      case LifeOsFeatureCommandType.newWorkspace:
+        _handleCommand(command, () {
+          _showTrash = false;
+          _showUnassigned = false;
+          _selectedWorkspaceId = null;
+        }, afterUpdate: _create);
+      case LifeOsFeatureCommandType.openWorkspace:
+        _handleCommand(command, () {
+          _showTrash = false;
+          _showUnassigned = false;
+          _selectedWorkspaceId = command.workspaceId;
+        });
+      case LifeOsFeatureCommandType.openUnassigned:
+        _handleCommand(command, () {
+          _showTrash = false;
+          _showUnassigned = true;
+          _selectedWorkspaceId = null;
+        });
+      case LifeOsFeatureCommandType.newTask:
+      case LifeOsFeatureCommandType.newNote:
+        break;
+    }
+  }
+
+  void _handleCommand(
+    LifeOsFeatureCommand command,
+    VoidCallback update, {
+    VoidCallback? afterUpdate,
+  }) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.featureCommand?.id != command.id) return;
+      widget.onFeatureCommandHandled?.call(command.id);
+      setState(update);
+      afterUpdate?.call();
+    });
+  }
+
   void _select(LifeOsEntityId id) {
     if (_selectedWorkspaceId != id) {
-      setState(() => _selectedWorkspaceId = id);
+      setState(() {
+        _showUnassigned = false;
+        _selectedWorkspaceId = id;
+      });
     }
   }
 
   void _showActive() {
     setState(() {
       _showTrash = false;
+      _showUnassigned = false;
       _restoreFailed = false;
       _selectedWorkspaceId = null;
     });
@@ -42,6 +99,16 @@ class _WorkspacePageState extends ConsumerState<WorkspacePage> {
   void _showDeleted() {
     setState(() {
       _showTrash = true;
+      _showUnassigned = false;
+      _restoreFailed = false;
+      _selectedWorkspaceId = null;
+    });
+  }
+
+  void _showUnassignedItems() {
+    setState(() {
+      _showTrash = false;
+      _showUnassigned = true;
       _restoreFailed = false;
       _selectedWorkspaceId = null;
     });
@@ -59,6 +126,7 @@ class _WorkspacePageState extends ConsumerState<WorkspacePage> {
     if (mounted && created != null) {
       setState(() {
         _showTrash = false;
+        _showUnassigned = false;
         _selectedWorkspaceId = created.id;
       });
     }
@@ -111,6 +179,36 @@ class _WorkspacePageState extends ConsumerState<WorkspacePage> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    if (_showUnassigned) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  key: const Key('back-from-unassigned'),
+                  tooltip: localizations.backToWorkspacesAction,
+                  onPressed: _showActive,
+                  icon: const Icon(Icons.arrow_back),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    localizations.unassignedTitle,
+                    key: const Key('workspace-page-title'),
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Expanded(child: UnassignedWorkspaceView()),
+          ],
+        ),
+      );
+    }
     final workspaces = ref.watch(
       _showTrash
           ? workspaceTrashControllerProvider
@@ -141,6 +239,15 @@ class _WorkspacePageState extends ConsumerState<WorkspacePage> {
                       icon: const Icon(Icons.add),
                       label: Text(localizations.workspaceCreateAction),
                     ),
+                  if (!_showTrash) ...[
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      key: const Key('workspace-unassigned-action'),
+                      onPressed: _showUnassignedItems,
+                      icon: const Icon(Icons.inbox_outlined),
+                      label: Text(localizations.unassignedTitle),
+                    ),
+                  ],
                   const SizedBox(width: 8),
                   IconButton(
                     key: const Key('workspace-trash-toggle'),

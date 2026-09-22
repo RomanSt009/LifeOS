@@ -19,6 +19,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navigationHome => 'Home';
 
   @override
+  String get navigationWorkspaces => 'Workspaces';
+
+  @override
   String get navigationTasks => 'Tasks';
 
   @override
@@ -35,7 +38,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use the navigation to work with Tasks and Notes or search Task titles.';
 
   @override
+  String get homeContextDescription =>
+      'Organize Tasks and Notes around the life contexts that matter to you.';
+
+  @override
+  String get homeWorkspacesTitle => 'Your Workspaces';
+
+  @override
+  String get homeWorkspacesEmpty =>
+      'Create a Workspace to start organizing a life context.';
+
+  @override
   String get homeQuickActionsTitle => 'Quick actions';
+
+  @override
+  String get homeSecondaryActionsTitle => 'Other actions';
 
   @override
   String get homeNewTaskAction => 'New Task';
@@ -448,6 +465,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceSelectPrompt => 'Select a Workspace';
 
   @override
+  String get workspaceOpenAction => 'Open Workspace';
+
+  @override
   String get workspaceAddTaskAction => 'Add Task';
 
   @override
@@ -493,4 +513,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workspaceDetachError => 'Unable to remove item from Workspace';
+
+  @override
+  String get unassignedTitle => 'Unassigned';
+
+  @override
+  String get unassignedDescription =>
+      'Active Tasks and Notes without an active Workspace context.';
+
+  @override
+  String get unassignedEmpty => 'No unassigned Tasks or Notes';
+
+  @override
+  String get unassignedLoadError => 'Unable to load unassigned items';
+
+  @override
+  String get assignToWorkspaceAction => 'Assign to Workspace';
+
+  @override
+  String get assignWorkspaceEmpty =>
+      'Create an active Workspace before assigning this item.';
+
+  @override
+  String get assignWorkspaceError => 'Unable to assign item to Workspace';
 }

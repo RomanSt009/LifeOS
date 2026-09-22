@@ -29,7 +29,12 @@ void main() {
     );
 
     expect(find.text('LifeOS'), findsNWidgets(2));
-    expect(find.text('Personal Operating System'), findsOneWidget);
+    expect(
+      find.text(
+        'Organize Tasks and Notes around the life contexts that matter to you.',
+      ),
+      findsOneWidget,
+    );
   });
 }
 

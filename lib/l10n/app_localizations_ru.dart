@@ -19,6 +19,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navigationHome => 'Главная';
 
   @override
+  String get navigationWorkspaces => 'Пространства';
+
+  @override
   String get navigationTasks => 'Задачи';
 
   @override
@@ -35,7 +38,21 @@ class AppLocalizationsRu extends AppLocalizations {
       'Используйте навигацию для работы с задачами и заметками или поиска по названиям задач.';
 
   @override
+  String get homeContextDescription =>
+      'Организуйте задачи и заметки вокруг важных жизненных контекстов.';
+
+  @override
+  String get homeWorkspacesTitle => 'Ваши рабочие пространства';
+
+  @override
+  String get homeWorkspacesEmpty =>
+      'Создайте рабочее пространство, чтобы организовать жизненный контекст.';
+
+  @override
   String get homeQuickActionsTitle => 'Быстрые действия';
+
+  @override
+  String get homeSecondaryActionsTitle => 'Другие действия';
 
   @override
   String get homeNewTaskAction => 'Новая задача';
@@ -455,6 +472,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workspaceSelectPrompt => 'Выберите рабочее пространство';
 
   @override
+  String get workspaceOpenAction => 'Открыть рабочее пространство';
+
+  @override
   String get workspaceAddTaskAction => 'Добавить задачу';
 
   @override
@@ -505,4 +525,30 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get workspaceDetachError =>
       'Не удалось убрать объект из рабочего пространства';
+
+  @override
+  String get unassignedTitle => 'Без пространства';
+
+  @override
+  String get unassignedDescription =>
+      'Активные задачи и заметки без активного контекста рабочего пространства.';
+
+  @override
+  String get unassignedEmpty =>
+      'Нет задач или заметок без рабочего пространства';
+
+  @override
+  String get unassignedLoadError =>
+      'Не удалось загрузить объекты без рабочего пространства';
+
+  @override
+  String get assignToWorkspaceAction => 'Добавить в пространство';
+
+  @override
+  String get assignWorkspaceEmpty =>
+      'Сначала создайте активное рабочее пространство.';
+
+  @override
+  String get assignWorkspaceError =>
+      'Не удалось добавить объект в рабочее пространство';
 }

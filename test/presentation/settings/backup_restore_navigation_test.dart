@@ -4,9 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/backup/lifeos_backup_operations.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
+import 'package:lifeos/application/use_cases/get_lifeos_workspaces.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
+import 'package:lifeos/domain/entities/lifeos_workspace.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
+import 'package:lifeos/domain/repositories/lifeos_workspace_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/search/task_search_providers.dart';
 import 'package:lifeos/presentation/settings/backup_settings_providers.dart';
@@ -14,6 +17,7 @@ import 'package:lifeos/presentation/settings/lifeos_artifact_file_chooser.dart';
 import 'package:lifeos/presentation/shell/lifeos_shell_page.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list_providers.dart';
+import 'package:lifeos/presentation/workspaces/workspace_providers.dart';
 
 void main() {
   testWidgets(
@@ -68,6 +72,8 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tasks'));
       await tester.pumpAndSettle();
       expect(find.text('Old local Task'), findsOneWidget);
 
@@ -197,6 +203,129 @@ void main() {
       expect(operations.confirmations, [false, true]);
     },
   );
+
+  testWidgets('Restore refreshes Home Workspace entries', (tester) async {
+    final oldWorkspace = _workspace('old-workspace', 'Old Workspace');
+    final restoredWorkspace = _workspace(
+      'restored-workspace',
+      'Restored Workspace',
+    );
+    final workspaceRepository = MutableWorkspaceRepository([oldWorkspace]);
+    final taskRepository = MutableTaskRepository([]);
+    final operations = WorkspaceReplacingOperations(
+      repository: workspaceRepository,
+      restoredWorkspaces: [restoredWorkspace],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          lifeOsTaskRepositoryProvider.overrideWithValue(taskRepository),
+          createLifeOsTaskProvider.overrideWithValue(
+            CreateLifeOsTask(
+              repository: taskRepository,
+              entityIdGenerator: () => 'unused-id',
+              utcClock: () => DateTime.utc(2026, 9, 22),
+            ),
+          ),
+          searchLifeOsTasksProvider.overrideWithValue(
+            SearchLifeOsTasks(taskRepository),
+          ),
+          getLifeOsWorkspacesProvider.overrideWithValue(
+            GetLifeOsWorkspaces(workspaceRepository),
+          ),
+          lifeOsBackupOperationsProvider.overrideWithValue(operations),
+          lifeOsArtifactFileChooserProvider.overrideWithValue(
+            const RestoreFileChooser(),
+          ),
+        ],
+        child: const MaterialApp(
+          locale: Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: LifeosShellPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Old Workspace'), findsOneWidget);
+
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('restore-backup-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('restore-confirmation-confirm')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Old Workspace'), findsNothing);
+    expect(find.text('Restored Workspace'), findsOneWidget);
+  });
+}
+
+LifeOsWorkspace _workspace(String id, String title) =>
+    LifeOsWorkspace.createUserWorkspace(
+      id: LifeOsEntityId(value: id, entityType: LifeOsEntityType.workspace),
+      title: title,
+      description: '',
+      timestamp: DateTime.utc(2026, 9, 22),
+    );
+
+class WorkspaceReplacingOperations implements LifeOsBackupOperations {
+  WorkspaceReplacingOperations({
+    required this.repository,
+    required this.restoredWorkspaces,
+  });
+
+  final MutableWorkspaceRepository repository;
+  final List<LifeOsWorkspace> restoredWorkspaces;
+
+  @override
+  Future<void> createBackupAt(String destinationPath) async {}
+
+  @override
+  Future<void> exportDataAt(String destinationPath) async {}
+
+  @override
+  Future<void> restoreBackupFrom(
+    String sourcePath, {
+    required bool destructiveReplaceConfirmed,
+  }) async {
+    if (!destructiveReplaceConfirmed) {
+      throw const LifeOsBackupOperationException(
+        LifeOsBackupOperationErrorCode.confirmationRequired,
+      );
+    }
+    repository.values
+      ..clear()
+      ..addAll(restoredWorkspaces);
+  }
+}
+
+class MutableWorkspaceRepository implements LifeOsWorkspaceRepository {
+  MutableWorkspaceRepository(this.values);
+
+  final List<LifeOsWorkspace> values;
+
+  @override
+  Future<List<LifeOsWorkspace>> getAll() async => List.of(values);
+
+  @override
+  Future<LifeOsWorkspace?> getById(LifeOsEntityId id) async =>
+      values.where((workspace) => workspace.id == id).firstOrNull;
+
+  @override
+  Future<List<LifeOsWorkspace>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async =>
+      values.where((workspace) => workspace.lifecycle == lifecycle).toList();
+
+  @override
+  Future<void> save(LifeOsWorkspace workspace) async {
+    values.removeWhere((item) => item.id == workspace.id);
+    values.add(workspace);
+  }
 }
 
 class RestoreReplacingOperations implements LifeOsBackupOperations {

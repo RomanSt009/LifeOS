@@ -58,6 +58,13 @@ final getLifeOsWorkspaceMembersProvider = Provider<GetLifeOsWorkspaceMembers>((
   );
 });
 
+final getUnassignedLifeOsWorkspaceMembersProvider =
+    Provider<GetUnassignedLifeOsWorkspaceMembers>((ref) {
+      throw UnimplementedError(
+        'getUnassignedLifeOsWorkspaceMembersProvider must be overridden by app composition.',
+      );
+    });
+
 final attachLifeOsWorkspaceMemberProvider =
     Provider<AttachLifeOsWorkspaceMember>((ref) {
       throw UnimplementedError(
@@ -169,4 +176,10 @@ final workspaceMembersProvider =
     ) {
       ref.watch(workspaceMemberRevisionProvider);
       return ref.watch(getLifeOsWorkspaceMembersProvider)(workspaceId);
+    });
+
+final unassignedWorkspaceMembersProvider =
+    FutureProvider<List<LifeOsWorkspaceMember>>((ref) {
+      ref.watch(workspaceMemberRevisionProvider);
+      return ref.watch(getUnassignedLifeOsWorkspaceMembersProvider)();
     });

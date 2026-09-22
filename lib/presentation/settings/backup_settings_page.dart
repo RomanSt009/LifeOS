@@ -7,6 +7,8 @@ import '../tasks/task_list_providers.dart';
 import '../notes/note_providers.dart';
 import '../relationships/relationship_providers.dart';
 import '../search/task_search_providers.dart';
+import '../workspaces/workspace_member_refresh.dart';
+import '../workspaces/workspace_providers.dart';
 import 'backup_settings_providers.dart';
 import 'lifeos_artifact_file_chooser.dart';
 
@@ -208,6 +210,9 @@ class _BackupSettingsPageState extends ConsumerState<BackupSettingsPage> {
       ref.invalidate(noteListControllerProvider);
       ref.invalidate(noteTrashControllerProvider);
       ref.invalidate(relationshipsForEntityProvider);
+      ref.invalidate(workspaceListControllerProvider);
+      ref.invalidate(workspaceTrashControllerProvider);
+      ref.read(workspaceMemberRevisionProvider.notifier).advance();
       ref.read(taskSearchRevisionProvider.notifier).advance();
       ref.read(backupRestoreRevisionProvider.notifier).advance();
       if (mounted) {

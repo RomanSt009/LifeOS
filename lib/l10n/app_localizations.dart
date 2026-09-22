@@ -116,6 +116,12 @@ abstract class AppLocalizations {
   /// **'Home'**
   String get navigationHome;
 
+  /// No description provided for @navigationWorkspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspaces'**
+  String get navigationWorkspaces;
+
   /// No description provided for @navigationTasks.
   ///
   /// In en, this message translates to:
@@ -146,11 +152,35 @@ abstract class AppLocalizations {
   /// **'Use the navigation to work with Tasks and Notes or search Task titles.'**
   String get homeAlphaDescription;
 
+  /// No description provided for @homeContextDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Organize Tasks and Notes around the life contexts that matter to you.'**
+  String get homeContextDescription;
+
+  /// No description provided for @homeWorkspacesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Workspaces'**
+  String get homeWorkspacesTitle;
+
+  /// No description provided for @homeWorkspacesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a Workspace to start organizing a life context.'**
+  String get homeWorkspacesEmpty;
+
   /// No description provided for @homeQuickActionsTitle.
   ///
   /// In en, this message translates to:
   /// **'Quick actions'**
   String get homeQuickActionsTitle;
+
+  /// No description provided for @homeSecondaryActionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Other actions'**
+  String get homeSecondaryActionsTitle;
 
   /// No description provided for @homeNewTaskAction.
   ///
@@ -932,6 +962,12 @@ abstract class AppLocalizations {
   /// **'Select a Workspace'**
   String get workspaceSelectPrompt;
 
+  /// No description provided for @workspaceOpenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Workspace'**
+  String get workspaceOpenAction;
+
   /// No description provided for @workspaceAddTaskAction.
   ///
   /// In en, this message translates to:
@@ -1021,6 +1057,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to remove item from Workspace'**
   String get workspaceDetachError;
+
+  /// No description provided for @unassignedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get unassignedTitle;
+
+  /// No description provided for @unassignedDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Tasks and Notes without an active Workspace context.'**
+  String get unassignedDescription;
+
+  /// No description provided for @unassignedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No unassigned Tasks or Notes'**
+  String get unassignedEmpty;
+
+  /// No description provided for @unassignedLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load unassigned items'**
+  String get unassignedLoadError;
+
+  /// No description provided for @assignToWorkspaceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign to Workspace'**
+  String get assignToWorkspaceAction;
+
+  /// No description provided for @assignWorkspaceEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an active Workspace before assigning this item.'**
+  String get assignWorkspaceEmpty;
+
+  /// No description provided for @assignWorkspaceError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to assign item to Workspace'**
+  String get assignWorkspaceError;
 }
 
 class _AppLocalizationsDelegate

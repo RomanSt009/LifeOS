@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/entities/lifeos_entity.dart';
 import '../../l10n/app_localizations.dart';
 import '../home/home_placeholder.dart';
 import '../navigation/lifeos_destination.dart';
@@ -8,6 +9,7 @@ import '../notes/note_page.dart';
 import '../search/task_search_page.dart';
 import '../settings/backup_settings_page.dart';
 import '../tasks/task_page.dart';
+import '../workspaces/workspace_page.dart';
 
 class LifeosShellPage extends StatefulWidget {
   const LifeosShellPage({super.key});
@@ -17,7 +19,7 @@ class LifeosShellPage extends StatefulWidget {
 }
 
 class _LifeosShellPageState extends State<LifeosShellPage> {
-  LifeOsDestination _selectedDestination = LifeOsDestination.tasks;
+  LifeOsDestination _selectedDestination = LifeOsDestination.home;
   LifeOsFeatureCommand? _featureCommand;
   int _nextFeatureCommandId = 0;
 
@@ -27,13 +29,15 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
 
   void _issueFeatureCommand(
     LifeOsDestination destination,
-    LifeOsFeatureCommandType type,
-  ) {
+    LifeOsFeatureCommandType type, {
+    LifeOsEntityId? workspaceId,
+  }) {
     setState(() {
       _selectedDestination = destination;
       _featureCommand = LifeOsFeatureCommand(
         id: ++_nextFeatureCommandId,
         type: type,
+        workspaceId: workspaceId,
       );
     });
   }
@@ -62,6 +66,14 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
                 label: Text(
                   localizations.navigationHome,
                   key: const Key('navigation-home-label'),
+                ),
+              ),
+              NavigationRailDestination(
+                icon: const Icon(Icons.workspaces_outline),
+                selectedIcon: const Icon(Icons.workspaces),
+                label: Text(
+                  localizations.navigationWorkspaces,
+                  key: const Key('navigation-workspaces-label'),
                 ),
               ),
               NavigationRailDestination(
@@ -106,6 +118,19 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: HomePlaceholder(
+                    onOpenWorkspace: (workspaceId) => _issueFeatureCommand(
+                      LifeOsDestination.workspaces,
+                      LifeOsFeatureCommandType.openWorkspace,
+                      workspaceId: workspaceId,
+                    ),
+                    onNewWorkspace: () => _issueFeatureCommand(
+                      LifeOsDestination.workspaces,
+                      LifeOsFeatureCommandType.newWorkspace,
+                    ),
+                    onUnassigned: () => _issueFeatureCommand(
+                      LifeOsDestination.workspaces,
+                      LifeOsFeatureCommandType.openUnassigned,
+                    ),
                     onNewTask: () => _issueFeatureCommand(
                       LifeOsDestination.tasks,
                       LifeOsFeatureCommandType.newTask,
@@ -119,6 +144,10 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
                     onSettings: () =>
                         _selectDestination(LifeOsDestination.settings),
                   ),
+                ),
+                WorkspacePage(
+                  featureCommand: _featureCommand,
+                  onFeatureCommandHandled: _featureCommandHandled,
                 ),
                 TaskPage(
                   featureCommand: _featureCommand,

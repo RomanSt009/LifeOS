@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/entities/lifeos_entity.dart';
 import '../../l10n/app_localizations.dart';
+import '../workspaces/workspace_providers.dart';
 
-class HomePlaceholder extends StatelessWidget {
+class HomePlaceholder extends ConsumerWidget {
   const HomePlaceholder({
+    required this.onOpenWorkspace,
+    required this.onNewWorkspace,
+    required this.onUnassigned,
     required this.onNewTask,
     required this.onNewNote,
     required this.onSearch,
@@ -11,14 +17,18 @@ class HomePlaceholder extends StatelessWidget {
     super.key,
   });
 
+  final ValueChanged<LifeOsEntityId> onOpenWorkspace;
+  final VoidCallback onNewWorkspace;
+  final VoidCallback onUnassigned;
   final VoidCallback onNewTask;
   final VoidCallback onNewNote;
   final VoidCallback onSearch;
   final VoidCallback onSettings;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final localizations = AppLocalizations.of(context);
+    final workspaces = ref.watch(workspaceListControllerProvider);
     return ListView(
       children: [
         Text(
@@ -28,12 +38,81 @@ class HomePlaceholder extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          localizations.homeAlphaDescription,
+          localizations.homeContextDescription,
           key: const Key('home-alpha-description'),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          localizations.homeWorkspacesTitle,
+          key: const Key('home-workspaces-title'),
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 8),
+        workspaces.when(
+          loading: () => const LinearProgressIndicator(
+            key: Key('home-workspaces-loading'),
+          ),
+          error: (_, _) => Row(
+            children: [
+              Expanded(child: Text(localizations.workspaceLoadError)),
+              TextButton.icon(
+                key: const Key('home-retry-workspaces'),
+                onPressed: () =>
+                    ref.invalidate(workspaceListControllerProvider),
+                icon: const Icon(Icons.refresh),
+                label: Text(localizations.retryAction),
+              ),
+            ],
+          ),
+          data: (items) => items.isEmpty
+              ? Text(localizations.homeWorkspacesEmpty)
+              : Column(
+                  children: [
+                    for (final workspace in items)
+                      Card(
+                        child: ListTile(
+                          key: ValueKey('home-workspace-${workspace.id.value}'),
+                          leading: const Icon(Icons.workspaces_outline),
+                          title: Text(workspace.title),
+                          subtitle: workspace.description?.isNotEmpty == true
+                              ? Text(
+                                  workspace.description!,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              : null,
+                          trailing: Icon(
+                            Icons.arrow_forward,
+                            semanticLabel: localizations.workspaceOpenAction,
+                          ),
+                          onTap: () => onOpenWorkspace(workspace.id),
+                        ),
+                      ),
+                  ],
+                ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            FilledButton.icon(
+              key: const Key('home-new-workspace-action'),
+              onPressed: onNewWorkspace,
+              icon: const Icon(Icons.create_new_folder_outlined),
+              label: Text(localizations.workspaceCreateAction),
+            ),
+            OutlinedButton.icon(
+              key: const Key('home-unassigned-action'),
+              onPressed: onUnassigned,
+              icon: const Icon(Icons.inbox_outlined),
+              label: Text(localizations.unassignedTitle),
+            ),
+          ],
         ),
         const SizedBox(height: 32),
         Text(
-          localizations.homeQuickActionsTitle,
+          localizations.homeSecondaryActionsTitle,
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 12),

@@ -198,6 +198,137 @@ void main() {
     expect(harness.creationStore.noteCreateCalls, 1);
   });
 
+  testWidgets(
+    'Unassigned renders mixed effective projection and assigns Task and Note',
+    (tester) async {
+      final harness = _Harness.seeded(includeUnattached: true);
+      final deletedWorkspace = _workspace(
+        'workspace-deleted',
+        'Deleted Workspace',
+      ).delete(updatedAt: _time.add(const Duration(minutes: 1)));
+      final deletedOnlyTask = _task(
+        'task-deleted-context',
+        'Deleted context Task',
+      );
+      final mixedNote = _note(
+        'note-mixed-context',
+        'Mixed context Note',
+        'Body',
+      );
+      final activeSecond = _workspace('workspace-2', 'Second Workspace');
+      final deletedMember = _task(
+        'task-deleted-member',
+        'Deleted member',
+      ).delete(updatedAt: _time.add(const Duration(minutes: 2)));
+      harness.workspaceRepository.values.addAll([
+        deletedWorkspace,
+        activeSecond,
+      ]);
+      harness.taskRepository.values.addAll([deletedOnlyTask, deletedMember]);
+      harness.noteRepository.values.add(mixedNote);
+      harness.membershipRepository.values.addAll([
+        _membership(
+          'membership-deleted-only',
+          deletedWorkspace.id,
+          deletedOnlyTask.id,
+        ),
+        _membership(
+          'membership-mixed-deleted',
+          deletedWorkspace.id,
+          mixedNote.id,
+        ),
+        _membership('membership-mixed-active', activeSecond.id, mixedNote.id),
+      ]);
+
+      await _pump(tester, harness, size: const Size(640, 600));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('workspace-unassigned-action')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Unattached Task'), findsOneWidget);
+      expect(find.text('Unattached Note'), findsOneWidget);
+      expect(find.text('Deleted context Task'), findsOneWidget);
+      expect(find.text('Seed Task'), findsNothing);
+      expect(find.text('Seed Note'), findsNothing);
+      expect(find.text('Mixed context Note'), findsNothing);
+      expect(find.text('Deleted member'), findsNothing);
+
+      await tester.tap(find.byKey(const Key('assign-task-task-2')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('assign-to-workspace-1')));
+      await tester.pumpAndSettle();
+      expect(find.text('Unattached Task'), findsNothing);
+      expect(
+        harness.membershipRepository.values.where(
+          (membership) => membership.memberEntityId.value == 'task-2',
+        ),
+        hasLength(1),
+      );
+
+      await tester.tap(find.byKey(const Key('assign-note-note-2')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('assign-to-workspace-2')));
+      await tester.pumpAndSettle();
+      expect(find.text('Unattached Note'), findsNothing);
+      expect(
+        harness.membershipRepository.values.where(
+          (membership) => membership.memberEntityId.value == 'note-2',
+        ),
+        hasLength(1),
+      );
+    },
+  );
+
+  testWidgets('Unassigned recovers from error and shows empty state', (
+    tester,
+  ) async {
+    final harness = _Harness();
+    harness.contextReader.failUnassignedReads = 1;
+    await _pump(tester, harness);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('workspace-unassigned-action')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load unassigned items'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('retry-unassigned')));
+    await tester.pumpAndSettle();
+    expect(find.text('No unassigned Tasks or Notes'), findsOneWidget);
+  });
+
+  testWidgets(
+    'restoring Workspace makes preserved memberships effective again',
+    (tester) async {
+      final harness = _Harness.seeded();
+      harness.workspaceRepository.values[0] = harness
+          .workspaceRepository
+          .values[0]
+          .delete(updatedAt: _time.add(const Duration(minutes: 1)));
+
+      await _pump(tester, harness);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('workspace-unassigned-action')));
+      await tester.pumpAndSettle();
+      expect(find.text('Seed Task'), findsOneWidget);
+      expect(find.text('Seed Note'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('back-from-unassigned')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('workspace-trash-toggle')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('restore-workspace-workspace-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('workspace-trash-toggle')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('workspace-unassigned-action')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('No unassigned Tasks or Notes'), findsOneWidget);
+      expect(find.text('Seed Task'), findsNothing);
+      expect(find.text('Seed Note'), findsNothing);
+      expect(harness.membershipRepository.values, hasLength(2));
+    },
+  );
+
   testWidgets('attaches, detaches, and reattaches without deleting Entity', (
     tester,
   ) async {
@@ -454,6 +585,7 @@ final class _Harness {
 
   void _initialize() {
     contextReader = _ContextReader(
+      workspaceRepository,
       membershipRepository,
       taskRepository,
       noteRepository,
@@ -494,6 +626,9 @@ final class _Harness {
       ),
       getLifeOsWorkspaceMembersProvider.overrideWithValue(
         GetLifeOsWorkspaceMembers(contextReader),
+      ),
+      getUnassignedLifeOsWorkspaceMembersProvider.overrideWithValue(
+        GetUnassignedLifeOsWorkspaceMembers(contextReader),
       ),
       attachLifeOsWorkspaceMemberProvider.overrideWithValue(
         AttachLifeOsWorkspaceMember(
@@ -709,11 +844,13 @@ final class _MembershipRepository
 }
 
 final class _ContextReader implements LifeOsWorkspaceContextReader {
-  const _ContextReader(this.memberships, this.tasks, this.notes);
+  _ContextReader(this.workspaces, this.memberships, this.tasks, this.notes);
 
+  final _WorkspaceRepository workspaces;
   final _MembershipRepository memberships;
   final _TaskRepository tasks;
   final _NoteRepository notes;
+  int failUnassignedReads = 0;
 
   @override
   Future<List<LifeOsWorkspaceMember>> getDirectMembers(
@@ -743,7 +880,32 @@ final class _ContextReader implements LifeOsWorkspaceContextReader {
   }
 
   @override
-  Future<List<LifeOsWorkspaceMember>> getUnassigned() async => const [];
+  Future<List<LifeOsWorkspaceMember>> getUnassigned() async {
+    if (failUnassignedReads > 0) {
+      failUnassignedReads--;
+      throw StateError('unassigned failed');
+    }
+    final activeWorkspaceIds = <LifeOsEntityId>{
+      for (final workspace in workspaces.values)
+        if (workspace.lifecycle == LifeOsEntityLifecycle.active) workspace.id,
+    };
+    bool isAssigned(LifeOsEntityId memberId) => memberships.values.any(
+      (membership) =>
+          membership.memberEntityId == memberId &&
+          membership.lifecycle == LifeOsEntityLifecycle.active &&
+          activeWorkspaceIds.contains(membership.workspaceId),
+    );
+    return [
+      for (final task in tasks.values)
+        if (task.lifecycle == LifeOsEntityLifecycle.active &&
+            !isAssigned(task.id))
+          LifeOsWorkspaceTaskMember(membershipId: null, task: task),
+      for (final note in notes.values)
+        if (note.lifecycle == LifeOsEntityLifecycle.active &&
+            !isAssigned(note.id))
+          LifeOsWorkspaceNoteMember(membershipId: null, note: note),
+    ];
+  }
 }
 
 final class _CreationStore implements LifeOsWorkspaceMemberCreationStore {

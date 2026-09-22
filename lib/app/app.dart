@@ -113,6 +113,9 @@ class _LifeOSAppState extends State<LifeOSApp> {
         getLifeOsWorkspaceMembersProvider.overrideWithValue(
           widget.dependencies.getWorkspaceMembers,
         ),
+        getUnassignedLifeOsWorkspaceMembersProvider.overrideWithValue(
+          widget.dependencies.getUnassignedWorkspaceMembers,
+        ),
         attachLifeOsWorkspaceMemberProvider.overrideWithValue(
           widget.dependencies.attachWorkspaceMember,
         ),

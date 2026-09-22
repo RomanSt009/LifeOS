@@ -34,6 +34,8 @@ void main() {
       await tester.pumpWidget(testApp(repository, createTask));
       await tester.pumpAndSettle();
 
+      await navigate(tester, 'Tasks');
+
       expect(find.text('Persisted Task'), findsOneWidget);
 
       await navigate(tester, 'Home');

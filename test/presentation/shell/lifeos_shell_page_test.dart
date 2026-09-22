@@ -5,11 +5,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_note.dart';
+import 'package:lifeos/application/use_cases/get_lifeos_workspace_context.dart';
+import 'package:lifeos/application/use_cases/get_lifeos_workspaces.dart';
+import 'package:lifeos/application/workspaces/lifeos_workspace_context_reader.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_note.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
+import 'package:lifeos/domain/entities/lifeos_workspace.dart';
 import 'package:lifeos/domain/repositories/lifeos_note_repository.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
+import 'package:lifeos/domain/repositories/lifeos_workspace_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/navigation/lifeos_destination.dart';
 import 'package:lifeos/presentation/notes/note_providers.dart';
@@ -18,6 +23,8 @@ import 'package:lifeos/presentation/search/task_search_page.dart';
 import 'package:lifeos/presentation/search/task_search_providers.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list.dart';
+import 'package:lifeos/presentation/workspaces/workspace_page.dart';
+import 'package:lifeos/presentation/workspaces/workspace_providers.dart';
 
 void main() {
   for (final scenario in [
@@ -43,6 +50,9 @@ void main() {
       await tester.pumpWidget(testApp(scenario.locale));
       await tester.pumpAndSettle();
 
+      await tester.tap(find.byKey(const Key('navigation-tasks-label')));
+      await tester.pumpAndSettle();
+
       expect(tester.takeException(), isNull);
       expect(find.byType(NavigationRail).hitTestable(), findsOneWidget);
       expect(
@@ -66,6 +76,8 @@ void main() {
         find.byKey(const Key('home-new-task-action')).hitTestable(),
         findsOneWidget,
       );
+      await tester.ensureVisible(find.byKey(const Key('home-settings-action')));
+      await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('home-settings-action')).hitTestable(),
         findsOneWidget,
@@ -131,14 +143,16 @@ void main() {
 
     expect(LifeOsDestination.values, [
       LifeOsDestination.home,
+      LifeOsDestination.workspaces,
       LifeOsDestination.tasks,
       LifeOsDestination.notes,
       LifeOsDestination.search,
       LifeOsDestination.settings,
     ]);
-    expect(navigationRail.destinations, hasLength(5));
+    expect(navigationRail.destinations, hasLength(6));
     expect(destinationLabels(navigationRail), [
       'Home',
+      'Workspaces',
       'Tasks',
       'Notes',
       'Search',
@@ -146,7 +160,7 @@ void main() {
     ]);
   });
 
-  testWidgets('shows a persistent desktop frame with Tasks selected', (
+  testWidgets('shows a persistent desktop frame with Home selected', (
     tester,
   ) async {
     await tester.pumpWidget(testApp(const Locale('en')));
@@ -156,18 +170,91 @@ void main() {
       find.byType(NavigationRail),
     );
 
-    expect(navigationRail.selectedIndex, LifeOsDestination.tasks.index);
+    expect(navigationRail.selectedIndex, LifeOsDestination.home.index);
     expect(navigationRail.labelType, NavigationRailLabelType.all);
     expect(destinationLabels(navigationRail), [
       'Home',
+      'Workspaces',
       'Tasks',
       'Notes',
       'Search',
       'Settings',
     ]);
-    expect(find.byType(TaskList), findsOneWidget);
-    expect(find.byKey(const Key('task-title-field')), findsOneWidget);
+    expect(find.byKey(const Key('home-placeholder-title')), findsOneWidget);
+    expect(find.byType(TaskList), findsNothing);
+    expect(find.byType(TaskList, skipOffstage: false), findsOneWidget);
   });
+
+  testWidgets(
+    'Home opens active Workspace, create flow, and Unassigned exactly once',
+    (tester) async {
+      final active = LifeOsWorkspace.createUserWorkspace(
+        id: const LifeOsEntityId(
+          value: 'workspace-shell',
+          entityType: LifeOsEntityType.workspace,
+        ),
+        title: 'Personal',
+        description: 'Personal context',
+        timestamp: DateTime.utc(2026, 9, 22),
+      );
+      final deleted = LifeOsWorkspace.createUserWorkspace(
+        id: const LifeOsEntityId(
+          value: 'workspace-deleted',
+          entityType: LifeOsEntityType.workspace,
+        ),
+        title: 'Deleted context',
+        description: '',
+        timestamp: DateTime.utc(2026, 9, 22),
+      ).delete(updatedAt: DateTime.utc(2026, 9, 22, 1));
+      final workspaces = ShellWorkspaceRepository([active, deleted]);
+
+      await tester.pumpWidget(
+        testApp(const Locale('en'), workspaceRepository: workspaces),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Personal'), findsOneWidget);
+      expect(find.text('Personal context'), findsOneWidget);
+      expect(find.text('Deleted context'), findsNothing);
+
+      await tester.tap(find.byKey(const Key('home-workspace-workspace-shell')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<NavigationRail>(find.byType(NavigationRail))
+            .selectedIndex,
+        LifeOsDestination.workspaces.index,
+      );
+      expect(find.byType(WorkspacePage), findsOneWidget);
+      expect(find.byKey(const Key('workspace-detail-title')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('navigation-home-label')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('home-new-workspace-action')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('workspace-title-field')), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('navigation-home-label')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('navigation-workspaces-label')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('workspace-title-field')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('navigation-home-label')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('home-unassigned-action')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<NavigationRail>(find.byType(NavigationRail))
+            .selectedIndex,
+        LifeOsDestination.workspaces.index,
+      );
+      expect(find.text('Unassigned'), findsWidgets);
+      expect(find.text('No unassigned Tasks or Notes'), findsOneWidget);
+    },
+  );
 
   testWidgets('opens Search and preserves its state across navigation', (
     tester,
@@ -224,6 +311,8 @@ void main() {
     await tester.pumpWidget(testApp(const Locale('en')));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Tasks'));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('task-title-field')), findsOneWidget);
     await tester.tap(find.text('Search'));
     await tester.pumpAndSettle();
@@ -250,7 +339,7 @@ void main() {
     expect(find.byKey(const Key('home-alpha-description')), findsOneWidget);
     expect(
       find.text(
-        'Use the navigation to work with Tasks and Notes or search Task titles.',
+        'Organize Tasks and Notes around the life contexts that matter to you.',
       ),
       findsOneWidget,
     );
@@ -275,6 +364,9 @@ void main() {
     await tester.pumpWidget(
       testApp(const Locale('en'), repository: repository),
     );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tasks'));
     await tester.pumpAndSettle();
 
     await tester.enterText(
@@ -342,6 +434,7 @@ void main() {
 
     expect(destinationLabels(navigationRail), [
       'Главная',
+      'Пространства',
       'Задачи',
       'Заметки',
       'Поиск',
@@ -357,7 +450,7 @@ void main() {
 
     await tester.tap(find.text('Home'));
     await tester.pumpAndSettle();
-    expect(find.text('Quick actions'), findsOneWidget);
+    expect(find.text('Other actions'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('home-new-task-action')));
     await tester.pumpAndSettle();
@@ -520,7 +613,7 @@ void main() {
     await tester.tap(find.text('Главная'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Быстрые действия'), findsOneWidget);
+    expect(find.text('Другие действия'), findsOneWidget);
     expect(find.text('Новая задача'), findsOneWidget);
     expect(find.text('Новая заметка'), findsOneWidget);
     expect(find.text('Поиск'), findsWidgets);
@@ -543,6 +636,9 @@ void main() {
     await tester.pumpWidget(
       testApp(const Locale('en'), repository: repository),
     );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Tasks'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Selected Task'));
@@ -593,9 +689,12 @@ Widget testApp(
   Locale locale, {
   EmptyLifeOsTaskRepository? repository,
   EmptyLifeOsNoteRepository? noteRepository,
+  ShellWorkspaceRepository? workspaceRepository,
 }) {
   final taskRepository = repository ?? EmptyLifeOsTaskRepository();
   final notes = noteRepository ?? EmptyLifeOsNoteRepository();
+  final workspaces = workspaceRepository ?? ShellWorkspaceRepository();
+  final workspaceContext = EmptyWorkspaceContextReader();
 
   return ProviderScope(
     overrides: [
@@ -617,6 +716,18 @@ Widget testApp(
       searchLifeOsTasksProvider.overrideWithValue(
         SearchLifeOsTasks(taskRepository),
       ),
+      getLifeOsWorkspacesProvider.overrideWithValue(
+        GetLifeOsWorkspaces(workspaces),
+      ),
+      getDeletedLifeOsWorkspacesProvider.overrideWithValue(
+        GetDeletedLifeOsWorkspaces(workspaces),
+      ),
+      getLifeOsWorkspaceMembersProvider.overrideWithValue(
+        GetLifeOsWorkspaceMembers(workspaceContext),
+      ),
+      getUnassignedLifeOsWorkspaceMembersProvider.overrideWithValue(
+        GetUnassignedLifeOsWorkspaceMembers(workspaceContext),
+      ),
     ],
     child: MaterialApp(
       locale: locale,
@@ -625,6 +736,42 @@ Widget testApp(
       home: const LifeosShellPage(),
     ),
   );
+}
+
+class ShellWorkspaceRepository implements LifeOsWorkspaceRepository {
+  ShellWorkspaceRepository([Iterable<LifeOsWorkspace> values = const []])
+    : values = List.of(values);
+
+  final List<LifeOsWorkspace> values;
+
+  @override
+  Future<List<LifeOsWorkspace>> getAll() async => List.of(values);
+
+  @override
+  Future<LifeOsWorkspace?> getById(LifeOsEntityId id) async =>
+      values.where((workspace) => workspace.id == id).firstOrNull;
+
+  @override
+  Future<List<LifeOsWorkspace>> getByLifecycle(
+    LifeOsEntityLifecycle lifecycle,
+  ) async =>
+      values.where((workspace) => workspace.lifecycle == lifecycle).toList();
+
+  @override
+  Future<void> save(LifeOsWorkspace workspace) async {
+    values.removeWhere((item) => item.id == workspace.id);
+    values.add(workspace);
+  }
+}
+
+class EmptyWorkspaceContextReader implements LifeOsWorkspaceContextReader {
+  @override
+  Future<List<LifeOsWorkspaceMember>> getDirectMembers(
+    LifeOsEntityId workspaceId,
+  ) async => const [];
+
+  @override
+  Future<List<LifeOsWorkspaceMember>> getUnassigned() async => const [];
 }
 
 class EmptyLifeOsNoteRepository implements LifeOsNoteRepository {
