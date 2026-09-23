@@ -1,12 +1,11 @@
 # Workspace Vertical Slice
 
-Статус плана: active
+Статус плана: completed
 
-Текущий checkpoint: WS-08 — Integration + final audit (pending)
+Текущий checkpoint: отсутствует; milestone completed
 
-Точная точка возобновления: начать WS-08 с повторной сверки Git, всех ADR
-milestone, готового context-centric shell, Workspace/Unassigned Presentation,
-schema v4 и Backup v4. WS-08 ещё не начат.
+Точная точка возобновления: отсутствует. Workspace Vertical Slice завершён;
+следующий milestone должен начинаться только отдельным execution plan.
 
 ## Goal
 
@@ -1080,7 +1079,7 @@ Validation:
 
 ## WS-08 — Integration + final audit
 
-Статус: pending
+Статус: done
 
 ### Goal
 
@@ -1130,11 +1129,43 @@ compatibility loss, data-loss risk или requirement beyond ADR-0034.
 
 ### Result / evidence
 
-Pending.
+- Final audit подтвердил Domain contracts Workspace и Membership, soft lifecycle,
+  immutable endpoints, zero-to-many membership и отсутствие Workspace/Membership
+  Relationship endpoints.
+- Production schema осталась v4; sequential v1 -> v2 -> v3 -> v4 migration,
+  frozen schemas v1-v4, `foreign_key_check` и `quick_check` подтверждены
+  migration tests. Schema v5 artifacts отсутствуют.
+- Workspace/Membership repositories и specialised quick-create store сохраняют
+  Entity, typed state и full-snapshot Outbox atomically. Focused rollback tests
+  покрывают typed-row, Membership и оба Outbox failure points.
+- Direct context ограничен active Workspace/Membership/Task/Note и имеет
+  deterministic order; Unassigned исключает только effective active
+  membership в active Workspace. Graph traversal и synthetic Workspace нет.
+- Production writer использует Backup/Export v4; reader поддерживает v1-v4
+  и отклоняет future formats. Restore validates before one atomic transaction,
+  сохраняет `device_id`, очищает Outbox и восстанавливает exact
+  Workspace/Membership state без synthetic backfill.
+- Final shell имеет ровно Home, Workspaces, Tasks, Notes, Search и Settings;
+  context-centric Home, static Workspaces destination, IndexedStack state и existing
+  Flutter SDK navigation сохранены. Workspace, Trash, Unassigned, mixed members,
+  quick-create, attach/detach/reattach и Restore покрыты widget tests на
+  1280x800 и 640x600.
+- Focused validation: Workspace Domain/Application/persistence/atomicity 43 PASS;
+  migration/Backup 44 PASS; Workspace/shell/Unassigned и regression Presentation 113 PASS;
+  Task/Note/Relationship/Search/composition regression 65 PASS.
+- `flutter gen-l10n` PASS; EN/RU ARB parity 167/167; `flutter analyze` PASS;
+  full `flutter test --reporter compact` PASS (329 tests); import, routing,
+  dependency, schema, generated-file и temporary-artifact scans PASS; `git diff --check` PASS.
+- Production Dart в WS-08 не менялся: audit не обнаружил correctness defect,
+  требующий fix или новое architecture decision.
+
+Deferred scope после milestone: Unified Local Search, Knowledge Graph Foundation #2,
+AI Foundation, Context-aware AI, Workspace hierarchy, Workspace semantic
+relationship expansion, system tray, notifications/reminders/time model и spellcheck.
 
 ### Blocker
 
-Отсутствует до architecture gate.
+Отсутствует; final audit завершён без architecture blocker.
 
 ## Run grouping / token optimization
 
@@ -1186,7 +1217,5 @@ rollback и layer-boundary regressions локализуемыми и снижа�
 
 ## Exact resume point
 
-WS-06 завершён. Возобновить с WS-07 — Context-centric shell + Unassigned. Перед
-implementation отметить WS-07 active, перечитать ADR-0022, ADR-0027 и ADR-0034,
-сверить HEAD/Git, готовую Workspace Presentation и текущие shell/Home contracts.
-WS-08 не начинать.
+Resume point отсутствует: WS-01…WS-08 done, Workspace Vertical Slice completed.
+Не начинать следующий milestone без нового accepted execution plan.
