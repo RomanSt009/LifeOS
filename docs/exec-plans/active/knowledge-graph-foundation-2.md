@@ -1,11 +1,12 @@
 # Knowledge Graph Foundation #2
 
-Статус: investigation complete; implementation not started
+Статус: implementation active
 
 Тип: docs-only architecture investigation и proposed execution plan
 
-Точка возобновления: начать KG-01 только после явного подтверждения
-пользователя. Production implementation в investigation run не начиналась.
+Точка возобновления: KG-02 — Drift direct-neighbor reader and composition.
+Перед implementation отметить KG-02 active и повторно сверить Git, schema v4,
+Relationship indexes и готовый KG-01 Application contract.
 
 ## Goal
 
@@ -355,7 +356,7 @@ Deferred:
 
 ### KG-01 — Direct-neighbor Application contract
 
-Status: pending
+Status: done
 
 Goal: ввести specialised immutable related-entity projection, read-only port и
 bounded use case.
@@ -371,6 +372,35 @@ Validation: Application tests, import-boundary scan, `flutter analyze`, `git dif
 
 Architecture gate: stop, если projection требует generic Entity/Graph abstraction
 или новую lifecycle semantics.
+
+Result / evidence:
+
+- Добавлен sealed Application read model `LifeOsRelatedNeighbor` с typed variants
+  `LifeOsRelatedTaskNeighbor` и `LifeOsRelatedNoteNeighbor`. Каждый item сохраняет
+  `sourceId`, full `LifeOsRelationship`, resolved typed Task/Note и derived target
+  `entityId`; `dynamic`, maps и generic Entity bag не используются.
+- Projection constructor защищает Task/Note-only nodes, active Relationship,
+  active neighbor, kind `related` и exact opposite-endpoint provenance. Domain не
+  изменён.
+- Application-facing `LifeOsRelatedEntityReader.getDirectNeighbors` принимает
+  required typed `sourceId` и required positive `limit`. Contract возвращает
+  at most `limit` items в порядке Relationship `updatedAt DESC`, затем
+  Relationship ID `ASC`; optional unbounded API нет.
+- `GetDirectLifeOsRelatedNeighbors` следует callable Application convention,
+  валидирует source type/limit до port и делегирует read без sorting,
+  caching, joins, ranking, traversal или mutation.
+- Typed `LifeOsRelatedEntityQueryException` различает
+  `unsupportedSourceType`, `invalidLimit`, `sourceNotFound` и `sourceInactive`.
+  Invalid type/limit отклоняются use case до reader; KG-02 implementation
+  обязана явно бросать missing/inactive source, а не возвращать
+  silent empty list.
+- Workspace/Membership, navigation, Presentation, Infrastructure, schema, Backup,
+  Outbox, dependencies и Relationship kinds не изменялись. KG-02 остаётся
+  pending; Drift adapter/composition не начинались.
+- Focused KG-01 suite: 7 tests PASS. Existing Relationship Domain/Application
+  regression: 9 tests PASS. `dart format` PASS; `flutter analyze` PASS
+  (`No issues found`). Application import-boundary, schema/Backup/dependency guards
+  и `git diff --check` PASS.
 
 ### KG-02 — Drift direct-neighbor reader and composition
 
