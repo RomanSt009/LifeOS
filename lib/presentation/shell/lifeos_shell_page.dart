@@ -15,10 +15,10 @@ class LifeosShellPage extends StatefulWidget {
   const LifeosShellPage({super.key});
 
   @override
-  State<LifeosShellPage> createState() => _LifeosShellPageState();
+  State<LifeosShellPage> createState() => LifeosShellPageState();
 }
 
-class _LifeosShellPageState extends State<LifeosShellPage> {
+class LifeosShellPageState extends State<LifeosShellPage> {
   LifeOsDestination _selectedDestination = LifeOsDestination.home;
   LifeOsFeatureCommand? _featureCommand;
   int _nextFeatureCommandId = 0;
@@ -39,6 +39,26 @@ class _LifeosShellPageState extends State<LifeosShellPage> {
         type: type,
         workspaceId: workspaceId,
       );
+    });
+  }
+
+  void openTask(LifeOsEntityId taskId) {
+    final nextId = _nextFeatureCommandId + 1;
+    final command = LifeOsFeatureCommand.openTask(id: nextId, taskId: taskId);
+    setState(() {
+      _selectedDestination = LifeOsDestination.tasks;
+      _nextFeatureCommandId = nextId;
+      _featureCommand = command;
+    });
+  }
+
+  void openNote(LifeOsEntityId noteId) {
+    final nextId = _nextFeatureCommandId + 1;
+    final command = LifeOsFeatureCommand.openNote(id: nextId, noteId: noteId);
+    setState(() {
+      _selectedDestination = LifeOsDestination.notes;
+      _nextFeatureCommandId = nextId;
+      _featureCommand = command;
     });
   }
 

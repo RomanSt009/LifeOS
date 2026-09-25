@@ -676,6 +676,280 @@ void main() {
       isNotNull,
     );
   });
+
+  testWidgets(
+    'typed openTask selects an active target, reveals it, and consumes once',
+    (tester) async {
+      final openTask = LifeOsTask.createUserTask(
+        id: const LifeOsEntityId(
+          value: 'task-open',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Open Task',
+        timestamp: DateTime.utc(2026, 9, 10),
+      );
+      final completedTask = LifeOsTask.createUserTask(
+        id: const LifeOsEntityId(
+          value: 'task-completed',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Completed Target',
+        timestamp: DateTime.utc(2026, 9, 10),
+      ).toggleCompletion(updatedAt: DateTime.utc(2026, 9, 25, 1));
+      final deletedTask = LifeOsTask.createUserTask(
+        id: const LifeOsEntityId(
+          value: 'task-deleted',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Deleted Target',
+        timestamp: DateTime.utc(2026, 9, 10),
+      ).delete(updatedAt: DateTime.utc(2026, 9, 10, 1));
+      final archivedTask = LifeOsTask.createUserTask(
+        id: const LifeOsEntityId(
+          value: 'task-archived',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Archived Target',
+        timestamp: DateTime.utc(2026, 9, 10),
+      ).archive(updatedAt: DateTime.utc(2026, 9, 10, 1));
+      final shellKey = GlobalKey<LifeosShellPageState>();
+      final repository = EmptyLifeOsTaskRepository(
+        tasks: [openTask, completedTask, deletedTask, archivedTask],
+      );
+      await tester.pumpWidget(
+        testApp(const Locale('en'), repository: repository, shellKey: shellKey),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('navigation-tasks-label')));
+      await tester.pumpAndSettle();
+      final filter = tester.widget<SegmentedButton<TaskCompletionFilter>>(
+        find.byKey(const Key('task-completion-filter')),
+      );
+      filter.onSelectionChanged!({TaskCompletionFilter.open});
+      await tester.pumpAndSettle();
+      expect(find.text('Completed Target'), findsNothing);
+
+      shellKey.currentState!.openTask(completedTask.id);
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widget<NavigationRail>(find.byType(NavigationRail))
+            .selectedIndex,
+        LifeOsDestination.tasks.index,
+      );
+      expect(find.text('Completed Target'), findsOneWidget);
+      expect(
+        tester
+            .widget<ExpansionTile>(
+              find.byKey(const ValueKey('task-task-completed')),
+            )
+            .collapsedBackgroundColor,
+        isNotNull,
+      );
+      expect(
+        tester
+            .widget<SegmentedButton<TaskCompletionFilter>>(
+              find.byKey(const Key('task-completion-filter')),
+            )
+            .selected,
+        {TaskCompletionFilter.all},
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('navigation-home-label')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('navigation-tasks-label')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<ExpansionTile>(
+              find.byKey(const ValueKey('task-task-completed')),
+            )
+            .collapsedBackgroundColor,
+        isNull,
+      );
+
+      shellKey.currentState!.openTask(deletedTask.id);
+      await tester.pumpAndSettle();
+      expect(find.text('Deleted Target'), findsNothing);
+      expect(tester.takeException(), isNull);
+
+      shellKey.currentState!.openTask(archivedTask.id);
+      await tester.pumpAndSettle();
+      expect(find.text('Archived Target'), findsNothing);
+      expect(tester.takeException(), isNull);
+
+      shellKey.currentState!.openTask(
+        const LifeOsEntityId(
+          value: 'task-missing',
+          entityType: LifeOsEntityType.task,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'typed openNote preserves dirty drafts through Save, Discard, and Cancel',
+    (tester) async {
+      final first = LifeOsNote.createUserNote(
+        id: const LifeOsEntityId(
+          value: 'note-first',
+          entityType: LifeOsEntityType.note,
+        ),
+        title: 'First Note',
+        content: 'First body',
+        timestamp: DateTime.utc(2026, 9, 10),
+      );
+      final second = LifeOsNote.createUserNote(
+        id: const LifeOsEntityId(
+          value: 'note-second',
+          entityType: LifeOsEntityType.note,
+        ),
+        title: 'Second Note',
+        content: 'Second body',
+        timestamp: DateTime.utc(2026, 9, 10),
+      );
+      final deleted = LifeOsNote.createUserNote(
+        id: const LifeOsEntityId(
+          value: 'note-deleted',
+          entityType: LifeOsEntityType.note,
+        ),
+        title: 'Deleted Note',
+        content: 'Deleted body',
+        timestamp: DateTime.utc(2026, 9, 10),
+      ).delete(updatedAt: DateTime.utc(2026, 9, 10, 1));
+      final archived = LifeOsNote.createUserNote(
+        id: const LifeOsEntityId(
+          value: 'note-archived',
+          entityType: LifeOsEntityType.note,
+        ),
+        title: 'Archived Note',
+        content: 'Archived body',
+        timestamp: DateTime.utc(2026, 9, 10),
+      ).archive(updatedAt: DateTime.utc(2026, 9, 10, 1));
+      final notes = EmptyLifeOsNoteRepository([
+        first,
+        second,
+        deleted,
+        archived,
+      ]);
+      final shellKey = GlobalKey<LifeosShellPageState>();
+      await tester.pumpWidget(
+        testApp(const Locale('en'), noteRepository: notes, shellKey: shellKey),
+      );
+      await tester.pumpAndSettle();
+
+      shellKey.currentState!.openNote(first.id);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('note-title-field')))
+            .controller
+            ?.text,
+        'First Note',
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('note-content-field')),
+        'Protected draft',
+      );
+      shellKey.currentState!.openNote(second.id);
+      await tester.pumpAndSettle();
+      expect(find.text('Save changes to this Note?'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('note-content-field')))
+            .controller
+            ?.text,
+        'Protected draft',
+      );
+      await tester.tap(find.byKey(const Key('navigation-home-label')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('navigation-notes-label')));
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('note-content-field')))
+            .controller
+            ?.text,
+        'Protected draft',
+      );
+
+      shellKey.currentState!.openNote(second.id);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Discard'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('note-title-field')))
+            .controller
+            ?.text,
+        'Second Note',
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('note-content-field')),
+        'Saved second body',
+      );
+      shellKey.currentState!.openNote(first.id);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('unsaved-note-save')));
+      await tester.pumpAndSettle();
+      expect(
+        notes.notes.singleWhere((note) => note.id == second.id).content,
+        'Saved second body',
+      );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('note-title-field')))
+            .controller
+            ?.text,
+        'First Note',
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('note-content-field')),
+        'Still protected',
+      );
+      shellKey.currentState!.openNote(deleted.id);
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('note-content-field')))
+            .controller
+            ?.text,
+        'Still protected',
+      );
+      shellKey.currentState!.openNote(archived.id);
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('note-content-field')))
+            .controller
+            ?.text,
+        'Still protected',
+      );
+      shellKey.currentState!.openNote(
+        const LifeOsEntityId(
+          value: 'note-missing',
+          entityType: LifeOsEntityType.note,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 List<String> destinationLabels(NavigationRail navigationRail) {
@@ -690,6 +964,7 @@ Widget testApp(
   EmptyLifeOsTaskRepository? repository,
   EmptyLifeOsNoteRepository? noteRepository,
   ShellWorkspaceRepository? workspaceRepository,
+  GlobalKey<LifeosShellPageState>? shellKey,
 }) {
   final taskRepository = repository ?? EmptyLifeOsTaskRepository();
   final notes = noteRepository ?? EmptyLifeOsNoteRepository();
@@ -733,7 +1008,7 @@ Widget testApp(
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const LifeosShellPage(),
+      home: LifeosShellPage(key: shellKey),
     ),
   );
 }
@@ -775,6 +1050,10 @@ class EmptyWorkspaceContextReader implements LifeOsWorkspaceContextReader {
 }
 
 class EmptyLifeOsNoteRepository implements LifeOsNoteRepository {
+  EmptyLifeOsNoteRepository([Iterable<LifeOsNote> values = const []]) {
+    notes.addAll(values);
+  }
+
   final List<LifeOsNote> notes = [];
 
   @override

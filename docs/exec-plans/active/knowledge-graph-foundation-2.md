@@ -4,9 +4,9 @@
 
 Тип: docs-only architecture investigation и proposed execution plan
 
-Точка возобновления: KG-03 — typed related-entity navigation.
-Перед implementation отметить KG-03 active и повторно сверить Git, shell-local
-navigation contract, Task selection и Note dirty-draft guard.
+Точка возобновления: KG-04 — Related UI over Application projection.
+Перед implementation отметить KG-04 active и повторно сверить Git,
+KG-02 reader/composition, KG-03 typed navigation и `RelatedEntitiesSection`.
 
 ## Goal
 
@@ -463,7 +463,7 @@ Result / evidence:
 
 ### KG-03 — Typed cross-feature entity navigation
 
-Status: pending
+Status: done
 
 Goal: расширить existing shell-local `LifeOsFeatureCommand` для open-existing
 Task/Note без router.
@@ -479,6 +479,29 @@ Validation: Task -> Note, Note -> Task, same-feature open, dirty Note flows, mis
 IndexedStack state, keyboard navigation.
 
 Architecture gate: stop if reliable selection requires a new routing architecture.
+
+Result / evidence:
+
+- Existing shell-local one-shot command contract расширен typed
+  `openTask`/`openNote` payload с `LifeOsEntityId`; runtime validation не
+  позволяет передать ID другого Entity type. Router, deep links,
+  history и global navigation state не добавлялись.
+- Shell переключает existing `IndexedStack` destination и передаёт
+  tokenized command. Task Presentation открывает active target,
+  показывает completed Task через existing `all` filter, сбрасывает
+  invalid selection для missing/archived/deleted target и не replay-ит
+  consumed command.
+- Note Presentation открывает active target и переиспользует
+  existing Save/Discard/Cancel dirty-draft guard. Cancel сохраняет
+  draft и не replay-ит command; missing/archived/deleted target не
+  разрушает текущий draft. Existing focus behavior сохранёно.
+- Focused command/shell suite: 21 tests PASS; broader KG-03 Presentation
+  regression suite: 43 tests PASS; full suite: 351 tests PASS. `flutter analyze`:
+  PASS (`No issues found`); `dart format` и `git diff --check`: PASS.
+- Domain, Application -> Infrastructure и Presentation -> Infrastructure import
+  scans: 0 forbidden imports; routing dependency scan: 0. `schemaVersion == 4`;
+  persistence, Backup, ADR, dependencies, localization resources и generated files
+  не изменялись. Новый ADR не требуется.
 
 ### KG-04 — Related UI over Application projection
 

@@ -61,6 +61,8 @@ class _WorkspacePageState extends ConsumerState<WorkspacePage> {
         });
       case LifeOsFeatureCommandType.newTask:
       case LifeOsFeatureCommandType.newNote:
+      case LifeOsFeatureCommandType.openTask:
+      case LifeOsFeatureCommandType.openNote:
         break;
     }
   }

@@ -35,25 +35,59 @@ class _TaskListState extends ConsumerState<TaskList> {
   final _completionMutations = <LifeOsEntityId>{};
   LifeOsEntityId? _completionFailedTaskId;
   LifeOsEntityId? _selectedTaskId;
+  int? _latestFeatureCommandId;
 
   @override
   void didUpdateWidget(covariant TaskList oldWidget) {
     super.didUpdateWidget(oldWidget);
     final command = widget.featureCommand;
     if (command == null || command.id == oldWidget.featureCommand?.id) return;
-    if (command.type == LifeOsFeatureCommandType.newTask) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || widget.featureCommand?.id != command.id) return;
-        widget.onFeatureCommandHandled?.call(command.id);
-        setState(() {
-          _showTrash = false;
-          _selectedTaskId = null;
-          _restoreFailed = false;
-          _completionFailedTaskId = null;
+    _latestFeatureCommandId = command.id;
+    switch (command.type) {
+      case LifeOsFeatureCommandType.newTask:
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || widget.featureCommand?.id != command.id) return;
+          widget.onFeatureCommandHandled?.call(command.id);
+          setState(() {
+            _showTrash = false;
+            _selectedTaskId = null;
+            _restoreFailed = false;
+            _completionFailedTaskId = null;
+          });
+          _focusCreation();
         });
-        _focusCreation();
-      });
+      case LifeOsFeatureCommandType.openTask:
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _latestFeatureCommandId != command.id) return;
+          _openTaskFromShell(command);
+        });
+      case LifeOsFeatureCommandType.newNote:
+      case LifeOsFeatureCommandType.openNote:
+      case LifeOsFeatureCommandType.newWorkspace:
+      case LifeOsFeatureCommandType.openWorkspace:
+      case LifeOsFeatureCommandType.openUnassigned:
+        break;
     }
+  }
+
+  Future<void> _openTaskFromShell(LifeOsFeatureCommand command) async {
+    widget.onFeatureCommandHandled?.call(command.id);
+    LifeOsTask? target;
+    try {
+      final tasks = await ref.read(taskListControllerProvider.future);
+      target = tasks.where((task) => task.id == command.entityId).firstOrNull;
+    } catch (_) {
+      target = null;
+    }
+    if (!mounted || _latestFeatureCommandId != command.id) return;
+    setState(() {
+      _showTrash = false;
+      _completionFilter = TaskCompletionFilter.all;
+      _selectedTaskId = target?.id;
+      _restoreFailed = false;
+      _completionFailedTaskId = null;
+    });
+    _featureFocusNode.requestFocus();
   }
 
   @override

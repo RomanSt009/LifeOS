@@ -43,6 +43,7 @@ class _NotePageState extends ConsumerState<NotePage> {
   bool _isReplacingDraft = false;
   bool _showSavedFeedback = false;
   _NoteEditorError? _error;
+  int? _latestFeatureCommandId;
 
   LifeOsEntityId? get _selectedId => _persistedDraft.id;
 
@@ -110,13 +111,56 @@ class _NotePageState extends ConsumerState<NotePage> {
     super.didUpdateWidget(oldWidget);
     final command = widget.featureCommand;
     if (command == null || command.id == oldWidget.featureCommand?.id) return;
-    if (command.type == LifeOsFeatureCommandType.newNote) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || widget.featureCommand?.id != command.id) return;
-        widget.onFeatureCommandHandled?.call(command.id);
-        _startNewFromShell();
+    _latestFeatureCommandId = command.id;
+    switch (command.type) {
+      case LifeOsFeatureCommandType.newNote:
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _latestFeatureCommandId != command.id) return;
+          widget.onFeatureCommandHandled?.call(command.id);
+          _startNewFromShell();
+        });
+      case LifeOsFeatureCommandType.openNote:
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _latestFeatureCommandId != command.id) return;
+          _openNoteFromShell(command);
+        });
+      case LifeOsFeatureCommandType.newTask:
+      case LifeOsFeatureCommandType.openTask:
+      case LifeOsFeatureCommandType.newWorkspace:
+      case LifeOsFeatureCommandType.openWorkspace:
+      case LifeOsFeatureCommandType.openUnassigned:
+        break;
+    }
+  }
+
+  Future<void> _openNoteFromShell(LifeOsFeatureCommand command) async {
+    widget.onFeatureCommandHandled?.call(command.id);
+    LifeOsNote? target;
+    try {
+      final notes = await ref.read(noteListControllerProvider.future);
+      target = notes.where((note) => note.id == command.entityId).firstOrNull;
+    } catch (_) {
+      target = null;
+    }
+    if (!mounted || _latestFeatureCommandId != command.id || target == null) {
+      return;
+    }
+    if (target.id == _selectedId && !_showTrash) {
+      _requestFocus(_contentFocusNode);
+      return;
+    }
+    if (!await _resolveDirtyDraft() ||
+        !mounted ||
+        _latestFeatureCommandId != command.id) {
+      return;
+    }
+    if (_showTrash) {
+      setState(() {
+        _showTrash = false;
+        _lifecycleFailed = false;
       });
     }
+    _select(target);
   }
 
   @override
