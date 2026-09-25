@@ -7,6 +7,7 @@ import '../application/use_cases/create_lifeos_workspace.dart';
 import '../application/use_cases/edit_lifeos_workspace.dart';
 import '../application/use_cases/get_lifeos_workspace_context.dart';
 import '../application/use_cases/get_lifeos_workspaces.dart';
+import '../application/use_cases/get_direct_lifeos_related_neighbors.dart';
 import '../application/use_cases/lifeos_workspace_lifecycle.dart';
 import '../application/use_cases/lifeos_workspace_membership.dart';
 import '../application/use_cases/edit_lifeos_note.dart';
@@ -20,6 +21,7 @@ import '../application/use_cases/export_lifeos_data.dart';
 import '../application/use_cases/restore_lifeos_backup.dart';
 import '../application/use_cases/search_lifeos_tasks.dart';
 import '../application/backup/lifeos_backup_operations.dart';
+import '../application/relationships/lifeos_related_entity_reader.dart';
 import '../domain/repositories/lifeos_task_repository.dart';
 import '../domain/repositories/lifeos_note_repository.dart';
 import '../domain/repositories/lifeos_relationship_repository.dart';
@@ -36,6 +38,7 @@ import '../infrastructure/persistence/drift/repositories/drift_lifeos_note_repos
 import '../infrastructure/persistence/drift/repositories/drift_lifeos_relationship_repository.dart';
 import '../infrastructure/persistence/drift/repositories/drift_lifeos_workspace_membership_repository.dart';
 import '../infrastructure/persistence/drift/repositories/drift_lifeos_workspace_repository.dart';
+import '../infrastructure/persistence/drift/relationships/drift_lifeos_related_entity_reader.dart';
 import '../infrastructure/persistence/drift/restore/drift_lifeos_backup_restore_store.dart';
 import '../infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_context_reader.dart';
 import '../infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_member_creation_store.dart';
@@ -47,6 +50,7 @@ class LifeOsAppDependencies {
     required this.taskRepository,
     required this.noteRepository,
     required this.relationshipRepository,
+    required this.relatedEntityReader,
     required this.workspaceRepository,
     required this.workspaceMembershipRepository,
     required this.createTask,
@@ -59,6 +63,7 @@ class LifeOsAppDependencies {
     required this.restoreNote,
     required this.createRelationship,
     required this.unlinkRelationship,
+    required this.getDirectRelatedNeighbors,
     required this.searchTasks,
     required this.createWorkspace,
     required this.editWorkspace,
@@ -83,6 +88,7 @@ class LifeOsAppDependencies {
   final LifeOsTaskRepository taskRepository;
   final LifeOsNoteRepository noteRepository;
   final LifeOsRelationshipRepository relationshipRepository;
+  final LifeOsRelatedEntityReader relatedEntityReader;
   final LifeOsWorkspaceRepository workspaceRepository;
   final LifeOsWorkspaceMembershipRepository workspaceMembershipRepository;
   final CreateLifeOsTask createTask;
@@ -95,6 +101,7 @@ class LifeOsAppDependencies {
   final RestoreLifeOsNote restoreNote;
   final CreateLifeOsRelationship createRelationship;
   final UnlinkLifeOsRelationship unlinkRelationship;
+  final GetDirectLifeOsRelatedNeighbors getDirectRelatedNeighbors;
   final SearchLifeOsTasks searchTasks;
   final CreateLifeOsWorkspace createWorkspace;
   final EditLifeOsWorkspace editWorkspace;
@@ -148,6 +155,7 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     identifierGenerator,
     deviceId,
   );
+  final relatedEntityReader = DriftLifeOsRelatedEntityReader(database);
   final workspaceRepository = DriftLifeOsWorkspaceRepository(
     database,
     identifierGenerator,
@@ -210,6 +218,9 @@ Future<LifeOsAppDependencies> createProductionDependencies({
   final unlinkRelationship = UnlinkLifeOsRelationship(
     repository: relationshipRepository,
     utcClock: utcClock,
+  );
+  final getDirectRelatedNeighbors = GetDirectLifeOsRelatedNeighbors(
+    relatedEntityReader,
   );
   final createWorkspace = CreateLifeOsWorkspace(
     repository: workspaceRepository,
@@ -294,6 +305,7 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     taskRepository: taskRepository,
     noteRepository: noteRepository,
     relationshipRepository: relationshipRepository,
+    relatedEntityReader: relatedEntityReader,
     workspaceRepository: workspaceRepository,
     workspaceMembershipRepository: workspaceMembershipRepository,
     createTask: createTask,
@@ -306,6 +318,7 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     restoreNote: restoreNote,
     createRelationship: createRelationship,
     unlinkRelationship: unlinkRelationship,
+    getDirectRelatedNeighbors: getDirectRelatedNeighbors,
     searchTasks: searchTasks,
     createWorkspace: createWorkspace,
     editWorkspace: editWorkspace,

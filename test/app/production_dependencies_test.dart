@@ -124,4 +124,48 @@ void main() {
       );
     },
   );
+
+  test(
+    'composes direct related-neighbor reads over the single database',
+    () async {
+      final supportDirectory = await Directory.systemTemp.createTemp(
+        'lifeos-related-reader-composition-',
+      );
+      addTearDown(() => supportDirectory.delete(recursive: true));
+      var infrastructureId = 0;
+      final entityIds = ['task-source', 'note-neighbor', 'relationship-1'];
+      final dependencies = await createProductionDependencies(
+        applicationSupportDirectoryProvider: () async => supportDirectory,
+        identifierGenerator: () => 'infrastructure-${++infrastructureId}',
+        entityIdGenerator: () => entityIds.removeAt(0),
+        utcClock: () => DateTime.utc(2026, 9, 25, 12),
+      );
+      addTearDown(dependencies.close);
+
+      final task = await dependencies.createTask('Source');
+      final note = await dependencies.createNote(
+        title: 'Neighbor',
+        content: '',
+      );
+      final relationship = await dependencies.createRelationship(
+        task.id,
+        note.id,
+      );
+
+      final neighbors = await dependencies.getDirectRelatedNeighbors(
+        sourceId: task.id,
+        limit: 5,
+      );
+
+      expect(neighbors, hasLength(1));
+      expect(neighbors.single.entityId, note.id);
+      expect(neighbors.single.relationship, relationship);
+      expect(
+        await dependencies.database
+            .select(dependencies.database.entities)
+            .get(),
+        hasLength(3),
+      );
+    },
+  );
 }

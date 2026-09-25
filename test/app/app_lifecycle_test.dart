@@ -24,6 +24,7 @@ import 'package:lifeos/application/use_cases/unlink_lifeos_relationship.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_workspace.dart';
 import 'package:lifeos/application/use_cases/get_lifeos_workspace_context.dart';
 import 'package:lifeos/application/use_cases/get_lifeos_workspaces.dart';
+import 'package:lifeos/application/use_cases/get_direct_lifeos_related_neighbors.dart';
 import 'package:lifeos/application/use_cases/lifeos_workspace_lifecycle.dart';
 import 'package:lifeos/application/use_cases/lifeos_workspace_membership.dart';
 import 'package:lifeos/infrastructure/backup/files/lifeos_backup_file_reader.dart';
@@ -34,6 +35,7 @@ import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeo
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_relationship_repository.dart';
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_workspace_membership_repository.dart';
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_workspace_repository.dart';
+import 'package:lifeos/infrastructure/persistence/drift/relationships/drift_lifeos_related_entity_reader.dart';
 import 'package:lifeos/infrastructure/persistence/drift/restore/drift_lifeos_backup_restore_store.dart';
 import 'package:lifeos/infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_context_reader.dart';
 import 'package:lifeos/infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_member_creation_store.dart';
@@ -103,6 +105,7 @@ LifeOsAppDependencies _createTestDependencies(LifeOsDatabase database) {
     () => 'relationship-change',
     'device-test',
   );
+  final relatedEntityReader = DriftLifeOsRelatedEntityReader(database);
   final workspaceRepository = DriftLifeOsWorkspaceRepository(
     database,
     () => 'workspace-change',
@@ -126,6 +129,7 @@ LifeOsAppDependencies _createTestDependencies(LifeOsDatabase database) {
     taskRepository: taskRepository,
     noteRepository: noteRepository,
     relationshipRepository: relationshipRepository,
+    relatedEntityReader: relatedEntityReader,
     workspaceRepository: workspaceRepository,
     workspaceMembershipRepository: membershipRepository,
     createTask: CreateLifeOsTask(
@@ -157,6 +161,9 @@ LifeOsAppDependencies _createTestDependencies(LifeOsDatabase database) {
     unlinkRelationship: UnlinkLifeOsRelationship(
       repository: relationshipRepository,
       utcClock: clock,
+    ),
+    getDirectRelatedNeighbors: GetDirectLifeOsRelatedNeighbors(
+      relatedEntityReader,
     ),
     searchTasks: SearchLifeOsTasks(taskRepository),
     createWorkspace: CreateLifeOsWorkspace(

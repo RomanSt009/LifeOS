@@ -4,9 +4,9 @@
 
 Тип: docs-only architecture investigation и proposed execution plan
 
-Точка возобновления: KG-02 — Drift direct-neighbor reader and composition.
-Перед implementation отметить KG-02 active и повторно сверить Git, schema v4,
-Relationship indexes и готовый KG-01 Application contract.
+Точка возобновления: KG-03 — typed related-entity navigation.
+Перед implementation отметить KG-03 active и повторно сверить Git, shell-local
+navigation contract, Task selection и Note dirty-draft guard.
 
 ## Goal
 
@@ -404,7 +404,7 @@ Result / evidence:
 
 ### KG-02 — Drift direct-neighbor reader and composition
 
-Status: pending
+Status: done
 
 Goal: реализовать port bounded joined query на schema v4 и wire его к
 single production DB.
@@ -420,6 +420,46 @@ deterministic order, limit, no duplicates, large bounded fixture, read-only/Outb
 
 Architecture gate: stop before schema v5/new index if existing indexes are demonstrably
 insufficient and the durable fix is not unambiguous.
+
+Result / evidence:
+
+- Добавлен `DriftLifeOsRelatedEntityReader`, реализующий KG-01 Application port
+  поверх единственной `LifeOsDatabase`. Source Task/Note проверяется отдельным
+  bounded joined read: missing даёт `sourceNotFound`, archived/deleted —
+  `sourceInactive`, unsupported typed ID — `unsupportedSourceType`; persisted
+  type/typed-row corruption не маскируется empty result.
+- Direct-neighbor read — один Drift join workflow: Relationship Entity, обе
+  endpoint Entity и aliases обеих Task/Note typed tables. Predicate учитывает
+  обе canonical sides, фильтрует active Relationship и active endpoints,
+  сохраняет `related` provenance, сортирует SQL-side по Relationship
+  `updatedAt DESC`, затем ID `ASC`, и применяет required `LIMIT` до hydration.
+  Per-edge reads/await отсутствуют; mapper-ы `LifeOsRelationshipMapper`,
+  `LifeOsTaskMapper` и `LifeOsNoteMapper` переиспользованы без дублирования.
+- Corrupted active neighbor с отсутствующей typed row вызывает
+  `LifeOsRelatedEntityPersistenceException`; incompatible endpoint type проходит
+  в существующий typed Relationship mapping failure, а не silently исключается.
+- Focused reader matrix покрывает Task/Note source, missing/archived/deleted/
+  unsupported source, обе canonical sides, Task↔Task, Task↔Note, Note↔Task,
+  Note↔Note, inactive/unlinked/restored state, deterministic tie order, limits,
+  отсутствие duplicates, 80-edge bounded fixture, corruption и read-only
+  repeated reads. Entity/Task/Note/Relationship/Outbox counts остаются неизменными.
+- `EXPLAIN QUERY PLAN` для dual-endpoint lookup фактически возвращает
+  `MULTI-INDEX OR`, использует composite unique index по `first_entity_id` и
+  `relationships_second_entity_id_idx`, без `SCAN relationships`. Schema v4
+  достаточна; новый index/schema v5 не требуются.
+- Production composition создаёт reader и `GetDirectLifeOsRelatedNeighbors` на
+  уже открытой single database instance и exposes Application abstraction/use
+  case. Дополнительный database lifecycle и Presentation wiring не добавлены.
+- Focused KG-02 + KG-01 + production composition: 19 tests PASS. Relationship/
+  Task/Note/Workspace/Membership persistence и migration/schema regression:
+  66 tests PASS. Full suite: 346 tests PASS. `flutter analyze`: PASS,
+  `git diff --check`: PASS.
+- Import guards: Domain — 0 forbidden imports; Application -> Infrastructure —
+  0; Presentation -> Infrastructure — 0. `schemaVersion == 4`, frozen/generated
+  schema files, Backup v4 writer, Search, Outbox contracts, `pubspec.yaml` и
+  `pubspec.lock` не изменены. Workspace/Membership не участвуют в graph query.
+- KG-03 остаётся pending и не начинался. Unrelated user/IDE-owned
+  `.obsidian/workspace.json` сохранён без изменений со стороны checkpoint.
 
 ### KG-03 — Typed cross-feature entity navigation
 
