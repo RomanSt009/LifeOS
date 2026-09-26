@@ -1,12 +1,11 @@
 # Knowledge Graph Foundation #2
 
-Статус: implementation active
+Статус: completed
 
-Тип: docs-only architecture investigation и proposed execution plan
+Тип: completed architecture investigation и implementation execution plan
 
-Точка возобновления: KG-06 — Integration and final audit.
-Перед audit отметить KG-06 active и повторно сверить Git, KG-01…KG-05,
-Related UI/navigation, Workspace/Search boundaries, Backup v4 и schema v4 guards.
+Точка возобновления: отсутствует; milestone закрыт. Следующий roadmap handoff —
+Unified Local Search, но его execution plan и реализация здесь не начинались.
 
 ## Goal
 
@@ -608,7 +607,7 @@ Result / evidence:
 
 ### KG-06 — Integration and final audit
 
-Status: pending
+Status: done
 
 Goal: подтвердить complete bounded one-hop vertical slice и absence of scope creep.
 
@@ -622,6 +621,63 @@ Validation: focused matrix, `flutter analyze`, full `flutter test`, localization
 routing/dependency/schema/Backup guards, `git diff --check`, exact Git state.
 
 Architecture gate: unresolved durable decision leaves KG-06 blocked and milestone active.
+
+Result / evidence:
+
+- Final semantics соответствуют ADR-0032/0033/0034: semantic nodes — Task и Note;
+  единственный undirected canonical edge — `LifeOsRelationship` kind `related`;
+  ordinary projection — active-source/edge/target, bounded deterministic one hop.
+  Workspace/Membership, directionality, traversal >1 hop и ranking не добавлены.
+- Application contract остаётся specialised и read-only: typed Task/Note variants
+  сохраняют source ID, safe target ID и full Relationship provenance; reader требует
+  explicit positive limit; use case только валидирует type/limit и делегирует.
+  Missing/inactive/unsupported source и invalid limit имеют typed errors.
+- Drift adapter выполняет один joined adjacency query для обеих canonical sides,
+  фильтрует active Relationship/targets SQL-side, hydrates typed Task/Note,
+  сортирует по Relationship `updatedAt DESC`, затем ID `ASC`, применяет SQL `LIMIT`
+  и не скрывает corruption. Per-row reads и N+1 отсутствуют.
+- Query-plan regression подтверждает `MULTI-INDEX OR`, composite first-endpoint
+  index и `relationships_second_entity_id_idx`, без `SCAN relationships`.
+  Schema v4 достаточна; indexes, migrations и generated Drift не менялись.
+- Repeated graph reads и typed navigation read-only: Entity/Task/Note/Relationship/
+  Workspace/Membership/Outbox state, versions и timestamps не изменяются.
+- `RelatedEntitiesSection` использует `GetDirectLifeOsRelatedNeighbors` с limit 20,
+  отображает hydrated projection и Relationship provenance, поддерживает loading/
+  empty/error/retry и не собирает ordinary rows из полных Task/Note lists.
+- Shell-local one-shot `openTask`/`openNote` commands consumed once в existing
+  `IndexedStack`; missing/inactive targets recover safely. Dirty Note Save/Discard/
+  Cancel защищает Note→Note и Note→Task navigation без draft loss или replay.
+- Existing create/unlink semantics сохранены: Task↔Task, Task↔Note и Note↔Note,
+  canonical duplicate protection, CREATE/UPDATE Outbox, soft delete, immutable
+  endpoints и отсутствие Task/Note cascade mutation.
+- Lifecycle projection скрывает deleted Relationship и archived/deleted target;
+  Restore/Unarchive возвращает тот же edge. Inactive source отклоняется typed error.
+- Relationship и WorkspaceMembership остаются независимыми. Relationships не
+  расширяют direct Workspace context и Unassigned, attach/detach не меняют edge,
+  unlink не меняет memberships; multi-Workspace membership semantics сохранены.
+- Search остаётся local, global, read-only, Task-only literal substring search с
+  deterministic order и wildcard escaping; graph не добавляет Notes/related results,
+  ranking или Workspace scope.
+- Backup writer остаётся v4. Existing v1–v4 compatibility, Relationship/Workspace/
+  Membership round-trip, atomic Restore, empty Outbox, preserved device ID и reopen
+  подтверждены; adjacency cache/navigation state и Backup v5 отсутствуют.
+- Responsive/accessibility matrix подтверждает several/long neighbor rows, scrolling,
+  open/unlink affordances и отсутствие overflow на 1280x800 и 640x600. Standard
+  actionable rows keyboard-accessible; Task/Note/open/unlink semantics локализованы.
+- EN/RU parity и generated localization подтверждены existing tests. Localization
+  sources не менялись, поэтому `flutter gen-l10n` повторно не запускался.
+- Production composition использует один `LifeOsDatabase`; reader/repositories/
+  Application use case получают тот же instance. Presentation получает Application
+  abstraction; duplicate DB lifecycle и Infrastructure leakage отсутствуют.
+- Architecture/dependency guards: Domain forbidden imports — 0; Application ->
+  Infrastructure — 0; Presentation -> Infrastructure — 0; routing dependencies — 0;
+  generic `GraphRepository`/`EntityRepository`/`UnitOfWork` — 0. `pubspec.yaml`,
+  `pubspec.lock`, dependencies, schema, Backup и generated files не изменены.
+- Final focused matrix A–N: 184 tests PASS. `flutter analyze`: PASS (`No issues
+  found`). Full `flutter test --reporter compact`: 357 tests PASS.
+  `git diff --check`: PASS. Багов и новых architecture decisions не обнаружено.
+- KG-06 завершён; Knowledge Graph Foundation #2 готов к закрытию без product-code
+  изменений checkpoint. Commit/push не выполнялись.
 
 ## Milestone Definition of Done
 
@@ -659,6 +715,11 @@ Architecture gate: unresolved durable decision leaves KG-06 blocked and mileston
 - graph-aware Search и Search result expansion;
 - schema v5, Backup v5, graph database и new dependencies;
 - Relationship re-link/undo и new mutation semantics.
+
+## Roadmap handoff
+
+Следующий milestone: **Unified Local Search**. Его execution plan не создан и
+реализация не начиналась в рамках Knowledge Graph Foundation #2.
 
 ## Investigation validation
 
