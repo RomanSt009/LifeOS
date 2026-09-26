@@ -2,9 +2,9 @@
 
 Статус плана: active
 
-Текущий checkpoint: AI-02 — pending.
+Текущий checkpoint: AI-03 — pending.
 
-Точка возобновления: AI-02 — Provider-neutral contracts and safe disabled boundary.
+Точка возобновления: AI-03 — Final integration and architecture audit.
 
 ## Current state
 
@@ -375,11 +375,48 @@ read-only tests, Application import scan, git diff --check and scope.
 
 ### AI-02 — Provider-neutral contracts and safe disabled boundary
 
-Status: pending. Depends on AI-01.
+Status: done. Depends on AI-01.
 
 Scope: provider/request/response/ref/error contracts; Application orchestration
 seam; deterministic fake; disabled/unavailable adapter or equivalent safe
 composition boundary; privacy-safe observability; focused tests.
+
+Result / evidence:
+
+- Added Application-only LifeOsAiProvider with one async non-streaming
+  generate(LifeOsAiRequest) operation.
+- Request contains typed workspaceQuestion purpose, trimmed non-empty
+  userInstruction and the existing structured LifeOsAiContext. It has no prompt,
+  history, tools, vendor/model configuration or transport data.
+- Response contains exact non-empty generated text and optional typed Entity ID
+  context references. RequestLifeOsAiCompletion rejects references that were not
+  present in the request root/items as invalidResponse.
+- Provider-neutral errors are unavailable, invalidConfiguration,
+  authentication, rateLimited, network, requestRejected, invalidResponse and
+  unknown. Vendor/HTTP codes and raw adapter failures are not exposed.
+- RequestLifeOsAiCompletion accepts an already-built context, constructs the
+  request and invokes the provider. It never builds/expands context and preserves
+  the explicit local assembly -> outbound call separation.
+- Streaming, cancellation, retries, tools, mutation actions, usage/billing data,
+  persistence and logging frameworks remain excluded.
+- Composition decision: no production unavailable adapter and no provider wiring
+  are added before a user-facing consumer exists. The constructor-injected port
+  is composition-ready, while current startup creates no AI dependency and
+  therefore remains safely disabled without fake production behavior.
+- Credentials, provider/model/endpoint configuration, transport and prompt
+  formatting remain future Infrastructure concerns behind explicit gates.
+- Focused test-only fake proves success, normalized/empty instruction behavior,
+  response invariant, preserved typed provider failure, context identity/content
+  preservation and rejection of an unrelated response reference.
+- Focused test:
+  flutter test test/application/use_cases/request_lifeos_ai_completion_test.dart
+  --reporter compact — PASS, 5 tests.
+- Focused import/scope scan — PASS: Application imports only Domain/Application;
+  no Flutter, Drift, Infrastructure, HTTP/SDK, Search, graph or platform imports.
+- git diff --check — PASS. Full tests, flutter analyze and broad audits deferred
+  to AI-03 under milestone economy policy.
+- Domain, Infrastructure, Presentation, composition, schemaVersion 4, Backup v4,
+  pubspec/lock and generated files unchanged.
 
 Exclusions: real provider, HTTP/SDK, secrets/storage, Settings UI, production
 prompts, streaming, tools, history/persistence.
@@ -397,7 +434,7 @@ Status: pending. Depends on AI-01/AI-02.
 Scope: fake-provider proof Workspace ID → bounded request/response, final privacy/
 architecture/local-first audit, minimal accepted fixes, plan completion.
 
-Final validation: all AF tests; relevant Workspace/Search/graph/composition
+Final validation: all AI Foundation tests; relevant Workspace/Search/graph/composition
 regressions; flutter analyze; full flutter test --reporter compact; import/
 architecture/privacy/dependency/schema/Backup/generated/Outbox guards;
 git diff --check and exact status.
