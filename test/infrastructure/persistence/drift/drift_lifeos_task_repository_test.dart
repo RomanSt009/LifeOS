@@ -442,6 +442,66 @@ void main() {
   });
 
   test(
+    'search stays title-only and never expands through Relationships',
+    () async {
+      final directMatch = createTask(
+        id: const LifeOsEntityId(
+          value: 'task-search-match',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Needle in this title',
+        isCompleted: false,
+        updatedAt: secondUpdatedAt,
+        version: 1,
+      );
+      final relatedNonMatch = createTask(
+        id: const LifeOsEntityId(
+          value: 'task-related',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Different title',
+        isCompleted: false,
+        updatedAt: firstUpdatedAt,
+        version: 1,
+      );
+      await repository.save(directMatch);
+      await repository.save(relatedNonMatch);
+      await database
+          .into(database.entities)
+          .insert(
+            EntitiesCompanion.insert(
+              id: 'relationship-search-guard',
+              entityType: 'relationship',
+              createdAt: createdAt,
+              updatedAt: secondUpdatedAt,
+              lifecycle: 'active',
+              version: 1,
+              source: 'user',
+            ),
+          );
+      await database
+          .into(database.relationshipRecords)
+          .insert(
+            RelationshipRecordsCompanion.insert(
+              entityId: 'relationship-search-guard',
+              firstEntityId: relatedNonMatch.id.value,
+              secondEntityId: directMatch.id.value,
+              kind: 'related',
+            ),
+          );
+      final outboxBeforeSearch = await database
+          .select(database.outboxEntries)
+          .get();
+
+      expect(await repository.searchByTitle('needle'), [directMatch]);
+      expect(
+        await database.select(database.outboxEntries).get(),
+        outboxBeforeSearch,
+      );
+    },
+  );
+
+  test(
     'matches Cyrillic case variants and literal wildcard characters',
     () async {
       final cyrillicTask = createTask(

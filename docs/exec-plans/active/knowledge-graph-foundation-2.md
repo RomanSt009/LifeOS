@@ -4,9 +4,9 @@
 
 Тип: docs-only architecture investigation и proposed execution plan
 
-Точка возобновления: KG-05 — Knowledge Graph non-regression gate.
-Перед implementation отметить KG-05 active и повторно сверить Git,
-KG-04 Related UI, Workspace/Search boundaries, Backup v4 и schema v4 guards.
+Точка возобновления: KG-06 — Integration and final audit.
+Перед audit отметить KG-06 active и повторно сверить Git, KG-01…KG-05,
+Related UI/navigation, Workspace/Search boundaries, Backup v4 и schema v4 guards.
 
 ## Goal
 
@@ -555,7 +555,7 @@ Result / evidence:
 
 ### KG-05 — Workspace/Search/Backup non-regression gate
 
-Status: pending
+Status: done
 
 Goal: доказать, что global semantic neighbor navigation не меняет direct
 Workspace context, Task-only Search, Backup v4, Outbox и schema v4.
@@ -571,6 +571,40 @@ Validation: Workspace/Membership, Search, Relationship persistence, Backup v1–
 Restore, Outbox, dependency/schema/import scans.
 
 Architecture gate: stop on any need for Workspace scope decision, schema v5 or Backup v5.
+
+Result / evidence:
+
+- Architecture gate пройден без нового решения: global semantic Relationships остаются
+  независимыми от structural Workspace Membership и Task-only Search; schema v5 и
+  Backup v5 не требуются.
+- Добавлен focused persistence regression: Workspace A с direct Task X и связанной
+  через `related` Note Y показывает только X, а Y остаётся в Unassigned без
+  Membership. Attach/detach в другом Workspace не меняет Relationship; unlink
+  Relationship не удаляет active Membership. Неявного scope expansion нет.
+- Добавлен focused Search regression: title-match Task возвращается один, а связанный
+  Task без совпадения не добавляется и не влияет на ranking. Search остаётся
+  global Task-only, выполняется read-only и не меняет Outbox.
+- Existing Relationship matrix подтверждает Task↔Task, Task↔Note и Note↔Note,
+  canonical endpoints, duplicate no-op, только kind `related`, CREATE/UPDATE Outbox,
+  immutable endpoints, lifecycle visibility и возврат того же edge после
+  Restore/Unarchive. Direct-neighbor read сохраняет Entity metadata, bounded SQL
+  order/limit, использует оба endpoint indexes без table scan и не меняет
+  Entity/Relationship/Outbox state.
+- Existing navigation/UI matrix подтверждает one-shot typed Task/Note commands,
+  missing/inactive recovery, Note dirty-draft Save/Discard/Cancel, refresh после
+  mutation/lifecycle, EN/RU, keyboard activation и layout 1280x800/640x600.
+- Existing Backup v1–v4/Restore matrix подтверждает v4 writer, v1–v3 compatibility,
+  exact Relationship/Workspace/Membership round-trip, atomic validation/restore,
+  empty Outbox, preserved device identity и reopen. Дополнительный restore test не
+  добавлялся: production v4 round-trip уже проверяет Relationship после reopen.
+- Final focused KG-05 matrix: 138 tests PASS. `flutter analyze`: PASS. Full suite:
+  357 tests PASS. Localization resources не менялись; existing EN/RU localization
+  tests PASS, поэтому `flutter gen-l10n` не запускался.
+- Import/routing scans: Domain forbidden imports — 0; Application -> Infrastructure —
+  0; Presentation -> Infrastructure — 0; routing dependencies — 0. `schemaVersion == 4`,
+  `V4BackupExportEncoder`, dependencies, generated files, persistence schema,
+  Backup implementation и production code не изменены. `git diff --check`: PASS.
+- KG-06 является точной точкой возобновления и не начинался.
 
 ### KG-06 — Integration and final audit
 

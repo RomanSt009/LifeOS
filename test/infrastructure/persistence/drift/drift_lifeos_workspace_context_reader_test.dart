@@ -133,6 +133,85 @@ void main() {
       );
     },
   );
+
+  test(
+    'Relationships never expand Workspace context or mutate memberships',
+    () async {
+      const secondWorkspaceId = LifeOsEntityId(
+        value: 'workspace-2',
+        entityType: LifeOsEntityType.workspace,
+      );
+      await _workspace(database, secondWorkspaceId.value);
+      await _task(database, 'task-member');
+      await _note(database, 'note-related-only');
+      await _membership(
+        database,
+        'membership-task',
+        workspaceId.value,
+        'task-member',
+      );
+      await _relationship(
+        database,
+        'relationship-task-note',
+        'task-member',
+        'note-related-only',
+      );
+
+      expect(
+        (await reader.getDirectMembers(workspaceId))
+            .map((value) => value.entityId.value),
+        ['task-member'],
+      );
+      expect(
+        (await reader.getUnassigned()).map((value) => value.entityId.value),
+        ['note-related-only'],
+      );
+
+      await _membership(
+        database,
+        'membership-note-second',
+        secondWorkspaceId.value,
+        'note-related-only',
+      );
+      expect(await reader.getUnassigned(), isEmpty);
+
+      await _setLifecycle(database, 'membership-note-second', 'deleted');
+      expect(
+        (await reader.getUnassigned()).map((value) => value.entityId.value),
+        ['note-related-only'],
+      );
+      expect(
+        (await database.select(database.relationshipRecords).get()).single.kind,
+        'related',
+      );
+      expect(
+        (await database.select(database.entities).get())
+            .singleWhere((row) => row.id == 'relationship-task-note')
+            .lifecycle,
+        'active',
+      );
+
+      await _membership(
+        database,
+        'membership-note-first',
+        workspaceId.value,
+        'note-related-only',
+      );
+      await _setLifecycle(database, 'relationship-task-note', 'deleted');
+      expect(
+        (await reader.getDirectMembers(workspaceId))
+            .map((value) => value.entityId.value)
+            .toSet(),
+        {'task-member', 'note-related-only'},
+      );
+      expect(
+        (await database.select(database.entities).get())
+            .singleWhere((row) => row.id == 'membership-note-first')
+            .lifecycle,
+        'active',
+      );
+    },
+  );
 }
 
 Future<void> _entity(
@@ -234,3 +313,31 @@ Future<void> _membership(
         ),
       );
 }
+
+Future<void> _relationship(
+  LifeOsDatabase database,
+  String id,
+  String endpointA,
+  String endpointB,
+) async {
+  final first = endpointA.compareTo(endpointB) < 0 ? endpointA : endpointB;
+  final second = first == endpointA ? endpointB : endpointA;
+  await _entity(database, id, 'relationship');
+  await database
+      .into(database.relationshipRecords)
+      .insert(
+        RelationshipRecordsCompanion.insert(
+          entityId: id,
+          firstEntityId: first,
+          secondEntityId: second,
+          kind: 'related',
+        ),
+      );
+}
+
+Future<void> _setLifecycle(
+  LifeOsDatabase database,
+  String id,
+  String lifecycle,
+) => (database.update(database.entities)..where((row) => row.id.equals(id)))
+    .write(EntitiesCompanion(lifecycle: Value(lifecycle)));
