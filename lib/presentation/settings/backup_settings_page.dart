@@ -209,7 +209,7 @@ class _BackupSettingsPageState extends ConsumerState<BackupSettingsPage> {
       ref.invalidate(taskTrashControllerProvider);
       ref.invalidate(noteListControllerProvider);
       ref.invalidate(noteTrashControllerProvider);
-      ref.invalidate(relationshipsForEntityProvider);
+      ref.invalidate(directLifeOsRelatedNeighborsProvider);
       ref.invalidate(workspaceListControllerProvider);
       ref.invalidate(workspaceTrashControllerProvider);
       ref.read(workspaceMemberRevisionProvider.notifier).advance();

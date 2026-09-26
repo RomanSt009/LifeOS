@@ -4,9 +4,9 @@
 
 Тип: docs-only architecture investigation и proposed execution plan
 
-Точка возобновления: KG-04 — Related UI over Application projection.
-Перед implementation отметить KG-04 active и повторно сверить Git,
-KG-02 reader/composition, KG-03 typed navigation и `RelatedEntitiesSection`.
+Точка возобновления: KG-05 — Knowledge Graph non-regression gate.
+Перед implementation отметить KG-05 active и повторно сверить Git,
+KG-04 Related UI, Workspace/Search boundaries, Backup v4 и schema v4 guards.
 
 ## Goal
 
@@ -505,7 +505,7 @@ Result / evidence:
 
 ### KG-04 — Related UI over Application projection
 
-Status: pending
+Status: done
 
 Goal: перевести `RelatedEntitiesSection` на direct-neighbor use case и сделать
 rows navigable.
@@ -521,6 +521,37 @@ Validation: resolved labels, active/inactive lifecycle refresh, add/unlink, stal
 EN/RU, 1280x800 and 640x600, accessibility and no overflow.
 
 Architecture gate: stop if UI needs graph-wide state or traversal.
+
+Result / evidence:
+
+- `RelatedEntitiesSection` ordinary display path использует
+  `GetDirectLifeOsRelatedNeighbors` с explicit Presentation limit `20`; Application/
+  Infrastructure ordering сохраняется. Full Task/Note lists больше
+  не загружаются для label resolution/rendering; existing create picker остался
+  отдельным user-choice workflow.
+- Task/Note rows рендерятся из hydrated typed projection; completed Task
+  отличается existing icon style. `LifeOsRelationship` provenance передаётся
+  existing unlink flow без secondary lookup и per-row reads.
+- Standard actionable `ListTile` обеспечивает mouse/keyboard activation и
+  localized EN/RU open semantics. Typed callbacks вызывают KG-03
+  `openTask`/`openNote`; router, history, hydrated command payload и global state
+  не добавлены.
+- Note -> Note навигация проходит existing Save/Discard/Cancel guard;
+  Cancel сохраняет draft и не replay-ит command. Note -> Task сначала
+  разрешает тот же dirty-draft guard, затем выдаёт typed shell command.
+- Create/unlink и Task/Note edit, completion, delete/restore, Backup Restore
+  invalidation обновляют projection. Inactive target скрывается;
+  Restore/Unarchive возвращает тот же edge без cascade mutation.
+- Loading/empty/error/retry, mixed types, deterministic order, forwarded limit,
+  no-full-list dependency, lifecycle refresh, 1280x800/640x600, typed navigation
+  и dirty Note flows покрыты focused tests.
+- Focused Related/shell/Task/Note suite: 77 tests PASS. Relationship Application +
+  Workspace/Search/localization smoke: 33 tests PASS. Full suite: 355 tests PASS.
+  `flutter analyze`: PASS; `flutter gen-l10n` выполнен, EN/RU parity
+  сохранён; `git diff --check`: PASS.
+- Import/routing scans: 0 forbidden dependencies. `schemaVersion == 4`,
+  `V4BackupExportEncoder`, Backup v4, Drift/generated persistence, dependencies,
+  Domain/Application contracts, Workspace и Search не изменялись.
 
 ### KG-05 — Workspace/Search/Backup non-regression gate
 

@@ -76,6 +76,7 @@ class TaskListController extends AsyncNotifier<List<LifeOsTask>> {
       for (final task in currentTasks)
         if (task.id == id) updatedTask else task,
     ]);
+    ref.invalidate(directLifeOsRelatedNeighborsProvider);
   }
 
   Future<LifeOsTask> editTitle(LifeOsEntityId id, String title) async {
@@ -92,6 +93,7 @@ class TaskListController extends AsyncNotifier<List<LifeOsTask>> {
       for (final task in currentTasks)
         if (task.id == id) updatedTask else task,
     ]);
+    ref.invalidate(directLifeOsRelatedNeighborsProvider);
     return updatedTask;
   }
 
@@ -105,7 +107,7 @@ class TaskListController extends AsyncNotifier<List<LifeOsTask>> {
         if (task.id != id) task,
     ]);
     ref.invalidate(taskTrashControllerProvider);
-    ref.invalidate(relationshipsForEntityProvider);
+    ref.invalidate(directLifeOsRelatedNeighborsProvider);
     ref.read(taskSearchRevisionProvider.notifier).advance();
     ref.read(workspaceMemberRevisionProvider.notifier).advance();
   }
@@ -131,7 +133,7 @@ class TaskTrashController extends AsyncNotifier<List<LifeOsTask>> {
         if (task.id != id) task,
     ]);
     ref.invalidate(taskListControllerProvider);
-    ref.invalidate(relationshipsForEntityProvider);
+    ref.invalidate(directLifeOsRelatedNeighborsProvider);
     ref.read(taskSearchRevisionProvider.notifier).advance();
     ref.read(workspaceMemberRevisionProvider.notifier).advance();
   }

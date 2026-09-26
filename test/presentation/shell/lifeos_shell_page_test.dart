@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifeos/application/relationships/lifeos_related_entity_reader.dart';
+import 'package:lifeos/application/use_cases/get_direct_lifeos_related_neighbors.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_note.dart';
@@ -10,6 +12,7 @@ import 'package:lifeos/application/use_cases/get_lifeos_workspaces.dart';
 import 'package:lifeos/application/workspaces/lifeos_workspace_context_reader.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_note.dart';
+import 'package:lifeos/domain/entities/lifeos_relationship.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/domain/entities/lifeos_workspace.dart';
 import 'package:lifeos/domain/repositories/lifeos_note_repository.dart';
@@ -18,6 +21,7 @@ import 'package:lifeos/domain/repositories/lifeos_workspace_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/navigation/lifeos_destination.dart';
 import 'package:lifeos/presentation/notes/note_providers.dart';
+import 'package:lifeos/presentation/relationships/relationship_providers.dart';
 import 'package:lifeos/presentation/shell/lifeos_shell_page.dart';
 import 'package:lifeos/presentation/search/task_search_page.dart';
 import 'package:lifeos/presentation/search/task_search_providers.dart';
@@ -950,7 +954,253 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('Related Task rows navigate to typed Task and Note targets', (
+    tester,
+  ) async {
+    final source = _shellTask('related-source', 'Source Task');
+    final taskTarget = _shellTask('related-task', 'Related Task');
+    final noteTarget = _shellNote('related-note', 'Related Note', 'Body');
+    final taskRelationship = _shellRelationship(
+      'relationship-task',
+      source.id,
+      taskTarget.id,
+    );
+    final noteRelationship = _shellRelationship(
+      'relationship-note',
+      source.id,
+      noteTarget.id,
+    );
+    final reader = ShellRelatedEntityReader({
+      source.id: [
+        LifeOsRelatedTaskNeighbor(
+          sourceId: source.id,
+          relationship: taskRelationship,
+          task: taskTarget,
+        ),
+        LifeOsRelatedNoteNeighbor(
+          sourceId: source.id,
+          relationship: noteRelationship,
+          note: noteTarget,
+        ),
+      ],
+    });
+    final shellKey = GlobalKey<LifeosShellPageState>();
+    await tester.pumpWidget(
+      testApp(
+        const Locale('en'),
+        repository: EmptyLifeOsTaskRepository(tasks: [source, taskTarget]),
+        noteRepository: EmptyLifeOsNoteRepository([noteTarget]),
+        shellKey: shellKey,
+        relatedReader: reader,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    shellKey.currentState!.openTask(source.id);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('task-related-source')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Task: Related Task'));
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byType(ListView).hitTestable().first,
+      const Offset(0, -400),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<ExpansionTile>(
+            find.byKey(const ValueKey('task-related-task')),
+          )
+          .collapsedBackgroundColor,
+      isNotNull,
+    );
+
+    shellKey.currentState!.openTask(source.id);
+    await tester.pumpAndSettle();
+    if (find.text('Note: Related Note').evaluate().isEmpty) {
+      await tester.tap(find.byKey(const ValueKey('task-related-source')));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('Note: Related Note'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-title-field')))
+          .controller
+          ?.text,
+      'Related Note',
+    );
+  });
+
+  testWidgets('Related Note navigation preserves every dirty-draft decision', (
+    tester,
+  ) async {
+    final source = _shellNote('note-source', 'Source Note', 'Original');
+    final noteTarget = _shellNote('note-target', 'Target Note', 'Target');
+    final taskTarget = _shellTask('task-target', 'Target Task');
+    final noteRelationship = _shellRelationship(
+      'relationship-note-target',
+      source.id,
+      noteTarget.id,
+    );
+    final taskRelationship = _shellRelationship(
+      'relationship-task-target',
+      source.id,
+      taskTarget.id,
+    );
+    final reader = ShellRelatedEntityReader({
+      source.id: [
+        LifeOsRelatedNoteNeighbor(
+          sourceId: source.id,
+          relationship: noteRelationship,
+          note: noteTarget,
+        ),
+        LifeOsRelatedTaskNeighbor(
+          sourceId: source.id,
+          relationship: taskRelationship,
+          task: taskTarget,
+        ),
+      ],
+    });
+    final notes = EmptyLifeOsNoteRepository([source, noteTarget]);
+    final shellKey = GlobalKey<LifeosShellPageState>();
+    await tester.pumpWidget(
+      testApp(
+        const Locale('en'),
+        repository: EmptyLifeOsTaskRepository(tasks: [taskTarget]),
+        noteRepository: notes,
+        shellKey: shellKey,
+        relatedReader: reader,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> openSource() async {
+      shellKey.currentState!.openNote(source.id);
+      await tester.pumpAndSettle();
+    }
+
+    await openSource();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Save this',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('open-related-relationship-note-target')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-save')));
+    await tester.pumpAndSettle();
+    expect(
+      notes.notes.singleWhere((note) => note.id == source.id).content,
+      'Save this',
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-title-field')))
+          .controller
+          ?.text,
+      'Target Note',
+    );
+
+    await openSource();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Discard this',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('open-related-relationship-note-target')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-discard')));
+    await tester.pumpAndSettle();
+    expect(
+      notes.notes.singleWhere((note) => note.id == source.id).content,
+      'Save this',
+    );
+
+    await openSource();
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Keep this draft',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('open-related-relationship-note-target')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-cancel')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-content-field')))
+          .controller
+          ?.text,
+      'Keep this draft',
+    );
+    await tester.tap(find.byKey(const Key('navigation-home-label')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('navigation-notes-label')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex,
+      LifeOsDestination.notes.index,
+    );
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-content-field')))
+          .controller
+          ?.text,
+      'Keep this draft',
+    );
+
+    final relatedTask = find.text('Task: Target Task');
+    await tester.ensureVisible(relatedTask);
+    await tester.pumpAndSettle();
+    await tester.tap(relatedTask);
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.tap(find.byKey(const Key('unsaved-note-discard')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex,
+      LifeOsDestination.tasks.index,
+    );
+    expect(
+      tester
+          .widget<ExpansionTile>(find.byKey(const ValueKey('task-task-target')))
+          .collapsedBackgroundColor,
+      isNotNull,
+    );
+  });
 }
+
+LifeOsTask _shellTask(String id, String title) => LifeOsTask.createUserTask(
+  id: LifeOsEntityId(value: id, entityType: LifeOsEntityType.task),
+  title: title,
+  timestamp: DateTime.utc(2026, 9, 10),
+);
+
+LifeOsNote _shellNote(String id, String title, String content) =>
+    LifeOsNote.createUserNote(
+      id: LifeOsEntityId(value: id, entityType: LifeOsEntityType.note),
+      title: title,
+      content: content,
+      timestamp: DateTime.utc(2026, 9, 10),
+    );
+
+LifeOsRelationship _shellRelationship(
+  String id,
+  LifeOsEntityId first,
+  LifeOsEntityId second,
+) => LifeOsRelationship.createUserRelationship(
+  id: LifeOsEntityId(value: id, entityType: LifeOsEntityType.relationship),
+  firstEndpoint: first,
+  secondEndpoint: second,
+  timestamp: DateTime.utc(2026, 9, 10),
+);
 
 List<String> destinationLabels(NavigationRail navigationRail) {
   return [
@@ -965,6 +1215,7 @@ Widget testApp(
   EmptyLifeOsNoteRepository? noteRepository,
   ShellWorkspaceRepository? workspaceRepository,
   GlobalKey<LifeosShellPageState>? shellKey,
+  LifeOsRelatedEntityReader? relatedReader,
 }) {
   final taskRepository = repository ?? EmptyLifeOsTaskRepository();
   final notes = noteRepository ?? EmptyLifeOsNoteRepository();
@@ -975,6 +1226,11 @@ Widget testApp(
     overrides: [
       lifeOsTaskRepositoryProvider.overrideWithValue(taskRepository),
       lifeOsNoteRepositoryProvider.overrideWithValue(notes),
+      getDirectLifeOsRelatedNeighborsProvider.overrideWithValue(
+        GetDirectLifeOsRelatedNeighbors(
+          relatedReader ?? const EmptyRelatedEntityReader(),
+        ),
+      ),
       createLifeOsNoteProvider.overrideWithValue(
         CreateLifeOsNote(
           repository: notes,
@@ -1011,6 +1267,28 @@ Widget testApp(
       home: LifeosShellPage(key: shellKey),
     ),
   );
+}
+
+class EmptyRelatedEntityReader implements LifeOsRelatedEntityReader {
+  const EmptyRelatedEntityReader();
+
+  @override
+  Future<List<LifeOsRelatedNeighbor>> getDirectNeighbors({
+    required LifeOsEntityId sourceId,
+    required int limit,
+  }) async => const [];
+}
+
+class ShellRelatedEntityReader implements LifeOsRelatedEntityReader {
+  ShellRelatedEntityReader(this.neighbors);
+
+  final Map<LifeOsEntityId, List<LifeOsRelatedNeighbor>> neighbors;
+
+  @override
+  Future<List<LifeOsRelatedNeighbor>> getDirectNeighbors({
+    required LifeOsEntityId sourceId,
+    required int limit,
+  }) async => (neighbors[sourceId] ?? const []).take(limit).toList();
 }
 
 class ShellWorkspaceRepository implements LifeOsWorkspaceRepository {

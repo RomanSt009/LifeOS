@@ -14,11 +14,15 @@ class NotePage extends ConsumerStatefulWidget {
   const NotePage({
     this.featureCommand,
     this.onFeatureCommandHandled,
+    this.onOpenTask,
+    this.onOpenNote,
     super.key,
   });
 
   final LifeOsFeatureCommand? featureCommand;
   final ValueChanged<int>? onFeatureCommandHandled;
+  final ValueChanged<LifeOsEntityId>? onOpenTask;
+  final ValueChanged<LifeOsEntityId>? onOpenNote;
 
   @override
   ConsumerState<NotePage> createState() => _NotePageState();
@@ -315,6 +319,11 @@ class _NotePageState extends ConsumerState<NotePage> {
     }
   }
 
+  Future<void> _openRelatedTask(LifeOsEntityId taskId) async {
+    if (!await _resolveDirtyDraft() || !mounted) return;
+    widget.onOpenTask?.call(taskId);
+  }
+
   void _discardDraft() {
     setState(() {
       _replaceDraft(
@@ -557,6 +566,8 @@ class _NotePageState extends ConsumerState<NotePage> {
                                     RelatedEntitiesSection(
                                       key: _relationshipKey,
                                       entityId: selectedId,
+                                      onOpenTask: _openRelatedTask,
+                                      onOpenNote: widget.onOpenNote,
                                       maxListHeight:
                                           constraints.maxWidth <
                                               _compactEditorBreakpoint

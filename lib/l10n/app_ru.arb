@@ -131,6 +131,14 @@
   "@relationshipNoteLabel": {
     "placeholders": {"title": {"type": "String"}}
   },
+  "relationshipOpenTaskAction": "Открыть связанную задачу {title}",
+  "@relationshipOpenTaskAction": {
+    "placeholders": {"title": {"type": "String"}}
+  },
+  "relationshipOpenNoteAction": "Открыть связанную заметку {title}",
+  "@relationshipOpenNoteAction": {
+    "placeholders": {"title": {"type": "String"}}
+  },
   "workspaceListTitle": "Рабочие пространства",
   "workspaceListEmpty": "Рабочих пространств пока нет",
   "workspaceLoadError": "Не удалось загрузить рабочие пространства",

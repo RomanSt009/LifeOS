@@ -400,6 +400,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String relationshipOpenTaskAction(String title) {
+    return 'Open related Task $title';
+  }
+
+  @override
+  String relationshipOpenNoteAction(String title) {
+    return 'Open related Note $title';
+  }
+
+  @override
   String get workspaceListTitle => 'Workspaces';
 
   @override

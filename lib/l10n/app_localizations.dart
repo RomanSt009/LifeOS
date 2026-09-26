@@ -836,6 +836,18 @@ abstract class AppLocalizations {
   /// **'Note: {title}'**
   String relationshipNoteLabel(String title);
 
+  /// No description provided for @relationshipOpenTaskAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open related Task {title}'**
+  String relationshipOpenTaskAction(String title);
+
+  /// No description provided for @relationshipOpenNoteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open related Note {title}'**
+  String relationshipOpenNoteAction(String title);
+
   /// No description provided for @workspaceListTitle.
   ///
   /// In en, this message translates to:

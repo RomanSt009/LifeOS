@@ -131,6 +131,14 @@
   "@relationshipNoteLabel": {
     "placeholders": {"title": {"type": "String"}}
   },
+  "relationshipOpenTaskAction": "Open related Task {title}",
+  "@relationshipOpenTaskAction": {
+    "placeholders": {"title": {"type": "String"}}
+  },
+  "relationshipOpenNoteAction": "Open related Note {title}",
+  "@relationshipOpenNoteAction": {
+    "placeholders": {"title": {"type": "String"}}
+  },
   "workspaceListTitle": "Workspaces",
   "workspaceListEmpty": "No Workspaces yet",
   "workspaceLoadError": "Unable to load Workspaces",

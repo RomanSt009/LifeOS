@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifeos/application/relationships/lifeos_related_entity_reader.dart';
+import 'package:lifeos/application/use_cases/get_direct_lifeos_related_neighbors.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_relationship.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
@@ -17,6 +20,7 @@ import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/notes/note_page.dart';
 import 'package:lifeos/presentation/notes/note_providers.dart';
 import 'package:lifeos/presentation/relationships/relationship_providers.dart';
+import 'package:lifeos/presentation/relationships/related_entities_section.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list.dart';
 import 'package:lifeos/presentation/tasks/task_list_providers.dart';
@@ -232,14 +236,19 @@ void main() {
   testWidgets('Relationship list failure has a bounded retry', (tester) async {
     final taskRepository = _TaskRepository([_task('task-a', 'Task A')]);
     final noteRepository = _NoteRepository([_note('note-a', 'Note A')]);
-    final relationshipRepository = _RelationshipRepository()
-      ..failNextGetForEntity = true;
+    final relationshipRepository = _RelationshipRepository();
+    final reader = _RelatedReader(
+      taskRepository,
+      noteRepository,
+      relationshipRepository,
+    )..failNextRead = true;
     await tester.pumpWidget(
       _app(
         const NotePage(),
         taskRepository,
         noteRepository,
         relationshipRepository,
+        reader: reader,
       ),
     );
     await tester.pumpAndSettle();
@@ -256,31 +265,32 @@ void main() {
     expect(find.text('No related Tasks or Notes'), findsOneWidget);
   });
 
-  testWidgets('Endpoint label failure stops loading and can retry', (
-    tester,
-  ) async {
-    final taskRepository = _TaskRepository([_task('task-a', 'Task A')])
-      ..failNextLifecycleRead = true;
+  testWidgets('Projection failure stops loading and can retry', (tester) async {
+    final taskRepository = _TaskRepository([_task('task-a', 'Task A')]);
     final noteRepository = _NoteRepository([_note('note-a', 'Note A')]);
     final relationshipRepository = _RelationshipRepository()
       ..items.add(_relationship());
+    final reader = _RelatedReader(
+      taskRepository,
+      noteRepository,
+      relationshipRepository,
+    )..failNextRead = true;
     await tester.pumpWidget(
       _app(
         const NotePage(),
         taskRepository,
         noteRepository,
         relationshipRepository,
+        reader: reader,
       ),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('note-note-a')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Unable to load related item'), findsOneWidget);
-    expect(find.text('Loading related item…'), findsNothing);
-    await tester.tap(
-      find.byKey(const ValueKey('retry-relationship-endpoint-relationship-a')),
-    );
+    expect(find.text('Unable to load relationships'), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('retry-relationships-note-a')));
     await tester.pumpAndSettle();
     expect(find.text('Task: Task A'), findsOneWidget);
   });
@@ -322,6 +332,138 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'resolved mixed projection preserves order, limit, and full-list decoupling',
+    (tester) async {
+      final source = _note('note-source', 'Source');
+      final task = _task('task-target', 'Task Target');
+      final note = _note('note-target', 'Note Target');
+      final taskRelationship = _relationshipBetween(
+        'relationship-b',
+        source.id,
+        task.id,
+        DateTime.utc(2026, 9, 12, 2),
+      );
+      final noteRelationship = _relationshipBetween(
+        'relationship-a',
+        source.id,
+        note.id,
+        DateTime.utc(2026, 9, 12, 3),
+      );
+      final tasks = _TaskRepository([task]);
+      final notes = _NoteRepository([source, note]);
+      final relationships = _RelationshipRepository()
+        ..items.addAll([taskRelationship, noteRelationship]);
+      final reader = _RelatedReader(tasks, notes, relationships);
+      LifeOsEntityId? openedTask;
+      LifeOsEntityId? openedNote;
+
+      await tester.pumpWidget(
+        _app(
+          RelatedEntitiesSection(
+            entityId: source.id,
+            onOpenTask: (id) => openedTask = id,
+            onOpenNote: (id) => openedNote = id,
+          ),
+          tasks,
+          notes,
+          relationships,
+          reader: reader,
+        ),
+      );
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      await tester.pumpAndSettle();
+
+      expect(reader.lastLimit, relatedEntitiesSectionLimit);
+      expect(tasks.lifecycleReadCount, 0);
+      expect(notes.lifecycleReadCount, 0);
+      expect(
+        tester.getTopLeft(find.text('Note: Note Target')).dy,
+        lessThan(tester.getTopLeft(find.text('Task: Task Target')).dy),
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('open-related-relationship-b')),
+      );
+      expect(openedTask, task.id);
+      await tester.tap(
+        find.byKey(const ValueKey('open-related-relationship-a')),
+      );
+      expect(openedNote, note.id);
+
+      openedNote = null;
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(openedNote, note.id);
+    },
+  );
+
+  testWidgets(
+    'target lifecycle invalidation hides and restores the same edge',
+    (tester) async {
+      final source = _note('note-source', 'Source');
+      final target = _task('task-target', 'Target');
+      final tasks = _TaskRepository([target]);
+      final notes = _NoteRepository([source]);
+      final relationships = _RelationshipRepository()
+        ..items.add(
+          _relationshipBetween(
+            'relationship-a',
+            source.id,
+            target.id,
+            DateTime.utc(2026, 9, 12),
+          ),
+        );
+      final reader = _RelatedReader(tasks, notes, relationships);
+
+      await tester.pumpWidget(
+        _app(
+          RelatedEntitiesSection(entityId: source.id),
+          tasks,
+          notes,
+          relationships,
+          reader: reader,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Task: Target'), findsOneWidget);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(RelatedEntitiesSection)),
+      );
+
+      tasks.items[0] = target.delete(updatedAt: DateTime.utc(2026, 9, 12, 1));
+      container.invalidate(directLifeOsRelatedNeighborsProvider(source.id));
+      await tester.pumpAndSettle();
+      expect(find.text('No related Tasks or Notes'), findsOneWidget);
+      expect(
+        relationships.items.single.lifecycle,
+        LifeOsEntityLifecycle.active,
+      );
+
+      tasks.items[0] = tasks.items[0].restore(
+        updatedAt: DateTime.utc(2026, 9, 12, 2),
+      );
+      container.invalidate(directLifeOsRelatedNeighborsProvider(source.id));
+      await tester.pumpAndSettle();
+      expect(find.text('Task: Target'), findsOneWidget);
+
+      tasks.items[0] = tasks.items[0].archive(
+        updatedAt: DateTime.utc(2026, 9, 12, 3),
+      );
+      container.invalidate(directLifeOsRelatedNeighborsProvider(source.id));
+      await tester.pumpAndSettle();
+      expect(find.text('No related Tasks or Notes'), findsOneWidget);
+
+      tasks.items[0] = tasks.items[0].unarchive(
+        updatedAt: DateTime.utc(2026, 9, 12, 4),
+      );
+      container.invalidate(directLifeOsRelatedNeighborsProvider(source.id));
+      await tester.pumpAndSettle();
+      expect(find.text('Task: Target'), findsOneWidget);
+    },
+  );
 }
 
 LifeOsRelationship _relationship({
@@ -340,12 +482,25 @@ LifeOsRelationship _relationship({
   timestamp: DateTime.utc(2026, 9, 12),
 );
 
+LifeOsRelationship _relationshipBetween(
+  String id,
+  LifeOsEntityId first,
+  LifeOsEntityId second,
+  DateTime timestamp,
+) => LifeOsRelationship.createUserRelationship(
+  id: LifeOsEntityId(value: id, entityType: LifeOsEntityType.relationship),
+  firstEndpoint: first,
+  secondEndpoint: second,
+  timestamp: timestamp,
+);
+
 Widget _app(
   Widget child,
   _TaskRepository tasks,
   _NoteRepository notes,
   _RelationshipRepository relationships, {
   Locale locale = const Locale('en'),
+  _RelatedReader? reader,
 }) {
   final createRelationship = CreateLifeOsRelationship(
     relationshipRepository: relationships,
@@ -354,6 +509,7 @@ Widget _app(
     entityIdGenerator: () => 'relationship-created',
     utcClock: () => DateTime.utc(2026, 9, 12, 12),
   );
+  final relatedReader = reader ?? _RelatedReader(tasks, notes, relationships);
   return ProviderScope(
     overrides: [
       lifeOsTaskRepositoryProvider.overrideWithValue(tasks),
@@ -385,6 +541,9 @@ Widget _app(
           repository: relationships,
           utcClock: () => DateTime.utc(2026, 9, 12, 13),
         ),
+      ),
+      getDirectLifeOsRelatedNeighborsProvider.overrideWithValue(
+        GetDirectLifeOsRelatedNeighbors(relatedReader),
       ),
     ],
     child: MaterialApp(
@@ -422,10 +581,12 @@ class _TaskRepository implements LifeOsTaskRepository {
   _TaskRepository(this.items);
   final List<LifeOsTask> items;
   bool failNextLifecycleRead = false;
+  int lifecycleReadCount = 0;
   @override
   Future<List<LifeOsTask>> getByLifecycle(
     LifeOsEntityLifecycle lifecycle,
   ) async {
+    lifecycleReadCount += 1;
     if (failNextLifecycleRead) {
       failNextLifecycleRead = false;
       throw StateError('Expected endpoint load failure.');
@@ -447,10 +608,15 @@ class _TaskRepository implements LifeOsTaskRepository {
 class _NoteRepository implements LifeOsNoteRepository {
   _NoteRepository(this.items);
   final List<LifeOsNote> items;
+  int lifecycleReadCount = 0;
   @override
   Future<List<LifeOsNote>> getByLifecycle(
     LifeOsEntityLifecycle lifecycle,
-  ) async => items.where((item) => item.lifecycle == lifecycle).toList();
+  ) async {
+    lifecycleReadCount += 1;
+    return items.where((item) => item.lifecycle == lifecycle).toList();
+  }
+
   @override
   Future<List<LifeOsNote>> getAll() async => List.of(items);
   @override
@@ -463,7 +629,6 @@ class _NoteRepository implements LifeOsNoteRepository {
 class _RelationshipRepository implements LifeOsRelationshipRepository {
   final List<LifeOsRelationship> items = [];
   bool failNextSave = false;
-  bool failNextGetForEntity = false;
   @override
   Future<List<LifeOsRelationship>> getAll() async => List.of(items);
   @override
@@ -471,10 +636,6 @@ class _RelationshipRepository implements LifeOsRelationshipRepository {
       items.where((item) => item.id == id).firstOrNull;
   @override
   Future<List<LifeOsRelationship>> getForEntity(LifeOsEntityId entityId) async {
-    if (failNextGetForEntity) {
-      failNextGetForEntity = false;
-      throw StateError('Expected relationship load failure.');
-    }
     return items
         .where(
           (item) =>
@@ -493,5 +654,92 @@ class _RelationshipRepository implements LifeOsRelationshipRepository {
     }
     items.removeWhere((item) => item.id == relationship.id);
     items.add(relationship);
+  }
+}
+
+class _RelatedReader implements LifeOsRelatedEntityReader {
+  _RelatedReader(this.tasks, this.notes, this.relationships);
+
+  final _TaskRepository tasks;
+  final _NoteRepository notes;
+  final _RelationshipRepository relationships;
+  bool failNextRead = false;
+  int callCount = 0;
+  int? lastLimit;
+
+  @override
+  Future<List<LifeOsRelatedNeighbor>> getDirectNeighbors({
+    required LifeOsEntityId sourceId,
+    required int limit,
+  }) async {
+    callCount += 1;
+    lastLimit = limit;
+    if (failNextRead) {
+      failNextRead = false;
+      throw StateError('Expected related projection failure.');
+    }
+    final ordered =
+        relationships.items
+            .where(
+              (relationship) =>
+                  relationship.lifecycle == LifeOsEntityLifecycle.active &&
+                  (relationship.firstEntityId == sourceId ||
+                      relationship.secondEntityId == sourceId),
+            )
+            .toList()
+          ..sort((first, second) {
+            final timestamp = second.updatedAt.compareTo(first.updatedAt);
+            return timestamp != 0
+                ? timestamp
+                : first.id.value.compareTo(second.id.value);
+          });
+    final result = <LifeOsRelatedNeighbor>[];
+    for (final relationship in ordered) {
+      final targetId = relationship.firstEntityId == sourceId
+          ? relationship.secondEntityId
+          : relationship.firstEntityId;
+      switch (targetId.entityType) {
+        case LifeOsEntityType.task:
+          final task = tasks.items
+              .where(
+                (item) =>
+                    item.id == targetId &&
+                    item.lifecycle == LifeOsEntityLifecycle.active,
+              )
+              .firstOrNull;
+          if (task != null) {
+            result.add(
+              LifeOsRelatedTaskNeighbor(
+                sourceId: sourceId,
+                relationship: relationship,
+                task: task,
+              ),
+            );
+          }
+        case LifeOsEntityType.note:
+          final note = notes.items
+              .where(
+                (item) =>
+                    item.id == targetId &&
+                    item.lifecycle == LifeOsEntityLifecycle.active,
+              )
+              .firstOrNull;
+          if (note != null) {
+            result.add(
+              LifeOsRelatedNoteNeighbor(
+                sourceId: sourceId,
+                relationship: relationship,
+                note: note,
+              ),
+            );
+          }
+        case LifeOsEntityType.relationship:
+        case LifeOsEntityType.workspace:
+        case LifeOsEntityType.workspaceMembership:
+          break;
+      }
+      if (result.length == limit) break;
+    }
+    return result;
   }
 }

@@ -13,11 +13,15 @@ class TaskList extends ConsumerStatefulWidget {
   const TaskList({
     this.featureCommand,
     this.onFeatureCommandHandled,
+    this.onOpenTask,
+    this.onOpenNote,
     super.key,
   });
 
   final LifeOsFeatureCommand? featureCommand;
   final ValueChanged<int>? onFeatureCommandHandled;
+  final ValueChanged<LifeOsEntityId>? onOpenTask;
+  final ValueChanged<LifeOsEntityId>? onOpenNote;
 
   @override
   ConsumerState<TaskList> createState() => _TaskListState();
@@ -348,6 +352,8 @@ class _TaskListState extends ConsumerState<TaskList> {
                               GlobalKey.new,
                             ),
                             entityId: task.id,
+                            onOpenTask: widget.onOpenTask,
+                            onOpenNote: widget.onOpenNote,
                           ),
                         ],
                       ),

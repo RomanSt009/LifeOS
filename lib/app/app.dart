@@ -74,6 +74,9 @@ class _LifeOSAppState extends State<LifeOSApp> {
         unlinkLifeOsRelationshipProvider.overrideWithValue(
           widget.dependencies.unlinkRelationship,
         ),
+        getDirectLifeOsRelatedNeighborsProvider.overrideWithValue(
+          widget.dependencies.getDirectRelatedNeighbors,
+        ),
         createLifeOsTaskProvider.overrideWithValue(
           widget.dependencies.createTask,
         ),

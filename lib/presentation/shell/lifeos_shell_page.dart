@@ -172,10 +172,14 @@ class LifeosShellPageState extends State<LifeosShellPage> {
                 TaskPage(
                   featureCommand: _featureCommand,
                   onFeatureCommandHandled: _featureCommandHandled,
+                  onOpenTask: openTask,
+                  onOpenNote: openNote,
                 ),
                 NotePage(
                   featureCommand: _featureCommand,
                   onFeatureCommandHandled: _featureCommandHandled,
+                  onOpenTask: openTask,
+                  onOpenNote: openNote,
                 ),
                 const TaskSearchPage(),
                 const BackupSettingsPage(),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/entities/lifeos_entity.dart';
 import '../../l10n/app_localizations.dart';
 import '../navigation/lifeos_feature_command.dart';
 import 'task_list.dart';
@@ -8,11 +9,15 @@ class TaskPage extends StatelessWidget {
   const TaskPage({
     this.featureCommand,
     this.onFeatureCommandHandled,
+    this.onOpenTask,
+    this.onOpenNote,
     super.key,
   });
 
   final LifeOsFeatureCommand? featureCommand;
   final ValueChanged<int>? onFeatureCommandHandled;
+  final ValueChanged<LifeOsEntityId>? onOpenTask;
+  final ValueChanged<LifeOsEntityId>? onOpenNote;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +44,8 @@ class TaskPage extends StatelessWidget {
             child: TaskList(
               featureCommand: featureCommand,
               onFeatureCommandHandled: onFeatureCommandHandled,
+              onOpenTask: onOpenTask,
+              onOpenNote: onOpenNote,
             ),
           ),
         ],

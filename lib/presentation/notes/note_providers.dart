@@ -87,6 +87,7 @@ class NoteListController extends AsyncNotifier<List<LifeOsNote>> {
             if (current.id == id) note else current,
         ]),
       );
+      ref.invalidate(directLifeOsRelatedNeighborsProvider);
     }
     return note;
   }
@@ -101,7 +102,7 @@ class NoteListController extends AsyncNotifier<List<LifeOsNote>> {
         if (note.id != id) note,
     ]);
     ref.invalidate(noteTrashControllerProvider);
-    ref.invalidate(relationshipsForEntityProvider);
+    ref.invalidate(directLifeOsRelatedNeighborsProvider);
     ref.read(workspaceMemberRevisionProvider.notifier).advance();
   }
 }
@@ -126,7 +127,7 @@ class NoteTrashController extends AsyncNotifier<List<LifeOsNote>> {
         if (note.id != id) note,
     ]);
     ref.invalidate(noteListControllerProvider);
-    ref.invalidate(relationshipsForEntityProvider);
+    ref.invalidate(directLifeOsRelatedNeighborsProvider);
     ref.read(workspaceMemberRevisionProvider.notifier).advance();
   }
 }

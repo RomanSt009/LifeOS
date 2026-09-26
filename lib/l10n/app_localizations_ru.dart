@@ -404,6 +404,16 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String relationshipOpenTaskAction(String title) {
+    return 'Открыть связанную задачу $title';
+  }
+
+  @override
+  String relationshipOpenNoteAction(String title) {
+    return 'Открыть связанную заметку $title';
+  }
+
+  @override
   String get workspaceListTitle => 'Рабочие пространства';
 
   @override
