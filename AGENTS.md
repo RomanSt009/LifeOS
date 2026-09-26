@@ -407,6 +407,49 @@ After generation, verify the resulting diff.
 
 After making code changes, run the smallest relevant validation first.
 
+### Milestone validation cadence
+
+LifeOS uses risk-based validation across execution-plan milestones.
+
+For investigation and architecture-gate checkpoints:
+
+- prefer docs-only work;
+- do not run the full test suite merely for formality;
+- run only validation needed to resolve the architecture decision.
+
+For implementation checkpoints:
+
+- keep checkpoints large enough to deliver a meaningful architectural or vertical unit;
+- do not routinely run full `flutter test`, broad regression suites, or broad audits;
+- do not routinely run `flutter analyze` unless a compile/static-analysis uncertainty must be resolved;
+- run the smallest focused validation needed to prove the checkpoint-specific contract and make the next checkpoint safe;
+- accumulate ordinary behavioral and regression validation for the final integration checkpoint where practical;
+- always run `git diff --check` and inspect Git status/scope before reporting.
+
+Validation must not be deferred when its result affects architectural safety or the
+ability to build the next checkpoint. Examples include:
+
+- a query plan deciding whether a schema/index change is required;
+- a migration on which later implementation depends;
+- an atomic transaction boundary used by later Application or Presentation work;
+- data-loss or dirty-state safety;
+- an ADR or architecture gate.
+
+The final integration checkpoint of every milestone must run:
+
+- all new focused tests;
+- all relevant regression suites;
+- `flutter analyze`;
+- full `flutter test --reporter compact`;
+- architecture and import-boundary scans;
+- localization validation;
+- responsive/accessibility checks when applicable;
+- schema, Backup, dependency, and generated-file guards;
+- `git diff --check` and exact Git status/scope inspection.
+
+Intermediate reports should remain concise. The comprehensive audit and detailed
+validation report belong to the final integration checkpoint.
+
 For general Flutter changes:
 
 ```
@@ -641,6 +684,11 @@ Keep checkpoints small enough that each checkpoint can normally be:
 - implemented in one bounded work unit;
 - validated independently;
 - safely resumed after interruption.
+
+Checkpoint size and validation must also follow the milestone validation cadence in
+section 20: implementation checkpoints should represent meaningful units, focused
+validation should unblock the next architectural step, and broad validation should be
+reserved for the final integration checkpoint unless risk requires it earlier.
 
 For every checkpoint, maintain:
 

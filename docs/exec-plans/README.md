@@ -52,6 +52,57 @@ docs/exec-plans/
 
 ---
 
+## Стандартный режим validation для milestone
+
+LifeOS использует risk-based validation cadence.
+
+### Investigation / architecture gate
+
+- обычно docs-only;
+- полный тестовый прогон не выполняется только ради формальности;
+- запускаются лишь проверки, необходимые для принятия архитектурного решения.
+
+### Implementation checkpoints
+
+- checkpoint должен давать содержательный архитектурный или vertical результат;
+- выполняется минимальная focused validation, необходимая для доказательства его
+  contract и безопасного перехода к следующему checkpoint;
+- полный `flutter test`, широкие regressions, `flutter analyze` и большие аудиты
+  обычно накапливаются до финала milestone;
+- перед отчётом всегда выполняется `git diff --check` и проверяется Git status/scope;
+- промежуточный отчёт остаётся коротким.
+
+Проверку нельзя откладывать, если её результат влияет на архитектурную безопасность
+или возможность продолжить работу. В частности, сразу проверяются:
+
+- query plan, определяющий необходимость schema/index;
+- migration, на которой строится следующий checkpoint;
+- atomic transaction boundary до построения Application/UI поверх неё;
+- data-loss и dirty-state safety;
+- ADR/architecture gate.
+
+### Final integration checkpoint
+
+Финальный checkpoint выполняет полный аудит milestone:
+
+- все новые focused tests;
+- все релевантные regression suites;
+- `flutter analyze`;
+- полный `flutter test --reporter compact`;
+- architecture/import scans;
+- localization validation;
+- responsive/accessibility checks, когда применимо;
+- schema/Backup/dependency/generated guards;
+- `git diff --check` и точный Git status/scope.
+
+Главный принцип:
+
+> В середине milestone проверяется только то, что влияет на архитектурную
+> безопасность и возможность двигаться дальше. Остальное накапливается и полноценно
+> проверяется в финальном integration checkpoint.
+
+---
+
 ## Как начать или продолжить автономную работу
 
 Открыть проект LifeOS в Codex и отправить:
