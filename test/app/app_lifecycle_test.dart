@@ -19,6 +19,7 @@ import 'package:lifeos/application/use_cases/restore_lifeos_task.dart';
 import 'package:lifeos/application/use_cases/delete_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_backup.dart';
+import 'package:lifeos/application/use_cases/search_lifeos_entities.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
 import 'package:lifeos/application/use_cases/unlink_lifeos_relationship.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_workspace.dart';
@@ -37,6 +38,7 @@ import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeo
 import 'package:lifeos/infrastructure/persistence/drift/repositories/drift_lifeos_workspace_repository.dart';
 import 'package:lifeos/infrastructure/persistence/drift/relationships/drift_lifeos_related_entity_reader.dart';
 import 'package:lifeos/infrastructure/persistence/drift/restore/drift_lifeos_backup_restore_store.dart';
+import 'package:lifeos/infrastructure/persistence/drift/search/drift_lifeos_unified_search_reader.dart';
 import 'package:lifeos/infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_context_reader.dart';
 import 'package:lifeos/infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_member_creation_store.dart';
 import 'package:lifeos/presentation/search/task_search_providers.dart';
@@ -164,6 +166,9 @@ LifeOsAppDependencies _createTestDependencies(LifeOsDatabase database) {
     ),
     getDirectRelatedNeighbors: GetDirectLifeOsRelatedNeighbors(
       relatedEntityReader,
+    ),
+    searchEntities: SearchLifeOsEntities(
+      DriftLifeOsUnifiedSearchReader(database),
     ),
     searchTasks: SearchLifeOsTasks(taskRepository),
     createWorkspace: CreateLifeOsWorkspace(

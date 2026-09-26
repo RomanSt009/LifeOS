@@ -19,6 +19,7 @@ import '../application/use_cases/restore_lifeos_note.dart';
 import '../application/use_cases/unlink_lifeos_relationship.dart';
 import '../application/use_cases/export_lifeos_data.dart';
 import '../application/use_cases/restore_lifeos_backup.dart';
+import '../application/use_cases/search_lifeos_entities.dart';
 import '../application/use_cases/search_lifeos_tasks.dart';
 import '../application/backup/lifeos_backup_operations.dart';
 import '../application/relationships/lifeos_related_entity_reader.dart';
@@ -40,6 +41,7 @@ import '../infrastructure/persistence/drift/repositories/drift_lifeos_workspace_
 import '../infrastructure/persistence/drift/repositories/drift_lifeos_workspace_repository.dart';
 import '../infrastructure/persistence/drift/relationships/drift_lifeos_related_entity_reader.dart';
 import '../infrastructure/persistence/drift/restore/drift_lifeos_backup_restore_store.dart';
+import '../infrastructure/persistence/drift/search/drift_lifeos_unified_search_reader.dart';
 import '../infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_context_reader.dart';
 import '../infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_member_creation_store.dart';
 import 'backup_operations.dart';
@@ -64,6 +66,7 @@ class LifeOsAppDependencies {
     required this.createRelationship,
     required this.unlinkRelationship,
     required this.getDirectRelatedNeighbors,
+    required this.searchEntities,
     required this.searchTasks,
     required this.createWorkspace,
     required this.editWorkspace,
@@ -102,6 +105,7 @@ class LifeOsAppDependencies {
   final CreateLifeOsRelationship createRelationship;
   final UnlinkLifeOsRelationship unlinkRelationship;
   final GetDirectLifeOsRelatedNeighbors getDirectRelatedNeighbors;
+  final SearchLifeOsEntities searchEntities;
   final SearchLifeOsTasks searchTasks;
   final CreateLifeOsWorkspace createWorkspace;
   final EditLifeOsWorkspace editWorkspace;
@@ -179,6 +183,9 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     utcClock: utcClock,
   );
   final searchTasks = SearchLifeOsTasks(taskRepository);
+  final searchEntities = SearchLifeOsEntities(
+    DriftLifeOsUnifiedSearchReader(database),
+  );
   final editTaskTitle = EditLifeOsTaskTitle(
     repository: taskRepository,
     utcClock: utcClock,
@@ -319,6 +326,7 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     createRelationship: createRelationship,
     unlinkRelationship: unlinkRelationship,
     getDirectRelatedNeighbors: getDirectRelatedNeighbors,
+    searchEntities: searchEntities,
     searchTasks: searchTasks,
     createWorkspace: createWorkspace,
     editWorkspace: editWorkspace,

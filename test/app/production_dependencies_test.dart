@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/app/dependencies.dart';
+import 'package:lifeos/application/search/lifeos_search_result.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:path/path.dart' as path;
 
@@ -87,6 +88,13 @@ void main() {
           jsonDecode(await dependencies.exportData()) as Map<String, dynamic>;
       expect(await dependencies.taskRepository.getById(taskId), task);
       expect(await dependencies.searchTasks('production'), [task]);
+      final unifiedResults = await dependencies.searchEntities(
+        'production',
+        limit: 50,
+      );
+      expect(unifiedResults, hasLength(1));
+      expect(unifiedResults.single, isA<LifeOsTaskSearchResult>());
+      expect(unifiedResults.single.entityId, task.id);
       expect(task.createdAt, DateTime.utc(2026, 9, 8, 12));
       expect(task.updatedAt, task.createdAt);
       expect(task.lifecycle, LifeOsEntityLifecycle.active);

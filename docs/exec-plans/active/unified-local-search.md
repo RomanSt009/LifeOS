@@ -6,8 +6,8 @@
 - Status: active
 - Investigation: completed
 - Architecture readiness: ready
-- Current checkpoint: US-01 — pending
-- Resume point: начать US-01 с Application contract и focused contract tests
+- Current checkpoint: US-02 — pending
+- Resume point: начать US-02 с unified Search Presentation/provider contract
 - ADR gate: новый ADR не требуется
 - Production implementation: не начата
 
@@ -73,7 +73,9 @@ Milestone не является реализацией knowledge retrieval, sema
 - Empty и whitespace-only query возвращают пустой результат и не превращаются в `match everything`.
 - Matching — literal substring по каждому разрешённому полю.
 - `%`, `_` и `\` остаются literal characters.
-- Comparison использует locale-independent Dart lowercase semantics, совместимые с текущим Task Search.
+- Infrastructure строит parameterized literal GLOB pattern из Dart lowercase и
+  простых one-to-one upper/lower пар, совместимых с текущими English/Cyrillic
+  expectations Task Search.
 - Ожидаются обычные English и Cyrillic case variants, но contract не обещает Unicode normalization, accent folding, locale-specific collation или linguistic stemming.
 - Совпадение хотя бы в одном поле создаёт ровно один result для entity; совпадение в нескольких полях не создаёт duplicates.
 - Fuzzy, prefix boost, tokenization, stemming, typo correction, relevance score и highlighting не входят в 1.0.
@@ -107,7 +109,9 @@ Application вводит sealed typed result family, например `LifeOsSea
 - Application port: специализированный read-only `LifeOsUnifiedSearchReader`.
 - Application use case: `SearchLifeOsEntities`.
 - Infrastructure: один Drift adapter, использующий существующую production database.
-- Adapter одним mixed read получает active Task/Note/Workspace candidates через `entities` и typed tables, затем выполняет literal matching, global sort и global limit.
+- Adapter одним mixed `LEFT OUTER JOIN` read получает Task/Note/Workspace через
+  `entities` и typed tables, применяет parameterized literal `glob(pattern,
+  field)`, active filtering, global sort и global limit в SQLite.
 - Typed mapping переиспользует существующие entity conventions; inconsistent typed rows считаются data corruption и не замалчиваются.
 - Composition root создаёт use case из уже существующего database lifecycle.
 
@@ -226,7 +230,7 @@ Application вводит sealed typed result family, например `LifeOsSea
 
 ### US-01 — Unified Application contract и Infrastructure query
 
-- Status: pending
+- Status: done
 - Goal: создать typed mixed Application search path и один Drift read adapter.
 - Relevant ADRs: ADR-0012, ADR-0015, ADR-0016, ADR-0022, ADR-0023, ADR-0030, ADR-0033, ADR-0034.
 - Allowed scope:
@@ -247,7 +251,36 @@ Application вводит sealed typed result family, например `LifeOsSea
   - temporary Drift database tests для mixed types, corruption boundary, ordering/limit и read-only/Outbox evidence;
   - relevant existing Task Search tests;
   - `git diff --check`, status и scope inspection.
-- Result / evidence: pending.
+- Result / evidence:
+  - sealed `LifeOsSearchResult` имеет typed Task, Note и Workspace variants с
+    Domain entity payload, typed ID/type, primary display title и `updatedAt`;
+  - `LifeOsUnifiedSearchReader.search({required query, required limit})`
+    является bounded read-only Application port;
+  - `SearchLifeOsEntities(query, limit: ...)` владеет `trim`, empty-query и
+    positive-limit validation;
+  - `DriftLifeOsUnifiedSearchReader` выполняет один parameterized mixed
+    `LEFT OUTER JOIN` query, literal GLOB matching по утверждённым полям,
+    active-only filtering, `updatedAt DESC`, `id ASC` и общий SQL `LIMIT`;
+  - `%`, `_` и `\` остаются literal; English/Cyrillic case expectations
+    подтверждены focused test; completed active Task остаётся searchable;
+  - существующие Task/Note/Workspace mappers выполняют полную typed hydration;
+    отсутствующий или конфликтующий typed row вызывает
+    `LifeOsUnifiedSearchPersistenceException`, а не silent skip;
+  - `QueryInterceptor` подтвердил один SELECT без N+1; captured SQL содержит
+    GLOB, joins, global ordering и `LIMIT 50`;
+  - `EXPLAIN QUERY PLAN` успешно выполнен на schema v4 и включает
+    Tasks/Notes/Workspaces; schema v5, index и FTS не потребовались;
+  - Outbox до/после Search совпадает; Search не выполняет mutation;
+  - production composition создаёт reader/use case поверх существующего
+    `LifeOsDatabase`; legacy `SearchLifeOsTasks` и текущий UI сохранены для
+    переключения в US-02;
+  - focused validation PASS:
+    `search_lifeos_entities_test.dart`,
+    `drift_lifeos_unified_search_reader_test.dart`,
+    `search_lifeos_tasks_test.dart`,
+    `production_dependencies_test.dart`, `app_lifecycle_test.dart`;
+  - full suite и `flutter analyze` намеренно отложены до US-03 по milestone
+    validation policy.
 
 ### US-02 — Unified Search Presentation и typed navigation
 
