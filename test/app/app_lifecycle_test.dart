@@ -2,8 +2,11 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/testing.dart';
 import 'package:lifeos/app/app.dart';
 import 'package:lifeos/app/dependencies.dart';
+import 'package:lifeos/application/ai/lifeos_local_ai_availability.dart';
+import 'package:lifeos/application/use_cases/check_lifeos_local_ai_availability.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_backup.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_relationship.dart';
@@ -231,6 +234,12 @@ LifeOsAppDependencies _createTestDependencies(LifeOsDatabase database) {
       restoreStore: DriftLifeOsBackupRestoreStore(database),
     ),
     backupOperations: const _NoopBackupOperations(),
+    localAiHttpClient: MockClient((_) async {
+      throw StateError('Local AI network must not run during startup.');
+    }),
+    checkLocalAiAvailability: CheckLifeOsLocalAiAvailability(
+      const _UnavailableLocalAiReader(),
+    ),
   );
 }
 
@@ -248,4 +257,12 @@ class _NoopBackupOperations implements LifeOsBackupOperations {
     String sourcePath, {
     required bool destructiveReplaceConfirmed,
   }) async {}
+}
+
+class _UnavailableLocalAiReader implements LifeOsLocalAiAvailabilityReader {
+  const _UnavailableLocalAiReader();
+
+  @override
+  Future<LifeOsLocalAiAvailability> read() async =>
+      LifeOsLocalAiAvailability.runtimeUnavailable;
 }

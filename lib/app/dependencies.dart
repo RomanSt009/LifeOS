@@ -1,3 +1,6 @@
+import 'package:http/http.dart' as http;
+
+import '../application/use_cases/check_lifeos_local_ai_availability.dart';
 import '../application/use_cases/create_lifeos_backup.dart';
 import '../application/use_cases/create_lifeos_note.dart';
 import '../application/use_cases/create_lifeos_relationship.dart';
@@ -27,6 +30,8 @@ import '../domain/repositories/lifeos_note_repository.dart';
 import '../domain/repositories/lifeos_relationship_repository.dart';
 import '../domain/repositories/lifeos_workspace_membership_repository.dart';
 import '../domain/repositories/lifeos_workspace_repository.dart';
+import '../infrastructure/ai/ollama/lifeos_ollama_http_transport.dart';
+import '../infrastructure/ai/ollama/ollama_lifeos_local_ai_availability_reader.dart';
 import '../infrastructure/backup/files/lifeos_backup_file_reader.dart';
 import '../infrastructure/backup/formats/v4_backup_export_encoder.dart';
 import '../infrastructure/identity/file_device_identity_store.dart';
@@ -83,7 +88,9 @@ class LifeOsAppDependencies {
     required this.exportData,
     required this.restoreBackup,
     required this.backupOperations,
-  });
+    required http.Client localAiHttpClient,
+    required this.checkLocalAiAvailability,
+  }) : _localAiHttpClient = localAiHttpClient;
 
   final LifeOsDatabase database;
   final LifeOsTaskRepository taskRepository;
@@ -121,10 +128,17 @@ class LifeOsAppDependencies {
   final ExportLifeOsData exportData;
   final RestoreLifeOsBackup restoreBackup;
   final LifeOsBackupOperations backupOperations;
+  final CheckLifeOsLocalAiAvailability checkLocalAiAvailability;
+  final http.Client _localAiHttpClient;
 
   Future<void>? _closeFuture;
 
-  Future<void> close() => _closeFuture ??= database.close();
+  Future<void> close() => _closeFuture ??= _closeOwnedResources();
+
+  Future<void> _closeOwnedResources() async {
+    _localAiHttpClient.close();
+    await database.close();
+  }
 }
 
 Future<LifeOsAppDependencies> createProductionDependencies({
@@ -302,6 +316,13 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     restoreBackup: restoreBackup,
     sourceDatabaseSchemaVersion: database.schemaVersion,
   );
+  final localAiHttpClient = createDirectLifeOsOllamaHttpClient();
+  final localAiTransport = FixedLoopbackLifeOsOllamaHttpTransport(
+    localAiHttpClient,
+  );
+  final checkLocalAiAvailability = CheckLifeOsLocalAiAvailability(
+    OllamaLifeOsLocalAiAvailabilityReader(localAiTransport),
+  );
 
   return LifeOsAppDependencies(
     database: database,
@@ -340,6 +361,8 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     exportData: exportData,
     restoreBackup: restoreBackup,
     backupOperations: backupOperations,
+    localAiHttpClient: localAiHttpClient,
+    checkLocalAiAvailability: checkLocalAiAvailability,
   );
 }
 

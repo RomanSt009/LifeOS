@@ -1,13 +1,13 @@
 # Context-aware AI #1 — Local AI Investigation and Execution Plan
 
-Статус плана: ready for implementation
+Статус плана: active
 
-Текущий checkpoint: CAI-01 — pending.
+Текущий checkpoint: CAI-02 — pending.
 
-Точка возобновления: CAI-01 — Local AI transport, availability and model boundary.
+Точка возобновления: CAI-02 — Ollama LifeOsAiProvider and Ask orchestration.
 
-Implementation не начиналась. План скорректирован docs-only после принятия
-product decision: LifeOS 1.0 использует только локальный AI.
+CAI-01 завершён: fixed-loopback transport и typed local availability path
+реализованы без generation/UI и без startup network activity.
 
 ## Current state
 
@@ -466,7 +466,7 @@ Default tests remain offline; Ollama installation is not required in CI.
 
 ### CAI-01 — Local AI transport, availability and model boundary
 
-Status: pending.
+Status: done.
 
 Goal: add only http; implement fixed-loopback Ollama transport seam and
 provider-neutral runtime/model availability contract.
@@ -490,6 +490,27 @@ Definition of Done:
 Focused validation: dependency diff/scan, availability/loopback offline tests,
 import/security scans, git diff --check and exact scope. No full suite/analyze
 unless needed for compile/static uncertainty.
+
+Result / evidence:
+
+- `http: ^1.6.0` is direct and remains locked at 1.6.0; no other dependency
+  version changed.
+- Infrastructure owns the fixed `http://127.0.0.1:11434` version/tags
+  transport, 3-second timeout, `HttpClient.findProxy = DIRECT` setup and exact
+  `qwen3:4b` constant. There is no configurable URL or generation operation.
+- Application owns only the typed availability reader/use case and distinguishes
+  runtime unavailable, runtime available/model missing, runtime/model available,
+  malformed response and unexpected transport failure.
+- Composition owns and closes one local AI HTTP client. Construction and app
+  startup make no request; Presentation has no CAI-01 consumer.
+- Offline focused tests passed: 12 tests across availability Application,
+  Ollama Infrastructure and app lifecycle/composition.
+- Import/network scans passed: no HTTP, IO, Ollama or Infrastructure import in
+  Application/Domain; no Presentation change; no `/api/chat` or remote endpoint.
+- `schemaVersion` remains 4; migrations, Backup v4, Drift/l10n generated files,
+  Domain and Presentation are unchanged.
+- Full suite and `flutter analyze` intentionally deferred to CAI-04 under the
+  milestone validation cadence.
 
 ### CAI-02 — Ollama LifeOsAiProvider and Ask orchestration
 
