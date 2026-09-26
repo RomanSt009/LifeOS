@@ -102,8 +102,22 @@ void main() {
         version: 2,
         source: LifeOsEntitySource.user,
       );
+      final deletedTask = LifeOsTask(
+        id: const LifeOsEntityId(
+          value: 'task-deleted',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Shared deleted Task',
+        isCompleted: false,
+        createdAt: createdAt,
+        updatedAt: DateTime.utc(2026, 9, 26, 15),
+        lifecycle: LifeOsEntityLifecycle.deleted,
+        version: 2,
+        source: LifeOsEntitySource.user,
+      );
 
       await taskRepository.save(task);
+      await taskRepository.save(deletedTask);
       await noteRepository.save(note);
       await noteRepository.save(archivedNote);
       await workspaceRepository.save(workspace);
@@ -156,6 +170,83 @@ void main() {
 
       final limited = await reader.search(query: 'shared', limit: 2);
       expect(limited.map((result) => result.entityId), [note.id, workspace.id]);
+      expect(
+        (await reader.search(query: 'completed', limit: 50)).single.entityId,
+        task.id,
+      );
+      expect(
+        (await reader.search(query: 'reference', limit: 50)).single.entityId,
+        note.id,
+      );
+      expect(
+        (await reader.search(query: 'content', limit: 50)).single.entityId,
+        note.id,
+      );
+      expect(
+        (await reader.search(query: 'planning', limit: 50)).single.entityId,
+        workspace.id,
+      );
+      expect(
+        (await reader.search(query: 'description', limit: 50)).single.entityId,
+        workspace.id,
+      );
+      expect(await reader.search(query: 'deleted', limit: 50), isEmpty);
+    },
+  );
+
+  test(
+    'orders equal timestamps by ID across types before global limit',
+    () async {
+      final taskRepository = DriftLifeOsTaskRepository(
+        database,
+        nextChangeId,
+        'device-test',
+      );
+      final noteRepository = DriftLifeOsNoteRepository(
+        database,
+        nextChangeId,
+        'device-test',
+      );
+      final workspaceRepository = DriftLifeOsWorkspaceRepository(
+        database,
+        nextChangeId,
+        'device-test',
+      );
+      final timestamp = DateTime.utc(2026, 9, 26, 12);
+      final task = LifeOsTask.createUserTask(
+        id: const LifeOsEntityId(
+          value: 'a-task',
+          entityType: LifeOsEntityType.task,
+        ),
+        title: 'Tie match',
+        timestamp: timestamp,
+      );
+      final note = LifeOsNote.createUserNote(
+        id: const LifeOsEntityId(
+          value: 'b-note',
+          entityType: LifeOsEntityType.note,
+        ),
+        title: 'Tie match',
+        content: '',
+        timestamp: timestamp,
+      );
+      final workspace = LifeOsWorkspace.createUserWorkspace(
+        id: const LifeOsEntityId(
+          value: 'c-workspace',
+          entityType: LifeOsEntityType.workspace,
+        ),
+        title: 'Tie match',
+        description: null,
+        timestamp: timestamp,
+      );
+      await taskRepository.save(task);
+      await noteRepository.save(note);
+      await workspaceRepository.save(workspace);
+
+      final results = await reader.search(query: 'tie', limit: 2);
+
+      expect(results.map((result) => result.entityId), [task.id, note.id]);
+      expect(results, hasLength(2));
     },
   );
 

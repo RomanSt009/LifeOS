@@ -323,7 +323,7 @@ void main() {
       ),
       title: 'Found Task',
       timestamp: DateTime.utc(2026, 9, 26, 10),
-    );
+    ).toggleCompletion(updatedAt: DateTime.utc(2026, 9, 26, 11));
     final note = LifeOsNote.createUserNote(
       id: const LifeOsEntityId(
         value: 'search-note',
@@ -342,10 +342,20 @@ void main() {
       description: 'Found context',
       timestamp: DateTime.utc(2026, 9, 26, 8),
     );
+    final staleWorkspace = LifeOsWorkspace.createUserWorkspace(
+      id: const LifeOsEntityId(
+        value: 'stale-workspace',
+        entityType: LifeOsEntityType.workspace,
+      ),
+      title: 'Stale Workspace',
+      description: null,
+      timestamp: DateTime.utc(2026, 9, 26, 7),
+    );
     final reader = _FixedUnifiedSearchReader([
       LifeOsTaskSearchResult(task),
       LifeOsNoteSearchResult(note),
       LifeOsWorkspaceSearchResult(workspace),
+      LifeOsWorkspaceSearchResult(staleWorkspace),
     ]);
 
     await tester.pumpWidget(
@@ -373,6 +383,7 @@ void main() {
       LifeOsDestination.tasks.index,
     );
     expect(find.text('Found Task'), findsOneWidget);
+    expect(find.byTooltip('Mark incomplete'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('navigation-search-label')));
     await tester.pumpAndSettle();
@@ -404,6 +415,19 @@ void main() {
     );
     expect(find.byKey(const Key('workspace-detail-title')), findsOneWidget);
     expect(find.text('Found Workspace'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('navigation-search-label')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('search-result-workspace-stale-workspace')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex,
+      LifeOsDestination.workspaces.index,
+    );
+    expect(find.byKey(const Key('workspace-detail-title')), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('switches between Tasks, Search, and Tasks', (tester) async {
@@ -893,7 +917,7 @@ void main() {
   );
 
   testWidgets(
-    'typed openNote preserves dirty drafts through Save, Discard, and Cancel',
+    'Search openNote preserves dirty drafts through Save, Discard, and Cancel',
     (tester) async {
       final first = LifeOsNote.createUserNote(
         id: const LifeOsEntityId(
@@ -938,10 +962,37 @@ void main() {
         archived,
       ]);
       final shellKey = GlobalKey<LifeosShellPageState>();
+      final searchReader = _FixedUnifiedSearchReader([
+        LifeOsNoteSearchResult(first),
+        LifeOsNoteSearchResult(second),
+      ]);
       await tester.pumpWidget(
-        testApp(const Locale('en'), noteRepository: notes, shellKey: shellKey),
+        testApp(
+          const Locale('en'),
+          noteRepository: notes,
+          shellKey: shellKey,
+          unifiedSearchReader: searchReader,
+        ),
       );
       await tester.pumpAndSettle();
+
+      Future<void> openFromSearch(LifeOsEntityId noteId) async {
+        await tester.tap(find.byKey(const Key('navigation-search-label')));
+        await tester.pumpAndSettle();
+        final result = find.byKey(
+          ValueKey('search-result-note-${noteId.value}'),
+        );
+        if (result.evaluate().isEmpty) {
+          await tester.enterText(
+            find.byKey(const Key('search-query-field')),
+            'note',
+          );
+          await tester.tap(find.byKey(const Key('search-submit-button')));
+          await tester.pumpAndSettle();
+        }
+        await tester.tap(result);
+        await tester.pumpAndSettle();
+      }
 
       shellKey.currentState!.openNote(first.id);
       await tester.pumpAndSettle();
@@ -957,8 +1008,7 @@ void main() {
         find.byKey(const Key('note-content-field')),
         'Protected draft',
       );
-      shellKey.currentState!.openNote(second.id);
-      await tester.pumpAndSettle();
+      await openFromSearch(second.id);
       expect(find.text('Save changes to this Note?'), findsOneWidget);
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
@@ -982,8 +1032,7 @@ void main() {
         'Protected draft',
       );
 
-      shellKey.currentState!.openNote(second.id);
-      await tester.pumpAndSettle();
+      await openFromSearch(second.id);
       await tester.tap(find.text('Discard'));
       await tester.pumpAndSettle();
       expect(
@@ -998,8 +1047,7 @@ void main() {
         find.byKey(const Key('note-content-field')),
         'Saved second body',
       );
-      shellKey.currentState!.openNote(first.id);
-      await tester.pumpAndSettle();
+      await openFromSearch(first.id);
       await tester.tap(find.byKey(const Key('unsaved-note-save')));
       await tester.pumpAndSettle();
       expect(

@@ -3,13 +3,13 @@
 ## Статус плана
 
 - Milestone: Unified Local Search
-- Status: active
+- Status: completed
 - Investigation: completed
 - Architecture readiness: ready
-- Current checkpoint: US-03 — pending
-- Resume point: начать US-03 с финального integration audit
+- Current checkpoint: US-03 — done
+- Resume point: отсутствует; milestone завершён, следующий roadmap handoff — AI Foundation
 - ADR gate: новый ADR не требуется
-- Production implementation: US-01 и US-02 реализованы; final audit pending
+- Production implementation: completed and validated
 
 ## 1. Текущее состояние
 
@@ -343,7 +343,7 @@ Application вводит sealed typed result family, например `LifeOsSea
 
 ### US-03 — Final integration audit
 
-- Status: pending
+- Status: done
 - Goal: доказать завершённый local-first Unified Search vertical slice и закрыть milestone.
 - Allowed scope: minimal defect fixes в принятой architecture, final evidence и перенос плана в completed.
 - Explicit non-goals: новый search engine, FTS, semantic/AI search, workspace scoping, graph expansion, следующий milestone.
@@ -363,7 +363,58 @@ Application вводит sealed typed result family, например `LifeOsSea
   - desktop responsive/accessibility checks;
   - schema/Backup/dependency/generated guards;
   - `git diff --check`, diff scope и exact status.
-- Result / evidence: pending.
+- Result / evidence:
+  - final searchable scope подтверждён: active Task title, Note title/content и
+    Workspace title/nullable description; Relationship и WorkspaceMembership
+    не являются результатами;
+  - Application владеет trim, empty-query и positive global limit validation;
+    typed sealed results не используют Map/dynamic и не содержат UI concerns;
+  - Infrastructure выполняет один parameterized mixed LEFT OUTER JOIN read,
+    active filtering, literal GLOB matching, SQL ordering updatedAt DESC/id ASC
+    и один global LIMIT; N+1, per-type limits и relevance ranking отсутствуют;
+  - explicit query matrix подтверждает все searchable fields, отсутствие false
+    type inclusion, literal %, _ и backslash, English/Cyrillic case behavior,
+    completed Task, archived/deleted exclusion и mixed tie ordering;
+  - one-SELECT evidence, неизменный Outbox и отсутствие write operations
+    подтверждают read-only contract; inconsistent typed rows не скрываются;
+  - UnifiedSearchPage сохраняет initial/loading/no-results/error/result states,
+    recovery, Clear, newest-query-wins и stale result/error rejection;
+  - mixed rows различают тип текстом и icon, показывают completion и bounded
+    previews; mouse, Enter/Space activation, focus recovery, scroll и layouts
+    1280x800/640x600 проходят без overflow;
+  - shell передаёт только typed IDs в существующие openTask/openNote/
+    openWorkspace commands; completed Task раскрывается существующим filter
+    path, stale Workspace безопасен, IndexedStack сохраняет Search state;
+  - прямой Search → Note regression подтверждает Save, Discard и Cancel dirty
+    guard, включая отсутствие replay после Cancel;
+  - Search остаётся global: нет Workspace membership filtering/ranking,
+    Relationship traversal, graph expansion, router, persistent history или AI;
+  - Task-only Presentation/provider и production composition удалены в US-02.
+    Исторический SearchLifeOsTasks/Domain repository contract сохранён: его
+    удаление затронуло бы завершённый Local Search contract и несколько слоёв,
+    что не является локальной cleanup финального checkpoint;
+  - flutter gen-l10n PASS; en/ru parity PASS (180 keys), generated localization
+    совпадает с HEAD после regeneration, hardcoded static Search text не найден;
+  - architecture/import scans PASS: Domain/Application не импортируют Flutter,
+    Infrastructure, Drift, SQLite или dart:io; Search Presentation не импортирует
+    Infrastructure/Drift/SQLite; graph и routing dependency scans PASS;
+  - composition audit PASS: один LifeOsDatabase создаётся composition root,
+    DriftLifeOsUnifiedSearchReader использует его, SearchLifeOsEntities
+    предоставляется Presentation одним provider override;
+  - guarded scope PASS: schemaVersion 4, frozen schemas/migrations/Drift
+    generated output, V4BackupExportEncoder/Backup v4, pubspec.yaml,
+    pubspec.lock и dependency set не изменены; schema/Backup v5 отсутствуют;
+  - focused Unified Search/Application/Persistence/Presentation/Shell:
+    40/40 PASS;
+  - relevant Task/Note/Workspace/Relationship/Backup/Migration/Localization/
+    Composition regressions: 177/177 PASS;
+  - flutter analyze PASS: No issues found;
+  - full flutter test --reporter compact PASS: 367/367;
+  - production bugs found: none; добавлены четыре audit regression cases и
+    расширены существующие field/lifecycle/navigation assertions;
+  - git diff --check PASS; commit и push не выполнялись;
+  - pre-flight: main, HEAD afb3a17, origin/main...HEAD = 0/0; единственное
+    pre-existing unrelated изменение .obsidian/workspace.json не изменялось.
 
 ## 20. Plan Definition of Done
 
