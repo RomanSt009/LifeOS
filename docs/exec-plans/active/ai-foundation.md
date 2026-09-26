@@ -1,10 +1,10 @@
 # AI Foundation — Investigation and Execution Plan
 
-Статус плана: blocked pending ADR decision
+Статус плана: active
 
-Текущий checkpoint: отсутствует; implementation не начиналась.
+Текущий checkpoint: AI-01 — pending; implementation не начиналась.
 
-Точка возобновления: принять ADR-0035, затем начать AF-01.
+Точка возобновления: AI-01 — Bounded Workspace context contracts and assembler.
 
 ## Current state
 
@@ -266,9 +266,9 @@ Context-aware AI #1:
 
 ## ADR decision
 
-ADR REQUIRED.
+ADR-0035 принят и является source of truth для AI Foundation.
 
-Предложение: ADR-0035: AI Provider, Bounded Context, and External Data Boundary.
+Решение: ADR-0035: AI Provider, Bounded Context, and External Data Boundary.
 
 Он фиксирует Foundation/feature split, Workspace root, bounds/provenance/dedupe/
 truncation, local-vs-outbound boundary, default deny + explicit action,
@@ -280,7 +280,7 @@ AI ADR-0008/0010/0013/0014 preliminary и не определяют concrete con
 Решения долговременны, cross-layer и privacy-sensitive. Execution plan
 недостаточен как source of truth.
 
-ADR здесь не создаётся. Implementation blocked до user acceptance.
+Architecture gate resolved. Implementation может начаться только с AI-01.
 
 ## Dependency gates
 
@@ -311,15 +311,15 @@ Implementation checkpoints: focused architecture-safety tests only; always
 git diff --check + scope. Do not defer bounds, query behavior, data leakage,
 read-only or import checks required by the next checkpoint.
 
-Final: all AF tests, relevant regressions, flutter analyze, full flutter test
+Final: all AI Foundation tests, relevant regressions, flutter analyze, full flutter test
 --reporter compact, import/architecture/security/privacy scans, schema/Backup/
 dependency/generated guards, git diff --check and exact status.
 
 ## Implementation checkpoints
 
-### AF-01 — Bounded Workspace context contracts and assembler
+### AI-01 — Bounded Workspace context contracts and assembler
 
-Status: pending, blocked by accepted ADR-0035.
+Status: pending. ADR-0035 accepted.
 
 Scope: Application models/use case; specialised bounded Workspace read port/Drift
 adapter; active direct Task/Note only; order/dedupe/truncation/omission; focused
@@ -334,9 +334,9 @@ or privacy semantics.
 Interim validation: focused assembler/budget/provenance/query/query-count/
 read-only tests, Application import scan, git diff --check and scope.
 
-### AF-02 — Provider-neutral contracts and safe disabled boundary
+### AI-02 — Provider-neutral contracts and safe disabled boundary
 
-Status: pending. Depends on AF-01.
+Status: pending. Depends on AI-01.
 
 Scope: provider/request/response/ref/error contracts; Application orchestration
 seam; deterministic fake; disabled/unavailable adapter or equivalent safe
@@ -351,9 +351,9 @@ feature-specific choice.
 Interim validation: focused contract/error/ref/no-content-log tests, import and
 schema/Backup/dependency guards, git diff --check and scope.
 
-### AF-03 — Final integration and architecture audit
+### AI-03 — Final integration and architecture audit
 
-Status: pending. Depends on AF-01/AF-02.
+Status: pending. Depends on AI-01/AI-02.
 
 Scope: fake-provider proof Workspace ID → bounded request/response, final privacy/
 architecture/local-first audit, minimal accepted fixes, plan completion.
@@ -404,8 +404,16 @@ AI #1 because the concrete feature establishes capability/UX needs.
 - Tests/analyze not run: docs-only, no architecture uncertainty required them.
 - Production Dart, tests, pubspec/lock, schema, Backup and generated unchanged.
 
-## Blocker
+## ADR checkpoint result
 
-Implementation blocked pending accepted ADR-0035. Minimum decision: accept the
-Workspace-rooted bounded context, default-deny outbound boundary, provider-neutral
-non-streaming port, no-tools/no-persistence scope and secure-storage gate.
+- ADR-0035 accepted on 2026-09-26.
+- Workspace-rooted bounded context, default-deny outbound boundary,
+  provider-neutral non-streaming port, no-tools/no-persistence scope and future
+  secure-storage dependency gate are fixed.
+- Architecture blocker removed; AI-01 is the next pending checkpoint.
+- No implementation checkpoint was started by this docs-only change.
+- Pre-flight: main, HEAD fcb6f6f, origin/main...HEAD = 0 0; only the pre-existing
+  .obsidian/workspace.json change was present and it remained outside scope.
+- Validation: git diff --check PASS; no staged files; production Dart, tests,
+  dependencies, schema, Backup and generated files unchanged.
+- Tests and flutter analyze were not run because this checkpoint is docs-only.
