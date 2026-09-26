@@ -87,7 +87,6 @@ void main() {
       final exportData =
           jsonDecode(await dependencies.exportData()) as Map<String, dynamic>;
       expect(await dependencies.taskRepository.getById(taskId), task);
-      expect(await dependencies.searchTasks('production'), [task]);
       final unifiedResults = await dependencies.searchEntities(
         'production',
         limit: 50,

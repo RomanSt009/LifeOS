@@ -11,6 +11,10 @@ void main() {
     value: 'note-1',
     entityType: LifeOsEntityType.note,
   );
+  const workspaceId = LifeOsEntityId(
+    value: 'workspace-1',
+    entityType: LifeOsEntityType.workspace,
+  );
 
   test('openTask carries only a typed Task ID', () {
     final command = LifeOsFeatureCommand.openTask(id: 1, taskId: taskId);
@@ -30,6 +34,18 @@ void main() {
     expect(command.workspaceId, isNull);
   });
 
+  test('openWorkspace carries only a typed Workspace ID', () {
+    final command = LifeOsFeatureCommand.openWorkspace(
+      id: 3,
+      workspaceId: workspaceId,
+    );
+
+    expect(command.id, 3);
+    expect(command.type, LifeOsFeatureCommandType.openWorkspace);
+    expect(command.entityId, isNull);
+    expect(command.workspaceId, workspaceId);
+  });
+
   test('typed open commands reject the wrong Entity type', () {
     expect(
       () => LifeOsFeatureCommand.openTask(id: 1, taskId: noteId),
@@ -40,8 +56,19 @@ void main() {
       throwsArgumentError,
     );
     expect(
+      () => LifeOsFeatureCommand.openWorkspace(id: 3, workspaceId: taskId),
+      throwsArgumentError,
+    );
+    expect(
       () =>
-          LifeOsFeatureCommand(id: 3, type: LifeOsFeatureCommandType.openTask),
+          LifeOsFeatureCommand(id: 4, type: LifeOsFeatureCommandType.openTask),
+      throwsArgumentError,
+    );
+    expect(
+      () => LifeOsFeatureCommand(
+        id: 5,
+        type: LifeOsFeatureCommandType.openWorkspace,
+      ),
       throwsArgumentError,
     );
   });

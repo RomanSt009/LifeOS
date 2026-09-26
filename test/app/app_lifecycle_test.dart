@@ -20,7 +20,6 @@ import 'package:lifeos/application/use_cases/delete_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_backup.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_entities.dart';
-import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
 import 'package:lifeos/application/use_cases/unlink_lifeos_relationship.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_workspace.dart';
 import 'package:lifeos/application/use_cases/get_lifeos_workspace_context.dart';
@@ -41,7 +40,7 @@ import 'package:lifeos/infrastructure/persistence/drift/restore/drift_lifeos_bac
 import 'package:lifeos/infrastructure/persistence/drift/search/drift_lifeos_unified_search_reader.dart';
 import 'package:lifeos/infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_context_reader.dart';
 import 'package:lifeos/infrastructure/persistence/drift/workspaces/drift_lifeos_workspace_member_creation_store.dart';
-import 'package:lifeos/presentation/search/task_search_providers.dart';
+import 'package:lifeos/presentation/search/unified_search_providers.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list_providers.dart';
 
@@ -78,8 +77,8 @@ void main() {
 
     expect(container.read(lifeOsTaskRepositoryProvider), same(repository));
     expect(
-      container.read(searchLifeOsTasksProvider),
-      same(dependencies.searchTasks),
+      container.read(searchLifeOsEntitiesProvider),
+      same(dependencies.searchEntities),
     );
     expect(
       container.read(editLifeOsTaskTitleProvider),
@@ -170,7 +169,6 @@ LifeOsAppDependencies _createTestDependencies(LifeOsDatabase database) {
     searchEntities: SearchLifeOsEntities(
       DriftLifeOsUnifiedSearchReader(database),
     ),
-    searchTasks: SearchLifeOsTasks(taskRepository),
     createWorkspace: CreateLifeOsWorkspace(
       repository: workspaceRepository,
       entityIdGenerator: () => 'workspace-test',

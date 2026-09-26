@@ -11,22 +11,16 @@ enum LifeOsFeatureCommandType {
 }
 
 final class LifeOsFeatureCommand {
-  LifeOsFeatureCommand({required this.id, required this.type, this.workspaceId})
-    : entityId = null {
+  LifeOsFeatureCommand({required this.id, required this.type})
+    : workspaceId = null,
+      entityId = null {
     if (type == LifeOsFeatureCommandType.openTask ||
-        type == LifeOsFeatureCommandType.openNote) {
+        type == LifeOsFeatureCommandType.openNote ||
+        type == LifeOsFeatureCommandType.openWorkspace) {
       throw ArgumentError.value(
         type,
         'type',
-        'Use the typed openTask/openNote command constructor.',
-      );
-    }
-    if ((type == LifeOsFeatureCommandType.openWorkspace) !=
-        (workspaceId != null)) {
-      throw ArgumentError.value(
-        workspaceId,
-        'workspaceId',
-        'Only openWorkspace accepts and requires a Workspace ID.',
+        'Use the matching typed open command constructor.',
       );
     }
   }
@@ -44,6 +38,17 @@ final class LifeOsFeatureCommand {
   }) : type = LifeOsFeatureCommandType.openNote,
        workspaceId = null,
        entityId = _requireType(noteId, LifeOsEntityType.note, 'noteId');
+
+  LifeOsFeatureCommand.openWorkspace({
+    required this.id,
+    required LifeOsEntityId workspaceId,
+  }) : type = LifeOsFeatureCommandType.openWorkspace,
+       workspaceId = _requireType(
+         workspaceId,
+         LifeOsEntityType.workspace,
+         'workspaceId',
+       ),
+       entityId = null;
 
   final int id;
   final LifeOsFeatureCommandType type;

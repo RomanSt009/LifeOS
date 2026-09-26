@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/backup/lifeos_backup_operations.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_task.dart';
-import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
+import 'package:lifeos/application/search/lifeos_search_result.dart';
+import 'package:lifeos/application/search/lifeos_unified_search_reader.dart';
+import 'package:lifeos/application/use_cases/search_lifeos_entities.dart';
 import 'package:lifeos/application/use_cases/get_lifeos_workspaces.dart';
 import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
@@ -11,7 +13,7 @@ import 'package:lifeos/domain/entities/lifeos_workspace.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
 import 'package:lifeos/domain/repositories/lifeos_workspace_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
-import 'package:lifeos/presentation/search/task_search_providers.dart';
+import 'package:lifeos/presentation/search/unified_search_providers.dart';
 import 'package:lifeos/presentation/settings/backup_settings_providers.dart';
 import 'package:lifeos/presentation/settings/lifeos_artifact_file_chooser.dart';
 import 'package:lifeos/presentation/shell/lifeos_shell_page.dart';
@@ -56,8 +58,8 @@ void main() {
                 utcClock: () => DateTime.utc(2026, 9, 11),
               ),
             ),
-            searchLifeOsTasksProvider.overrideWithValue(
-              SearchLifeOsTasks(repository),
+            searchLifeOsEntitiesProvider.overrideWithValue(
+              SearchLifeOsEntities(_TaskUnifiedSearchReader(repository)),
             ),
             lifeOsBackupOperationsProvider.overrideWithValue(operations),
             lifeOsArtifactFileChooserProvider.overrideWithValue(
@@ -128,8 +130,8 @@ void main() {
                 utcClock: () => DateTime.utc(2026, 9, 11),
               ),
             ),
-            searchLifeOsTasksProvider.overrideWithValue(
-              SearchLifeOsTasks(repository),
+            searchLifeOsEntitiesProvider.overrideWithValue(
+              SearchLifeOsEntities(_TaskUnifiedSearchReader(repository)),
             ),
             lifeOsBackupOperationsProvider.overrideWithValue(operations),
             lifeOsArtifactFileChooserProvider.overrideWithValue(
@@ -182,7 +184,10 @@ void main() {
 
       await tester.tap(find.text('Search'));
       await tester.pumpAndSettle();
-      expect(find.text('Enter a Task title to search'), findsOneWidget);
+      expect(
+        find.text('Enter text to search your local content'),
+        findsOneWidget,
+      );
       expect(find.text('Created after Backup'), findsNothing);
 
       await tester.tap(find.text('Tasks'));
@@ -228,8 +233,8 @@ void main() {
               utcClock: () => DateTime.utc(2026, 9, 22),
             ),
           ),
-          searchLifeOsTasksProvider.overrideWithValue(
-            SearchLifeOsTasks(taskRepository),
+          searchLifeOsEntitiesProvider.overrideWithValue(
+            SearchLifeOsEntities(_TaskUnifiedSearchReader(taskRepository)),
           ),
           getLifeOsWorkspacesProvider.overrideWithValue(
             GetLifeOsWorkspaces(workspaceRepository),
@@ -476,5 +481,20 @@ class MutableTaskRepository implements LifeOsTaskRepository {
     } else {
       tasks[index] = task;
     }
+  }
+}
+
+class _TaskUnifiedSearchReader implements LifeOsUnifiedSearchReader {
+  const _TaskUnifiedSearchReader(this.repository);
+
+  final LifeOsTaskRepository repository;
+
+  @override
+  Future<List<LifeOsSearchResult>> search({
+    required String query,
+    required int limit,
+  }) async {
+    final tasks = await repository.searchByTitle(query);
+    return tasks.take(limit).map(LifeOsTaskSearchResult.new).toList();
   }
 }

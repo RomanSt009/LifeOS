@@ -30,14 +30,21 @@ void main() {
     expect(english.searchClearAction, 'Clear search');
     expect(
       english.homeAlphaDescription,
-      'Use the navigation to work with Tasks and Notes or search Task titles.',
+      'Use the navigation to work with Tasks, Notes, and Workspaces or search '
+      'your local content.',
     );
     expect(english.searchTitle, 'Search');
-    expect(english.searchQueryFieldLabel, 'Task title');
+    expect(
+      english.searchQueryFieldLabel,
+      'Search Tasks, Notes, and Workspaces',
+    );
     expect(english.searchAction, 'Search');
-    expect(english.searchInitial, 'Enter a Task title to search');
-    expect(english.searchNoResults, 'No Tasks found');
-    expect(english.searchError, 'Unable to search Tasks');
+    expect(english.searchInitial, 'Enter text to search your local content');
+    expect(english.searchNoResults, 'No results found');
+    expect(english.searchError, 'Unable to search local content');
+    expect(english.searchResultTaskType, 'Task');
+    expect(english.searchResultNoteType, 'Note');
+    expect(english.searchResultWorkspaceType, 'Workspace');
     expect(russian.taskListTitle, 'Задачи');
     expect(russian.taskCreateAction, 'Добавить задачу');
     expect(russian.taskCompletionError, 'Не удалось изменить состояние задачи');
@@ -63,14 +70,24 @@ void main() {
     expect(russian.searchClearAction, 'Очистить поиск');
     expect(
       russian.homeAlphaDescription,
-      'Используйте навигацию для работы с задачами и заметками или поиска по названиям задач.',
+      'Используйте навигацию для работы с задачами, заметками и пространствами '
+      'или поиска по локальным данным.',
     );
     expect(russian.searchTitle, 'Поиск');
-    expect(russian.searchQueryFieldLabel, 'Название задачи');
+    expect(russian.searchQueryFieldLabel, 'Поиск задач, заметок и пространств');
     expect(russian.searchAction, 'Найти');
-    expect(russian.searchInitial, 'Введите название задачи для поиска');
-    expect(russian.searchNoResults, 'Задачи не найдены');
-    expect(russian.searchError, 'Не удалось выполнить поиск задач');
+    expect(
+      russian.searchInitial,
+      'Введите текст для поиска по локальным данным',
+    );
+    expect(russian.searchNoResults, 'Ничего не найдено');
+    expect(
+      russian.searchError,
+      'Не удалось выполнить поиск по локальным данным',
+    );
+    expect(russian.searchResultTaskType, 'Задача');
+    expect(russian.searchResultNoteType, 'Заметка');
+    expect(russian.searchResultWorkspaceType, 'Рабочее пространство');
   });
 
   test('configures English and Russian as the supported locales', () {

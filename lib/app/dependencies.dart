@@ -20,7 +20,6 @@ import '../application/use_cases/unlink_lifeos_relationship.dart';
 import '../application/use_cases/export_lifeos_data.dart';
 import '../application/use_cases/restore_lifeos_backup.dart';
 import '../application/use_cases/search_lifeos_entities.dart';
-import '../application/use_cases/search_lifeos_tasks.dart';
 import '../application/backup/lifeos_backup_operations.dart';
 import '../application/relationships/lifeos_related_entity_reader.dart';
 import '../domain/repositories/lifeos_task_repository.dart';
@@ -67,7 +66,6 @@ class LifeOsAppDependencies {
     required this.unlinkRelationship,
     required this.getDirectRelatedNeighbors,
     required this.searchEntities,
-    required this.searchTasks,
     required this.createWorkspace,
     required this.editWorkspace,
     required this.getWorkspace,
@@ -106,7 +104,6 @@ class LifeOsAppDependencies {
   final UnlinkLifeOsRelationship unlinkRelationship;
   final GetDirectLifeOsRelatedNeighbors getDirectRelatedNeighbors;
   final SearchLifeOsEntities searchEntities;
-  final SearchLifeOsTasks searchTasks;
   final CreateLifeOsWorkspace createWorkspace;
   final EditLifeOsWorkspace editWorkspace;
   final GetLifeOsWorkspace getWorkspace;
@@ -182,7 +179,6 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     entityIdGenerator: entityIdGenerator,
     utcClock: utcClock,
   );
-  final searchTasks = SearchLifeOsTasks(taskRepository);
   final searchEntities = SearchLifeOsEntities(
     DriftLifeOsUnifiedSearchReader(database),
   );
@@ -327,7 +323,6 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     unlinkRelationship: unlinkRelationship,
     getDirectRelatedNeighbors: getDirectRelatedNeighbors,
     searchEntities: searchEntities,
-    searchTasks: searchTasks,
     createWorkspace: createWorkspace,
     editWorkspace: editWorkspace,
     getWorkspace: getWorkspace,

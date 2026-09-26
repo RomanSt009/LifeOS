@@ -6,10 +6,10 @@
 - Status: active
 - Investigation: completed
 - Architecture readiness: ready
-- Current checkpoint: US-02 — pending
-- Resume point: начать US-02 с unified Search Presentation/provider contract
+- Current checkpoint: US-03 — pending
+- Resume point: начать US-03 с финального integration audit
 - ADR gate: новый ADR не требуется
-- Production implementation: не начата
+- Production implementation: US-01 и US-02 реализованы; final audit pending
 
 ## 1. Текущее состояние
 
@@ -284,7 +284,7 @@ Application вводит sealed typed result family, например `LifeOsSea
 
 ### US-02 — Unified Search Presentation и typed navigation
 
-- Status: pending
+- Status: done
 - Goal: заменить Task-only list единым локализованным Search UI и открыть каждый result через текущий shell.
 - Relevant ADRs: ADR-0022, ADR-0027, ADR-0030, ADR-0033, ADR-0034.
 - Allowed scope:
@@ -306,7 +306,40 @@ Application вводит sealed typed result family, например `LifeOsSea
   - focused shell navigation tests для трёх result types;
   - localization generation/check только при изменении ARB;
   - `git diff --check`, status и scope inspection.
-- Result / evidence: pending.
+- Result / evidence:
+  - Task-only TaskSearchPage и его Presentation provider удалены; один
+    UnifiedSearchPage вызывает только SearchLifeOsEntities с global limit 50,
+    не выполняя merge, filter или sort в Presentation;
+  - mixed rows сохраняют Application order и показывают локализованный type
+    marker, Task completion, bounded Note content preview и optional Workspace
+    description preview;
+  - initial, loading, no-results, recoverable error и result states работают;
+    whitespace-only input возвращает initial state без read;
+  - request token защищает от stale result и stale error; Clear инвалидирует
+    in-flight request, очищает state и возвращает focus полю;
+  - mouse tap и desktop keyboard activation подтверждены widget tests;
+  - Task, Note и Workspace result передают только typed LifeOsEntityId в
+    существующий shell command path; Workspace command получил отдельный
+    type-checking constructor и callback;
+  - shell сохраняет Search query/results через существующий IndexedStack;
+    Task reveal/completed filter, Note dirty-draft guard и Workspace selection
+    переиспользуют ранее проверенные destination lifecycle paths;
+  - production composition предоставляет unified use case из единственного
+    database lifecycle; ставший неиспользуемым SearchLifeOsTasks ownership
+    удалён из composition, при этом нижележащий исторический Application/Domain
+    contract не удалялся в рамках Presentation checkpoint;
+  - новые и изменённые строки добавлены в en/ru ARB; flutter gen-l10n PASS,
+    generated localization files изменены только генератором;
+  - focused validation PASS:
+    unified_search_page_test.dart (6),
+    lifeos_feature_command_test.dart (4),
+    lifeos_shell_page_test.dart (21),
+    localization_test.dart (5),
+    app_lifecycle_test.dart,
+    production_dependencies_test.dart,
+    backup_restore_navigation_test.dart и task_navigation_test.dart;
+  - git diff --check PASS; full suite, flutter analyze и broad audits
+    намеренно отложены до US-03 по milestone validation policy.
 
 ### US-03 — Final integration audit
 

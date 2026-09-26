@@ -149,7 +149,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeAlphaDescription.
   ///
   /// In en, this message translates to:
-  /// **'Use the navigation to work with Tasks and Notes or search Task titles.'**
+  /// **'Use the navigation to work with Tasks, Notes, and Workspaces or search your local content.'**
   String get homeAlphaDescription;
 
   /// No description provided for @homeContextDescription.
@@ -365,7 +365,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchQueryFieldLabel.
   ///
   /// In en, this message translates to:
-  /// **'Task title'**
+  /// **'Search Tasks, Notes, and Workspaces'**
   String get searchQueryFieldLabel;
 
   /// No description provided for @searchAction.
@@ -383,20 +383,38 @@ abstract class AppLocalizations {
   /// No description provided for @searchInitial.
   ///
   /// In en, this message translates to:
-  /// **'Enter a Task title to search'**
+  /// **'Enter text to search your local content'**
   String get searchInitial;
 
   /// No description provided for @searchNoResults.
   ///
   /// In en, this message translates to:
-  /// **'No Tasks found'**
+  /// **'No results found'**
   String get searchNoResults;
 
   /// No description provided for @searchError.
   ///
   /// In en, this message translates to:
-  /// **'Unable to search Tasks'**
+  /// **'Unable to search local content'**
   String get searchError;
+
+  /// No description provided for @searchResultTaskType.
+  ///
+  /// In en, this message translates to:
+  /// **'Task'**
+  String get searchResultTaskType;
+
+  /// No description provided for @searchResultNoteType.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get searchResultNoteType;
+
+  /// No description provided for @searchResultWorkspaceType.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace'**
+  String get searchResultWorkspaceType;
 
   /// No description provided for @taskListTitle.
   ///

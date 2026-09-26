@@ -8,7 +8,7 @@ import '../../application/use_cases/get_lifeos_tasks.dart';
 import '../../domain/entities/lifeos_entity.dart';
 import '../../domain/entities/lifeos_task.dart';
 import '../relationships/relationship_providers.dart';
-import '../search/task_search_providers.dart';
+import '../search/unified_search_providers.dart';
 import '../workspaces/workspace_member_refresh.dart';
 import 'task_completion_providers.dart';
 
@@ -108,7 +108,7 @@ class TaskListController extends AsyncNotifier<List<LifeOsTask>> {
     ]);
     ref.invalidate(taskTrashControllerProvider);
     ref.invalidate(directLifeOsRelatedNeighborsProvider);
-    ref.read(taskSearchRevisionProvider.notifier).advance();
+    ref.read(unifiedSearchRevisionProvider.notifier).advance();
     ref.read(workspaceMemberRevisionProvider.notifier).advance();
   }
 }
@@ -134,7 +134,7 @@ class TaskTrashController extends AsyncNotifier<List<LifeOsTask>> {
     ]);
     ref.invalidate(taskListControllerProvider);
     ref.invalidate(directLifeOsRelatedNeighborsProvider);
-    ref.read(taskSearchRevisionProvider.notifier).advance();
+    ref.read(unifiedSearchRevisionProvider.notifier).advance();
     ref.read(workspaceMemberRevisionProvider.notifier).advance();
   }
 }

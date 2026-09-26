@@ -35,7 +35,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get homeAlphaDescription =>
-      'Используйте навигацию для работы с задачами и заметками или поиска по названиям задач.';
+      'Используйте навигацию для работы с задачами, заметками и пространствами или поиска по локальным данным.';
 
   @override
   String get homeContextDescription =>
@@ -154,7 +154,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get searchTitle => 'Поиск';
 
   @override
-  String get searchQueryFieldLabel => 'Название задачи';
+  String get searchQueryFieldLabel => 'Поиск задач, заметок и пространств';
 
   @override
   String get searchAction => 'Найти';
@@ -163,13 +163,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get searchClearAction => 'Очистить поиск';
 
   @override
-  String get searchInitial => 'Введите название задачи для поиска';
+  String get searchInitial => 'Введите текст для поиска по локальным данным';
 
   @override
-  String get searchNoResults => 'Задачи не найдены';
+  String get searchNoResults => 'Ничего не найдено';
 
   @override
-  String get searchError => 'Не удалось выполнить поиск задач';
+  String get searchError => 'Не удалось выполнить поиск по локальным данным';
+
+  @override
+  String get searchResultTaskType => 'Задача';
+
+  @override
+  String get searchResultNoteType => 'Заметка';
+
+  @override
+  String get searchResultWorkspaceType => 'Рабочее пространство';
 
   @override
   String get taskListTitle => 'Задачи';

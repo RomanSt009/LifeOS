@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/relationships/lifeos_related_entity_reader.dart';
 import 'package:lifeos/application/use_cases/get_direct_lifeos_related_neighbors.dart';
-import 'package:lifeos/application/use_cases/search_lifeos_tasks.dart';
+import 'package:lifeos/application/search/lifeos_search_result.dart';
+import 'package:lifeos/application/search/lifeos_unified_search_reader.dart';
+import 'package:lifeos/application/use_cases/search_lifeos_entities.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/edit_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/get_lifeos_workspace_context.dart';
@@ -23,8 +25,8 @@ import 'package:lifeos/presentation/navigation/lifeos_destination.dart';
 import 'package:lifeos/presentation/notes/note_providers.dart';
 import 'package:lifeos/presentation/relationships/relationship_providers.dart';
 import 'package:lifeos/presentation/shell/lifeos_shell_page.dart';
-import 'package:lifeos/presentation/search/task_search_page.dart';
-import 'package:lifeos/presentation/search/task_search_providers.dart';
+import 'package:lifeos/presentation/search/unified_search_page.dart';
+import 'package:lifeos/presentation/search/unified_search_providers.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list.dart';
 import 'package:lifeos/presentation/workspaces/workspace_page.dart';
@@ -284,7 +286,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('navigation-search-label')));
     await tester.pumpAndSettle();
-    expect(find.byType(TaskSearchPage), findsOneWidget);
+    expect(find.byType(UnifiedSearchPage), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('search-query-field')),
@@ -309,6 +311,99 @@ void main() {
     );
     expect(find.text('Search result'), findsOneWidget);
     expect(repository.searchByTitleCallCount, 1);
+  });
+
+  testWidgets('Unified Search opens Task, Note, and Workspace by typed ID', (
+    tester,
+  ) async {
+    final task = LifeOsTask.createUserTask(
+      id: const LifeOsEntityId(
+        value: 'search-task',
+        entityType: LifeOsEntityType.task,
+      ),
+      title: 'Found Task',
+      timestamp: DateTime.utc(2026, 9, 26, 10),
+    );
+    final note = LifeOsNote.createUserNote(
+      id: const LifeOsEntityId(
+        value: 'search-note',
+        entityType: LifeOsEntityType.note,
+      ),
+      title: 'Found Note',
+      content: 'Found content',
+      timestamp: DateTime.utc(2026, 9, 26, 9),
+    );
+    final workspace = LifeOsWorkspace.createUserWorkspace(
+      id: const LifeOsEntityId(
+        value: 'search-workspace',
+        entityType: LifeOsEntityType.workspace,
+      ),
+      title: 'Found Workspace',
+      description: 'Found context',
+      timestamp: DateTime.utc(2026, 9, 26, 8),
+    );
+    final reader = _FixedUnifiedSearchReader([
+      LifeOsTaskSearchResult(task),
+      LifeOsNoteSearchResult(note),
+      LifeOsWorkspaceSearchResult(workspace),
+    ]);
+
+    await tester.pumpWidget(
+      testApp(
+        const Locale('en'),
+        repository: EmptyLifeOsTaskRepository(tasks: [task]),
+        noteRepository: EmptyLifeOsNoteRepository([note]),
+        workspaceRepository: ShellWorkspaceRepository([workspace]),
+        unifiedSearchReader: reader,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('navigation-search-label')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('search-query-field')), 'find');
+    await tester.tap(find.byKey(const Key('search-submit-button')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('search-result-task-search-task')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex,
+      LifeOsDestination.tasks.index,
+    );
+    expect(find.text('Found Task'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('navigation-search-label')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('search-result-note-search-note')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex,
+      LifeOsDestination.notes.index,
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('note-title-field')))
+          .controller
+          ?.text,
+      'Found Note',
+    );
+
+    await tester.tap(find.byKey(const Key('navigation-search-label')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('search-result-workspace-search-workspace')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex,
+      LifeOsDestination.workspaces.index,
+    );
+    expect(find.byKey(const Key('workspace-detail-title')), findsOneWidget);
+    expect(find.text('Found Workspace'), findsOneWidget);
   });
 
   testWidgets('switches between Tasks, Search, and Tasks', (tester) async {
@@ -1216,6 +1311,7 @@ Widget testApp(
   ShellWorkspaceRepository? workspaceRepository,
   GlobalKey<LifeosShellPageState>? shellKey,
   LifeOsRelatedEntityReader? relatedReader,
+  LifeOsUnifiedSearchReader? unifiedSearchReader,
 }) {
   final taskRepository = repository ?? EmptyLifeOsTaskRepository();
   final notes = noteRepository ?? EmptyLifeOsNoteRepository();
@@ -1244,8 +1340,11 @@ Widget testApp(
           utcClock: () => DateTime.utc(2026, 9, 12, 1),
         ),
       ),
-      searchLifeOsTasksProvider.overrideWithValue(
-        SearchLifeOsTasks(taskRepository),
+      searchLifeOsEntitiesProvider.overrideWithValue(
+        SearchLifeOsEntities(
+          unifiedSearchReader ??
+              _TaskRepositoryUnifiedSearchReader(taskRepository),
+        ),
       ),
       getLifeOsWorkspacesProvider.overrideWithValue(
         GetLifeOsWorkspaces(workspaces),
@@ -1277,6 +1376,33 @@ class EmptyRelatedEntityReader implements LifeOsRelatedEntityReader {
     required LifeOsEntityId sourceId,
     required int limit,
   }) async => const [];
+}
+
+class _TaskRepositoryUnifiedSearchReader implements LifeOsUnifiedSearchReader {
+  const _TaskRepositoryUnifiedSearchReader(this.repository);
+
+  final LifeOsTaskRepository repository;
+
+  @override
+  Future<List<LifeOsSearchResult>> search({
+    required String query,
+    required int limit,
+  }) async {
+    final tasks = await repository.searchByTitle(query);
+    return tasks.take(limit).map(LifeOsTaskSearchResult.new).toList();
+  }
+}
+
+class _FixedUnifiedSearchReader implements LifeOsUnifiedSearchReader {
+  const _FixedUnifiedSearchReader(this.results);
+
+  final List<LifeOsSearchResult> results;
+
+  @override
+  Future<List<LifeOsSearchResult>> search({
+    required String query,
+    required int limit,
+  }) async => results.take(limit).toList();
 }
 
 class ShellRelatedEntityReader implements LifeOsRelatedEntityReader {

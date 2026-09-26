@@ -6,7 +6,7 @@ import '../home/home_placeholder.dart';
 import '../navigation/lifeos_destination.dart';
 import '../navigation/lifeos_feature_command.dart';
 import '../notes/note_page.dart';
-import '../search/task_search_page.dart';
+import '../search/unified_search_page.dart';
 import '../settings/backup_settings_page.dart';
 import '../tasks/task_page.dart';
 import '../workspaces/workspace_page.dart';
@@ -29,15 +29,13 @@ class LifeosShellPageState extends State<LifeosShellPage> {
 
   void _issueFeatureCommand(
     LifeOsDestination destination,
-    LifeOsFeatureCommandType type, {
-    LifeOsEntityId? workspaceId,
-  }) {
+    LifeOsFeatureCommandType type,
+  ) {
     setState(() {
       _selectedDestination = destination;
       _featureCommand = LifeOsFeatureCommand(
         id: ++_nextFeatureCommandId,
         type: type,
-        workspaceId: workspaceId,
       );
     });
   }
@@ -57,6 +55,19 @@ class LifeosShellPageState extends State<LifeosShellPage> {
     final command = LifeOsFeatureCommand.openNote(id: nextId, noteId: noteId);
     setState(() {
       _selectedDestination = LifeOsDestination.notes;
+      _nextFeatureCommandId = nextId;
+      _featureCommand = command;
+    });
+  }
+
+  void openWorkspace(LifeOsEntityId workspaceId) {
+    final nextId = _nextFeatureCommandId + 1;
+    final command = LifeOsFeatureCommand.openWorkspace(
+      id: nextId,
+      workspaceId: workspaceId,
+    );
+    setState(() {
+      _selectedDestination = LifeOsDestination.workspaces;
       _nextFeatureCommandId = nextId;
       _featureCommand = command;
     });
@@ -138,11 +149,7 @@ class LifeosShellPageState extends State<LifeosShellPage> {
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: HomePlaceholder(
-                    onOpenWorkspace: (workspaceId) => _issueFeatureCommand(
-                      LifeOsDestination.workspaces,
-                      LifeOsFeatureCommandType.openWorkspace,
-                      workspaceId: workspaceId,
-                    ),
+                    onOpenWorkspace: openWorkspace,
                     onNewWorkspace: () => _issueFeatureCommand(
                       LifeOsDestination.workspaces,
                       LifeOsFeatureCommandType.newWorkspace,
@@ -181,7 +188,11 @@ class LifeosShellPageState extends State<LifeosShellPage> {
                   onOpenTask: openTask,
                   onOpenNote: openNote,
                 ),
-                const TaskSearchPage(),
+                UnifiedSearchPage(
+                  onOpenTask: openTask,
+                  onOpenNote: openNote,
+                  onOpenWorkspace: openWorkspace,
+                ),
                 const BackupSettingsPage(),
               ],
             ),

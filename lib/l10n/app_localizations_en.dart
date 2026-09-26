@@ -35,7 +35,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeAlphaDescription =>
-      'Use the navigation to work with Tasks and Notes or search Task titles.';
+      'Use the navigation to work with Tasks, Notes, and Workspaces or search your local content.';
 
   @override
   String get homeContextDescription =>
@@ -151,7 +151,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchTitle => 'Search';
 
   @override
-  String get searchQueryFieldLabel => 'Task title';
+  String get searchQueryFieldLabel => 'Search Tasks, Notes, and Workspaces';
 
   @override
   String get searchAction => 'Search';
@@ -160,13 +160,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchClearAction => 'Clear search';
 
   @override
-  String get searchInitial => 'Enter a Task title to search';
+  String get searchInitial => 'Enter text to search your local content';
 
   @override
-  String get searchNoResults => 'No Tasks found';
+  String get searchNoResults => 'No results found';
 
   @override
-  String get searchError => 'Unable to search Tasks';
+  String get searchError => 'Unable to search local content';
+
+  @override
+  String get searchResultTaskType => 'Task';
+
+  @override
+  String get searchResultNoteType => 'Note';
+
+  @override
+  String get searchResultWorkspaceType => 'Workspace';
 
   @override
   String get taskListTitle => 'Tasks';
