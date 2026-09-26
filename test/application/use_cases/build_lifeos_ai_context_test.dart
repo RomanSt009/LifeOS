@@ -74,6 +74,20 @@ void main() {
       expect(context.usage.itemCount, 2);
       expect(context.usage.characterCount, 19);
       expect(context.usage.omittedItemCount, 0);
+      expect(
+        context.usage.itemCount,
+        lessThanOrEqualTo(context.budget.maxItems),
+      );
+      expect(
+        context.usage.characterCount,
+        lessThanOrEqualTo(context.budget.maxCharacters),
+      );
+      expect(
+        context.items.every(
+          (item) => item.characterCount <= context.budget.maxCharactersPerItem,
+        ),
+        isTrue,
+      );
       expect(reader.directCalls, 1);
       expect(reader.unassignedCalls, 0);
       expect(repository.saveCount, 0);
@@ -194,6 +208,7 @@ void main() {
       ]);
       expect(context.usage.deduplicatedItemCount, 1);
       expect(context.usage.omittedItemCount, 1);
+      expect(context.rootWorkspace.workspaceId, workspaceId);
     },
   );
 
@@ -337,7 +352,7 @@ LifeOsNote _note(
 LifeOsWorkspaceTaskMember _taskMember(LifeOsTask task) =>
     LifeOsWorkspaceTaskMember(
       membershipId: LifeOsEntityId(
-        value: 'membership-' + task.id.value,
+        value: 'membership-${task.id.value}',
         entityType: LifeOsEntityType.workspaceMembership,
       ),
       task: task,
@@ -346,7 +361,7 @@ LifeOsWorkspaceTaskMember _taskMember(LifeOsTask task) =>
 LifeOsWorkspaceNoteMember _noteMember(LifeOsNote note) =>
     LifeOsWorkspaceNoteMember(
       membershipId: LifeOsEntityId(
-        value: 'membership-' + note.id.value,
+        value: 'membership-${note.id.value}',
         entityType: LifeOsEntityType.workspaceMembership,
       ),
       note: note,

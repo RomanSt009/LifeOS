@@ -131,12 +131,12 @@ final class LifeOsAiContextBudgetUsage {
 }
 
 final class LifeOsAiContext {
-  const LifeOsAiContext({
+  LifeOsAiContext({
     required this.rootWorkspace,
-    required this.items,
+    required Iterable<LifeOsAiContextItem> items,
     required this.budget,
     required this.usage,
-  });
+  }) : items = List.unmodifiable(items);
 
   final LifeOsAiWorkspaceContextRoot rootWorkspace;
   final List<LifeOsAiContextItem> items;

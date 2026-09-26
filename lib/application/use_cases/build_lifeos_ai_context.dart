@@ -205,11 +205,7 @@ bool _isActive(LifeOsWorkspaceMember member) => switch (member) {
 int _compareMembers(LifeOsWorkspaceMember first, LifeOsWorkspaceMember second) {
   final updatedAt = second.updatedAt.compareTo(first.updatedAt);
   if (updatedAt != 0) return updatedAt;
-  final id = first.entityId.value.compareTo(second.entityId.value);
-  if (id != 0) return id;
-  return first.entityId.entityType.index.compareTo(
-    second.entityId.entityType.index,
-  );
+  return first.entityId.value.compareTo(second.entityId.value);
 }
 
 int _characterCount(String value) => value.runes.length;

@@ -1,10 +1,10 @@
 # AI Foundation — Investigation and Execution Plan
 
-Статус плана: active
+Статус плана: completed
 
-Текущий checkpoint: AI-03 — pending.
+Текущий checkpoint: AI-03 — done.
 
-Точка возобновления: AI-03 — Final integration and architecture audit.
+Точка возобновления: отсутствует; AI Foundation завершён.
 
 ## Current state
 
@@ -429,7 +429,7 @@ schema/Backup/dependency guards, git diff --check and scope.
 
 ### AI-03 — Final integration and architecture audit
 
-Status: pending. Depends on AI-01/AI-02.
+Status: done. Depends on AI-01/AI-02.
 
 Scope: fake-provider proof Workspace ID → bounded request/response, final privacy/
 architecture/local-first audit, minimal accepted fixes, plan completion.
@@ -438,6 +438,51 @@ Final validation: all AI Foundation tests; relevant Workspace/Search/graph/compo
 regressions; flutter analyze; full flutter test --reporter compact; import/
 architecture/privacy/dependency/schema/Backup/generated/Outbox guards;
 git diff --check and exact status.
+
+Result / evidence:
+
+- ADR-0035 conformance confirmed: Foundation remains Application-owned,
+  local-first, optional, read-only, non-streaming, provider-neutral,
+  runtime-only, bounded and deterministic.
+- Explicit active Workspace is the only root. Context sources remain Workspace
+  metadata plus active direct Task/Note members. Unassigned, Search,
+  Relationships and graph neighbors are not read or expanded.
+- Typed root/items/provenance/budget/usage contain no dynamic Map, Drift row,
+  provider DTO or flattened prompt.
+- Ordering is updatedAt DESC then Entity ID ASC. Root is separate and mandatory;
+  dedupe uses typed Entity ID before item accounting.
+- maxItems, maxCharacters and maxCharactersPerItem are positive and explicit.
+  Accounting uses Unicode scalar values only for approved user-text fields.
+  IDs, provenance and completion bool consume no character budget.
+- Workspace description and Note content use deterministic scalar-safe prefixes;
+  truncation flags/original counts are factual and Domain values remain unchanged.
+- Context errors remain invalidBudget, workspaceNotFound and workspaceInactive.
+- LifeOsAiProvider remains a one-shot async generate port. Request contains typed
+  workspaceQuestion, trimmed non-empty instruction and structured context.
+  Response contains non-empty text and optional validated context Entity IDs.
+- Provider errors remain unavailable, invalidConfiguration, authentication,
+  rateLimited, network, requestRejected, invalidResponse and unknown.
+- BuildLifeOsAiContext is local-only; RequestLifeOsAiCompletion is the explicit
+  outbound boundary. No combined auto-send service, provider adapter, transport,
+  secret storage, UI, logging, persistence, tools or mutations were added.
+- Security/privacy scans found no content/secret logging, network/filesystem/tool
+  access, hidden Search/graph retrieval, whole-database read or background send.
+- Narrow fixes: LifeOsAiContext now defensively freezes every supplied item list;
+  member ordering no longer uses Entity type as a tertiary priority; two test
+  helper interpolation lints were corrected.
+- Focused AI Foundation tests — PASS, 11 tests.
+- Relevant Workspace/Search/graph/Relationship/Backup/migration/composition
+  regression matrix — PASS, 117 tests.
+- flutter analyze — PASS, no issues.
+- Full flutter test --reporter compact — PASS, 378 tests.
+- flutter gen-l10n — PASS; generated localization diff absent.
+- Application import, Domain/Presentation leakage, Search/graph dependency,
+  privacy/security and production-adapter scans — PASS.
+- schemaVersion remains 4; V4BackupExportEncoder remains production writer;
+  schema v5, Backup v5, AI tables and AI persistence are absent.
+- pubspec.yaml/pubspec.lock and Drift/localization generated files unchanged.
+- git diff --check — PASS. Only AI-03 code/tests/plan plus the pre-existing
+  user-owned .obsidian/workspace.json change are present; nothing is staged.
 
 ## Milestone Definition of Done
 
@@ -450,23 +495,29 @@ git diff --check and exact status.
 
 ## Deferred scope
 
-Concrete Cloud/Local provider/model; HTTP/SDK and secure-storage choice; API key
-Settings; Context-aware AI #1 UI/prompts; streaming/cancellation; history/memory/
-cache; tools/agents; Search/graph expansion; Unassigned scope; semantic/vector/
-embeddings/RAG; sensitivity/consent profiles; generated entities/relationships;
-usage telemetry; schema v5, Backup v5 and Sync interaction.
+- Context-aware AI #1 UI and outbound disclosure UX;
+- concrete Cloud/Local provider, model, transport and prompt adapter;
+- API credential secure storage and provider/model Settings;
+- streaming and cancellation;
+- tool calling, mutations and agents;
+- AI history, persistent memory and response caching;
+- automatic Unified Search retrieval or graph expansion;
+- embeddings, vector database, semantic search and RAG;
+- Unassigned or multi-Workspace scope;
+- sensitivity/consent profiles and generated entities/relationships;
+- usage telemetry and multi-provider orchestration/failover;
+- schema v5, Backup v5 and Sync interaction.
 
 ## Roadmap result
 
-Order remains:
+AI Foundation is completed. Roadmap handoff remains:
 
-1. AI Foundation;
-2. Context-aware AI #1;
-3. LifeOS 1.0 Dogfooding & Stabilization;
-4. LifeOS 1.0.
+1. Context-aware AI #1;
+2. LifeOS 1.0 Dogfooding & Stabilization;
+3. LifeOS 1.0.
 
-No extra milestone required. Provider + secure-storage gates start Context-aware
-AI #1 because the concrete feature establishes capability/UX needs.
+No next active plan is created in this run. Provider + secure-storage gates start
+Context-aware AI #1 because the concrete feature establishes capability/UX needs.
 
 ## Investigation evidence
 

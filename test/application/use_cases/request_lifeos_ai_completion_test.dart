@@ -23,7 +23,7 @@ void main() {
 
     final response = await RequestLifeOsAiCompletion(provider)(
       purpose: LifeOsAiRequestPurpose.workspaceQuestion,
-      userInstruction: '  What matters?  ',
+      userInstruction: '  What  matters?\nNow  ',
       context: context,
     );
 
@@ -34,7 +34,7 @@ void main() {
       provider.requests.single.purpose,
       LifeOsAiRequestPurpose.workspaceQuestion,
     );
-    expect(provider.requests.single.userInstruction, 'What matters?');
+    expect(provider.requests.single.userInstruction, 'What  matters?\nNow');
     expect(provider.requests.single.context, same(context));
     expect(context.items.single, isA<LifeOsAiTaskContextItem>());
     expect((context.items.single as LifeOsAiTaskContextItem).title, 'Task');
@@ -62,33 +62,35 @@ void main() {
     expect(provider.requests, isEmpty);
   });
 
-  test('rejects an empty provider response with typed error', () {
-    expect(
-      () => LifeOsAiResponse(text: ' \n '),
-      throwsA(
-        isA<LifeOsAiProviderException>().having(
-          (error) => error.error,
-          'error',
-          LifeOsAiProviderError.invalidResponse,
+  test('rejects empty and whitespace-only provider responses', () {
+    for (final value in ['', ' \n ']) {
+      expect(
+        () => LifeOsAiResponse(text: value),
+        throwsA(
+          isA<LifeOsAiProviderException>().having(
+            (error) => error.error,
+            'error',
+            LifeOsAiProviderError.invalidResponse,
+          ),
         ),
-      ),
-    );
+      );
+    }
   });
 
-  test('preserves provider-neutral failures', () async {
-    const failure = LifeOsAiProviderException(
-      LifeOsAiProviderError.unavailable,
-    );
-    final provider = _FakeProvider((request) async => throw failure);
+  test('preserves every provider-neutral failure category', () async {
+    for (final error in LifeOsAiProviderError.values) {
+      final failure = LifeOsAiProviderException(error);
+      final provider = _FakeProvider((request) async => throw failure);
 
-    await expectLater(
-      RequestLifeOsAiCompletion(provider)(
-        purpose: LifeOsAiRequestPurpose.workspaceQuestion,
-        userInstruction: 'Question',
-        context: _context(workspaceId, taskId),
-      ),
-      throwsA(same(failure)),
-    );
+      await expectLater(
+        RequestLifeOsAiCompletion(provider)(
+          purpose: LifeOsAiRequestPurpose.workspaceQuestion,
+          userInstruction: 'Question',
+          context: _context(workspaceId, taskId),
+        ),
+        throwsA(same(failure)),
+      );
+    }
   });
 
   test('rejects response references outside the request context', () async {
@@ -116,9 +118,39 @@ void main() {
       ),
     );
   });
+
+  test('context items cannot be mutated through the outbound request', () {
+    final mutableItems = <LifeOsAiContextItem>[
+      LifeOsAiTaskContextItem(
+        entityId: taskId,
+        title: 'Task',
+        isCompleted: false,
+        characterCount: 4,
+      ),
+    ];
+    final context = _context(workspaceId, taskId, items: mutableItems);
+    mutableItems.clear();
+
+    expect(context.items, hasLength(1));
+    expect(
+      () => context.items.add(
+        LifeOsAiTaskContextItem(
+          entityId: taskId,
+          title: 'Other',
+          isCompleted: true,
+          characterCount: 5,
+        ),
+      ),
+      throwsUnsupportedError,
+    );
+  });
 }
 
-LifeOsAiContext _context(LifeOsEntityId workspaceId, LifeOsEntityId taskId) {
+LifeOsAiContext _context(
+  LifeOsEntityId workspaceId,
+  LifeOsEntityId taskId, {
+  Iterable<LifeOsAiContextItem>? items,
+}) {
   final budget = LifeOsAiContextBudget(
     maxItems: 1,
     maxCharacters: 20,
@@ -133,14 +165,16 @@ LifeOsAiContext _context(LifeOsEntityId workspaceId, LifeOsEntityId taskId) {
       originalDescriptionCharacterCount: 0,
       characterCount: 4,
     ),
-    items: [
-      LifeOsAiTaskContextItem(
-        entityId: taskId,
-        title: 'Task',
-        isCompleted: false,
-        characterCount: 4,
-      ),
-    ],
+    items:
+        items ??
+        [
+          LifeOsAiTaskContextItem(
+            entityId: taskId,
+            title: 'Task',
+            isCompleted: false,
+            characterCount: 4,
+          ),
+        ],
     budget: budget,
     usage: const LifeOsAiContextBudgetUsage(
       itemCount: 1,
