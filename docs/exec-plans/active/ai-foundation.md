@@ -2,9 +2,9 @@
 
 Статус плана: active
 
-Текущий checkpoint: AI-01 — pending; implementation не начиналась.
+Текущий checkpoint: AI-02 — pending.
 
-Точка возобновления: AI-01 — Bounded Workspace context contracts and assembler.
+Точка возобновления: AI-02 — Provider-neutral contracts and safe disabled boundary.
 
 ## Current state
 
@@ -319,11 +319,50 @@ dependency/generated guards, git diff --check and exact status.
 
 ### AI-01 — Bounded Workspace context contracts and assembler
 
-Status: pending. ADR-0035 accepted.
+Status: done. ADR-0035 accepted.
 
-Scope: Application models/use case; specialised bounded Workspace read port/Drift
-adapter; active direct Task/Note only; order/dedupe/truncation/omission; focused
-tests.
+Scope: Application models/use case over the existing direct Workspace context
+reader; active direct Task/Note only; bounded output, order, dedupe, truncation,
+omission and focused tests. No new Infrastructure adapter was required.
+
+Result / evidence:
+
+- Added typed Application-only root, sealed Task/Note items, provenance
+  workspaceRoot/workspaceMember, budget, usage and context aggregate.
+- BuildLifeOsAiContext validates an explicit typed Workspace ID through
+  LifeOsWorkspaceRepository, rejects missing/inactive roots with typed errors,
+  and reads only LifeOsWorkspaceContextReader.getDirectMembers.
+- Budget is explicit and positive: maxItems, maxCharacters and
+  maxCharactersPerItem. maxItems counts member items; the root is mandatory and
+  reserved separately.
+- Character accounting counts Unicode scalar values in projected user text:
+  Workspace title/description, Task title, Note title/content. IDs, provenance,
+  completion bool and formatting separators do not consume the character budget.
+- maxCharacters covers root plus members; maxCharactersPerItem covers each root
+  or member textual projection. Mandatory titles are never truncated. A root
+  title that cannot fit produces invalidBudget; a member title that cannot fit
+  stops assembly and deterministically omits that member and all remaining ones.
+- Workspace description and Note content use literal Unicode-scalar prefixes.
+  Projection-only truncation records flags and original character counts; Domain
+  objects remain unchanged.
+- Root is logically first. Eligible members are deduplicated by typed Entity ID
+  with first occurrence retained, then ordered updatedAt DESC and ID ASC. Only
+  active Task/Note members are projected; Unassigned, Search and graph are never
+  read.
+- Usage records item/character, omitted, deduplicated and truncated counts.
+- Typed errors are invalidBudget, workspaceNotFound and workspaceInactive.
+- Focused test:
+  flutter test test/application/use_cases/build_lifeos_ai_context_test.dart
+  --reporter compact — PASS, 5 tests.
+- Focused import scan — PASS: new Application code imports only Domain and
+  Application contracts; no Flutter, Drift, Infrastructure, Search, graph,
+  provider, network or platform imports.
+- Read-only evidence: focused fake verifies one direct read, no Unassigned read
+  and no repository save. No Outbox/persistence/network/provider path exists.
+- git diff --check — PASS. Full tests, flutter analyze and broad audits deferred
+  to AI-03 under milestone economy policy.
+- Domain, Infrastructure, Presentation, schemaVersion 4, Backup v4,
+  dependencies and generated files unchanged.
 
 Exclusions: provider/network/config/secrets/UI, Search/graph auto-expansion,
 Domain/repository/schema/Backup changes, mutation/Outbox.
