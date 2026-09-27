@@ -113,6 +113,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get retryAction => 'Повторить';
 
   @override
+  String get startupFailureTitle => 'Не удалось запустить LifeOS';
+
+  @override
+  String get startupFailureMessage =>
+      'Не удалось безопасно открыть локальную базу данных. Ваши данные не были сброшены или удалены. Повторите попытку или выйдите и проверьте настройку приложения.';
+
+  @override
+  String get exitApplicationAction => 'Выйти из LifeOS';
+
+  @override
   String get restoreConfirmationTitle => 'Заменить текущие данные LifeOS?';
 
   @override

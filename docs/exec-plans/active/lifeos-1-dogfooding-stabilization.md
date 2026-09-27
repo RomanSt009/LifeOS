@@ -299,7 +299,7 @@ boundary but not release-ready.
 
 ### STAB-01 — Exit and startup safety
 
-Status: pending
+Status: done
 
 Goal: close the P0 dirty-Note exit path and P1 bootstrap failure surface without
 changing Domain/persistence architecture.
@@ -329,6 +329,31 @@ localized, testable and do not close/replace persistence prematurely.
 Validation: smallest focused lifecycle/widget tests needed to prove the safety
 boundary, then `git diff --check` and exact scope inspection. Broader regression is
 reserved for STAB-04 under the project validation cadence.
+
+Result / evidence:
+
+- Flutter's existing `AppLifecycleListener.onExitRequested` remains the Windows
+  close/Alt+F4/framework interception point. It now awaits a Note-specific
+  Presentation coordinator before closing owned dependencies.
+- The mounted `NotePage` registers its existing `_resolveDirtyDraft` flow, so app
+  exit and in-app navigation share the same localized Save/Discard/Cancel dialog.
+  No Note validation, mutation, timestamp, version or Outbox semantics changed.
+- Clean close has no dialog or save. Save is awaited once before exit; a failed or
+  invalid save keeps the dialog/app/draft open. Discard permits exit without save;
+  Cancel preserves selection and draft and allows a later guarded close.
+- Both app lifecycle and Note coordinator retain one in-flight close Future.
+  Repeated close requests cannot create duplicate dialogs, saves or shutdowns.
+- Dependencies close only after an accepted decision; their existing idempotent
+  close owns HTTP-client and database shutdown. Cancel/failure leaves them open.
+- Production startup now mounts a localized bootstrap first. Dependency creation
+  failure exposes Retry/Exit without error details or destructive reset; a successful
+  retry mounts the unchanged composition-owned `LifeOSApp`.
+- EN/RU startup strings were added to ARB sources and `flutter gen-l10n` passed.
+- Focused app lifecycle + Note suite: 30 PASS. Existing shell dirty-navigation
+  selection: 3 PASS. Seven new regressions cover clean close, Save success/failure,
+  Discard, Cancel, duplicate dialog/save, shutdown, and startup Retry/Exit.
+- No package, schema, migration, Backup, Restore, Domain, Application or
+  Infrastructure change. Full analyze/suite remain deferred to STAB-04 by policy.
 
 ### STAB-02 — Desktop usability and bounded scale proof
 
@@ -427,9 +452,11 @@ conditional future gates, not decisions made by this investigation.
 
 - Product state: accepted feature boundary complete; stabilization evidence pending.
 - Architecture state: coherent; no blocking contradiction found.
-- Release state: **not ready** because one P0 and five P1 findings remain.
-- Recommended next action: begin **STAB-01 — Exit and startup safety** only.
-- Resume checkpoint: `STAB-01`, status `pending`.
+- Release state: **not ready**; STAB-01 closed the P0 and startup P1, while four
+  release-evidence/documentation/package P1 findings remain.
+- Recommended next action: begin
+  **STAB-02 — Desktop usability and bounded scale proof** only.
+- Resume checkpoint: `STAB-02`, status `pending`.
 - Investigation validation intentionally uses repository/document/code inspection
   and the latest completed milestone evidence; no Flutter suite/analyze/build was
   repeated for this docs-only checkpoint.

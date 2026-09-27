@@ -296,6 +296,24 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get retryAction;
 
+  /// No description provided for @startupFailureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'LifeOS could not start'**
+  String get startupFailureTitle;
+
+  /// No description provided for @startupFailureMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The local database could not be opened safely. Your data was not reset or deleted. Retry, or exit and review the application setup.'**
+  String get startupFailureMessage;
+
+  /// No description provided for @exitApplicationAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit LifeOS'**
+  String get exitApplicationAction;
+
   /// No description provided for @restoreConfirmationTitle.
   ///
   /// In en, this message translates to:

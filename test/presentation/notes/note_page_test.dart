@@ -13,6 +13,7 @@ import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_note.dart';
 import 'package:lifeos/domain/repositories/lifeos_note_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
+import 'package:lifeos/presentation/notes/note_exit_coordinator.dart';
 import 'package:lifeos/presentation/notes/note_page.dart';
 import 'package:lifeos/presentation/notes/note_providers.dart';
 import 'package:lifeos/presentation/settings/backup_settings_providers.dart';
@@ -838,6 +839,149 @@ void main() {
     expect(_fieldText(tester, 'note-content-field'), '');
     expect(find.byKey(const Key('delete-note-button')), findsNothing);
   });
+
+  testWidgets('app close allows a clean Note and guards Cancel and Discard', (
+    tester,
+  ) async {
+    final repository = _MemoryNoteRepository();
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 27),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final coordinator = ProviderScope.containerOf(
+      tester.element(find.byType(NotePage)),
+    ).read(lifeOsNoteExitCoordinatorProvider);
+
+    expect(await coordinator.requestClose(), isTrue);
+    expect(find.byType(AlertDialog), findsNothing);
+
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Keep this draft',
+    );
+    await tester.pump();
+    final cancelledClose = coordinator.requestClose();
+    await tester.pumpAndSettle();
+    expect(find.text('Save changes to this Note?'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('unsaved-note-cancel')));
+    await tester.pumpAndSettle();
+    expect(await cancelledClose, isFalse);
+    expect(_fieldText(tester, 'note-content-field'), 'Keep this draft');
+    expect(find.byKey(const Key('note-unsaved-indicator')), findsOneWidget);
+
+    final discardedClose = coordinator.requestClose();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-discard')));
+    await tester.pumpAndSettle();
+    expect(await discardedClose, isTrue);
+    expect(repository.saveCallCount, 0);
+    expect(_fieldText(tester, 'note-content-field'), isEmpty);
+  });
+
+  testWidgets('app close saves once and blocks close after a save failure', (
+    tester,
+  ) async {
+    final repository = _MemoryNoteRepository();
+    await tester.pumpWidget(
+      _testApp(
+        repository,
+        locale: const Locale('en'),
+        utcClock: () => DateTime.utc(2026, 9, 27),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final coordinator = ProviderScope.containerOf(
+      tester.element(find.byType(NotePage)),
+    ).read(lifeOsNoteExitCoordinatorProvider);
+
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Saved before close',
+    );
+    await tester.pump();
+    final savedClose = coordinator.requestClose();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-save')));
+    await tester.pumpAndSettle();
+    expect(await savedClose, isTrue);
+    expect(repository.saveCallCount, 1);
+    expect(repository.notes.single.content, 'Saved before close');
+
+    await tester.enterText(
+      find.byKey(const Key('note-content-field')),
+      'Still dirty after failure',
+    );
+    repository.failNextSave = true;
+    await tester.pump();
+    final failedClose = coordinator.requestClose();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('unsaved-note-save')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('unsaved-note-save-error')), findsOneWidget);
+    expect(find.text('Save changes to this Note?'), findsOneWidget);
+    expect(
+      _fieldText(tester, 'note-content-field'),
+      'Still dirty after failure',
+    );
+    expect(find.byKey(const Key('note-unsaved-indicator')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('unsaved-note-cancel')));
+    await tester.pumpAndSettle();
+    expect(await failedClose, isFalse);
+    expect(repository.saveCallCount, 2);
+  });
+
+  testWidgets(
+    'duplicate app close requests share one dialog and pending save',
+    (tester) async {
+      final repository = _MemoryNoteRepository();
+      final saveBarrier = Completer<void>();
+      repository.saveBarrier = saveBarrier;
+      await tester.pumpWidget(
+        _testApp(
+          repository,
+          locale: const Locale('en'),
+          utcClock: () => DateTime.utc(2026, 9, 27),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final coordinator = ProviderScope.containerOf(
+        tester.element(find.byType(NotePage)),
+      ).read(lifeOsNoteExitCoordinatorProvider);
+      await tester.enterText(
+        find.byKey(const Key('note-content-field')),
+        'One pending save',
+      );
+      await tester.pump();
+
+      final firstClose = coordinator.requestClose();
+      final repeatedClose = coordinator.requestClose();
+      expect(identical(firstClose, repeatedClose), isTrue);
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('unsaved-note-save')));
+      await tester.pump();
+      final closeWhileSaving = coordinator.requestClose();
+      expect(identical(firstClose, closeWhileSaving), isTrue);
+      expect(repository.saveCallCount, 1);
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      saveBarrier.complete();
+      await tester.pumpAndSettle();
+      expect(await firstClose, isTrue);
+      expect(await repeatedClose, isTrue);
+      expect(await closeWhileSaving, isTrue);
+      expect(repository.saveCallCount, 1);
+      expect(repository.notes.single.content, 'One pending save');
+    },
+  );
 }
 
 Future<void> _secondaryTap(WidgetTester tester, Finder finder) async {

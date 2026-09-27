@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import '../presentation/ai/local_ai_providers.dart';
 import '../presentation/shell/lifeos_shell_page.dart';
+import '../presentation/notes/note_exit_coordinator.dart';
 import '../presentation/notes/note_providers.dart';
 import '../presentation/relationships/relationship_providers.dart';
 import '../presentation/search/unified_search_providers.dart';
@@ -26,26 +27,6 @@ class LifeOSApp extends StatefulWidget {
 }
 
 class _LifeOSAppState extends State<LifeOSApp> {
-  late final AppLifecycleListener _lifecycleListener;
-
-  @override
-  void initState() {
-    super.initState();
-    _lifecycleListener = AppLifecycleListener(
-      onExitRequested: () async {
-        await widget.dependencies.close();
-        return AppExitResponse.exit;
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _lifecycleListener.dispose();
-    unawaited(widget.dependencies.close());
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
@@ -142,14 +123,78 @@ class _LifeOSAppState extends State<LifeOSApp> {
           widget.dependencies.localAiModelName,
         ),
       ],
-      child: MaterialApp(
-        onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        localeResolutionCallback: resolveLifeOsLocale,
-        theme: ThemeData(colorSchemeSeed: Colors.indigo),
-        home: const LifeosShellPage(),
-      ),
+      child: _LifeOSAppLifecycle(dependencies: widget.dependencies),
+    );
+  }
+}
+
+class _LifeOSAppLifecycle extends ConsumerStatefulWidget {
+  const _LifeOSAppLifecycle({required this.dependencies});
+
+  final LifeOsAppDependencies dependencies;
+
+  @override
+  ConsumerState<_LifeOSAppLifecycle> createState() =>
+      _LifeOSAppLifecycleState();
+}
+
+class _LifeOSAppLifecycleState extends ConsumerState<_LifeOSAppLifecycle> {
+  late final AppLifecycleListener _lifecycleListener;
+  Future<AppExitResponse>? _exitRequest;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycleListener = AppLifecycleListener(
+      onExitRequested: _handleExitRequested,
+    );
+  }
+
+  Future<AppExitResponse> _handleExitRequested() {
+    return _exitRequest ??= _resolveExitRequest();
+  }
+
+  Future<AppExitResponse> _resolveExitRequest() async {
+    try {
+      final canClose = await ref
+          .read(lifeOsNoteExitCoordinatorProvider)
+          .requestClose();
+      if (!canClose) {
+        _exitRequest = null;
+        return AppExitResponse.cancel;
+      }
+      await widget.dependencies.close();
+      return AppExitResponse.exit;
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'LifeOS app lifecycle',
+          context: ErrorDescription('while resolving an app exit request'),
+        ),
+      );
+      _exitRequest = null;
+      return AppExitResponse.cancel;
+    }
+  }
+
+  @override
+  void dispose() {
+    _lifecycleListener.dispose();
+    unawaited(widget.dependencies.close());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localeResolutionCallback: resolveLifeOsLocale,
+      theme: ThemeData(colorSchemeSeed: Colors.indigo),
+      home: const LifeosShellPage(),
     );
   }
 }

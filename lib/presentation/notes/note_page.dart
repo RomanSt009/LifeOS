@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../navigation/lifeos_feature_command.dart';
 import '../relationships/related_entities_section.dart';
 import '../settings/backup_settings_providers.dart';
+import 'note_exit_coordinator.dart';
 import 'note_providers.dart';
 
 class NotePage extends ConsumerStatefulWidget {
@@ -39,6 +40,7 @@ class _NotePageState extends ConsumerState<NotePage> {
   final _titleFocusNode = FocusNode();
   final _contentFocusNode = FocusNode();
   final _relationshipKey = GlobalKey();
+  late final LifeOsNoteExitCoordinator _exitCoordinator;
   _PersistedNoteDraft _persistedDraft = const _PersistedNoteDraft.empty();
   bool _isSaving = false;
   bool _showTrash = false;
@@ -62,6 +64,8 @@ class _NotePageState extends ConsumerState<NotePage> {
     _contentFocusNode.onKeyEvent = _handleEditorKeyEvent;
     _titleController.addListener(_draftChanged);
     _contentController.addListener(_draftChanged);
+    _exitCoordinator = ref.read(lifeOsNoteExitCoordinatorProvider);
+    _exitCoordinator.attach(this, _resolveDirtyDraft);
   }
 
   KeyEventResult _handleEditorKeyEvent(FocusNode _, KeyEvent event) {
@@ -169,6 +173,7 @@ class _NotePageState extends ConsumerState<NotePage> {
 
   @override
   void dispose() {
+    _exitCoordinator.detach(this);
     _titleController.removeListener(_draftChanged);
     _contentController.removeListener(_draftChanged);
     _featureFocusNode.dispose();

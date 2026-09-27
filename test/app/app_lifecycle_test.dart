@@ -1,9 +1,12 @@
+import 'dart:ui' show AppExitResponse;
+
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:lifeos/app/app.dart';
+import 'package:lifeos/app/bootstrap.dart';
 import 'package:lifeos/app/dependencies.dart';
 import 'package:lifeos/application/ai/lifeos_ai_provider.dart';
 import 'package:lifeos/application/ai/lifeos_local_ai_availability.dart';
@@ -68,6 +71,138 @@ void main() {
       database.customSelect('SELECT 1').get(),
       throwsA(isA<StateError>()),
     );
+  });
+
+  testWidgets('clean app exit closes without a confirmation dialog', (
+    tester,
+  ) async {
+    final database = LifeOsDatabase(NativeDatabase.memory());
+    final dependencies = _createTestDependencies(database);
+    await tester.pumpWidget(LifeOSApp(dependencies: dependencies));
+    await tester.pumpAndSettle();
+
+    final response = await tester.binding.handleRequestAppExit();
+
+    expect(response, AppExitResponse.exit);
+    expect(find.byType(AlertDialog), findsNothing);
+    await expectLater(
+      database.customSelect('SELECT 1').get(),
+      throwsA(isA<StateError>()),
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets(
+    'dirty Note cancels duplicate app exits and can later discard once',
+    (tester) async {
+      final database = LifeOsDatabase(NativeDatabase.memory());
+      final dependencies = _createTestDependencies(database);
+      await tester.pumpWidget(LifeOSApp(dependencies: dependencies));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('navigation-notes-label')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('note-content-field')),
+        'Draft protected from app close',
+      );
+      await tester.pump();
+
+      final firstExit = tester.binding.handleRequestAppExit();
+      await tester.pumpAndSettle();
+      final repeatedExit = tester.binding.handleRequestAppExit();
+      await tester.pump();
+      expect(find.text('Save changes to this Note?'), findsOneWidget);
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('unsaved-note-cancel')));
+      await tester.pumpAndSettle();
+      expect(await firstExit, AppExitResponse.cancel);
+      expect(await repeatedExit, AppExitResponse.cancel);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('note-content-field')))
+            .controller!
+            .text,
+        'Draft protected from app close',
+      );
+      expect(find.byKey(const Key('note-unsaved-indicator')), findsOneWidget);
+      await database.customSelect('SELECT 1').get();
+
+      final discardedExit = tester.binding.handleRequestAppExit();
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+      await tester.tap(find.byKey(const Key('unsaved-note-discard')));
+      await tester.pumpAndSettle();
+      expect(await discardedExit, AppExitResponse.exit);
+      await expectLater(
+        database.customSelect('SELECT 1').get(),
+        throwsA(isA<StateError>()),
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets('startup failure is recoverable through Retry', (tester) async {
+    final database = LifeOsDatabase(NativeDatabase.memory());
+    final dependencies = _createTestDependencies(database);
+    var attempts = 0;
+    await tester.pumpWidget(
+      LifeOSBootstrap(
+        createDependencies: () async {
+          attempts += 1;
+          if (attempts == 1) {
+            throw StateError('Expected startup failure.');
+          }
+          return dependencies;
+        },
+        exitApplication: () async {},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('LifeOS could not start'), findsOneWidget);
+    expect(find.textContaining('Expected startup failure'), findsNothing);
+    expect(find.byKey(const Key('startup-retry-button')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('startup-retry-button')));
+    await tester.pumpAndSettle();
+
+    expect(attempts, 2);
+    expect(find.byType(LifeOSApp), findsOneWidget);
+    await database.customSelect('SELECT 1').get();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await dependencies.close();
+  });
+
+  testWidgets('startup failure localizes Exit and does not retry implicitly', (
+    tester,
+  ) async {
+    tester.binding.platformDispatcher.localesTestValue = const [Locale('ru')];
+    addTearDown(tester.binding.platformDispatcher.clearLocalesTestValue);
+    var attempts = 0;
+    var exits = 0;
+    await tester.pumpWidget(
+      LifeOSBootstrap(
+        createDependencies: () async {
+          attempts += 1;
+          throw StateError('Expected startup failure.');
+        },
+        exitApplication: () async {
+          exits += 1;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Не удалось запустить LifeOS'), findsOneWidget);
+    expect(find.text('Повторить'), findsOneWidget);
+    expect(find.text('Выйти из LifeOS'), findsOneWidget);
+    expect(attempts, 1);
+
+    await tester.tap(find.byKey(const Key('startup-exit-button')));
+    await tester.pump();
+    expect(exits, 1);
+    expect(attempts, 1);
   });
 
   testWidgets('provides the composed Domain repository to Presentation', (

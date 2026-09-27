@@ -113,6 +113,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retryAction => 'Retry';
 
   @override
+  String get startupFailureTitle => 'LifeOS could not start';
+
+  @override
+  String get startupFailureMessage =>
+      'The local database could not be opened safely. Your data was not reset or deleted. Retry, or exit and review the application setup.';
+
+  @override
+  String get exitApplicationAction => 'Exit LifeOS';
+
+  @override
   String get restoreConfirmationTitle => 'Replace current LifeOS data?';
 
   @override
