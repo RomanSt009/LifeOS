@@ -3,8 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifeos/application/ai/lifeos_local_ai_availability.dart';
 import 'package:lifeos/application/backup/lifeos_backup_operations.dart';
+import 'package:lifeos/application/use_cases/check_lifeos_local_ai_availability.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
+import 'package:lifeos/presentation/ai/local_ai_providers.dart';
 import 'package:lifeos/presentation/settings/backup_settings_page.dart';
 import 'package:lifeos/presentation/settings/backup_settings_providers.dart';
 import 'package:lifeos/presentation/settings/lifeos_artifact_file_chooser.dart';
@@ -245,6 +248,10 @@ Widget testApp({
     overrides: [
       lifeOsArtifactFileChooserProvider.overrideWithValue(chooser),
       lifeOsBackupOperationsProvider.overrideWithValue(operations),
+      checkLifeOsLocalAiAvailabilityProvider.overrideWithValue(
+        CheckLifeOsLocalAiAvailability(const _ReadyLocalAiReader()),
+      ),
+      lifeOsLocalAiModelNameProvider.overrideWithValue('qwen2.5-coder:7b'),
     ],
     child: MaterialApp(
       locale: locale,
@@ -334,4 +341,12 @@ class FakeBackupOperations implements LifeOsBackupOperations {
       );
     }
   }
+}
+
+class _ReadyLocalAiReader implements LifeOsLocalAiAvailabilityReader {
+  const _ReadyLocalAiReader();
+
+  @override
+  Future<LifeOsLocalAiAvailability> read() async =>
+      LifeOsLocalAiAvailability.runtimeAvailableModelAvailable;
 }

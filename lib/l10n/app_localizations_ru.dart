@@ -570,4 +570,93 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get assignWorkspaceError =>
       'Не удалось добавить объект в рабочее пространство';
+
+  @override
+  String get localAiSectionTitle => 'Локальный ИИ';
+
+  @override
+  String get localAiSectionDescription =>
+      'LifeOS использует локально установленный Ollama. Данные рабочего пространства не отправляются в облачный ИИ-сервис.';
+
+  @override
+  String localAiRequiredModel(String model) {
+    return 'Требуемая модель: $model';
+  }
+
+  @override
+  String get localAiStatusNotChecked => 'Статус не проверен';
+
+  @override
+  String get localAiStatusChecking => 'Проверка локального ИИ…';
+
+  @override
+  String get localAiStatusReady => 'Ollama и требуемая модель доступны';
+
+  @override
+  String get localAiStatusRuntimeUnavailable => 'Ollama недоступен';
+
+  @override
+  String get localAiStatusModelMissing =>
+      'Ollama доступен, но требуемая модель отсутствует';
+
+  @override
+  String get localAiStatusError => 'Не удалось проверить локальный ИИ';
+
+  @override
+  String get localAiRefreshAction => 'Обновить';
+
+  @override
+  String get localAiRuntimeSetupInstruction =>
+      'Установите и запустите Ollama, затем обновите статус.';
+
+  @override
+  String localAiModelSetupInstruction(String model) {
+    return 'Установите модель вручную командой: ollama pull $model';
+  }
+
+  @override
+  String get localAiProcessingNotice =>
+      'ИИ работает локально на этом устройстве. Данные рабочего пространства передаются только локальному Ollama и не сохраняются LifeOS как история ИИ.';
+
+  @override
+  String get workspaceAskAiAction => 'Спросить локальный ИИ';
+
+  @override
+  String get workspaceAiDialogTitle => 'Спросить об этом пространстве';
+
+  @override
+  String get workspaceAiQuestionLabel => 'Вопрос';
+
+  @override
+  String get workspaceAiQuestionRequired => 'Введите вопрос';
+
+  @override
+  String get workspaceAiSendAction => 'Отправить';
+
+  @override
+  String get workspaceAiClearAction => 'Очистить';
+
+  @override
+  String get workspaceAiChecking => 'Проверка доступности локального ИИ…';
+
+  @override
+  String workspaceAiReady(String model) {
+    return 'Локальная модель $model готова.';
+  }
+
+  @override
+  String get workspaceAiRuntimeUnavailable =>
+      'Локальный ИИ недоступен: Ollama не запущен.';
+
+  @override
+  String workspaceAiModelMissing(String model) {
+    return 'Требуемая локальная модель $model не установлена.';
+  }
+
+  @override
+  String get workspaceAiRequestError =>
+      'Ошибка локального ИИ. Запрос можно повторить.';
+
+  @override
+  String get workspaceAiResponseLabel => 'Ответ';
 }

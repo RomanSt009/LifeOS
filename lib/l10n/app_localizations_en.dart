@@ -555,4 +555,94 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assignWorkspaceError => 'Unable to assign item to Workspace';
+
+  @override
+  String get localAiSectionTitle => 'Local AI';
+
+  @override
+  String get localAiSectionDescription =>
+      'LifeOS uses the locally installed Ollama runtime. No Workspace data is sent to a cloud AI service.';
+
+  @override
+  String localAiRequiredModel(String model) {
+    return 'Required model: $model';
+  }
+
+  @override
+  String get localAiStatusNotChecked => 'Status not checked';
+
+  @override
+  String get localAiStatusChecking => 'Checking local AI…';
+
+  @override
+  String get localAiStatusReady =>
+      'Ollama and the required model are available';
+
+  @override
+  String get localAiStatusRuntimeUnavailable => 'Ollama is unavailable';
+
+  @override
+  String get localAiStatusModelMissing =>
+      'Ollama is available, but the required model is missing';
+
+  @override
+  String get localAiStatusError => 'Unable to check local AI';
+
+  @override
+  String get localAiRefreshAction => 'Refresh';
+
+  @override
+  String get localAiRuntimeSetupInstruction =>
+      'Install and start Ollama, then refresh the status.';
+
+  @override
+  String localAiModelSetupInstruction(String model) {
+    return 'Install the model manually with: ollama pull $model';
+  }
+
+  @override
+  String get localAiProcessingNotice =>
+      'AI processing runs locally on this device. Workspace data is sent only to the local Ollama runtime and is not stored as AI history by LifeOS.';
+
+  @override
+  String get workspaceAskAiAction => 'Ask local AI';
+
+  @override
+  String get workspaceAiDialogTitle => 'Ask about this Workspace';
+
+  @override
+  String get workspaceAiQuestionLabel => 'Question';
+
+  @override
+  String get workspaceAiQuestionRequired => 'Enter a question';
+
+  @override
+  String get workspaceAiSendAction => 'Send';
+
+  @override
+  String get workspaceAiClearAction => 'Clear';
+
+  @override
+  String get workspaceAiChecking => 'Checking local AI availability…';
+
+  @override
+  String workspaceAiReady(String model) {
+    return 'Local model $model is ready.';
+  }
+
+  @override
+  String get workspaceAiRuntimeUnavailable =>
+      'Local AI is unavailable because Ollama is not running.';
+
+  @override
+  String workspaceAiModelMissing(String model) {
+    return 'The required local model $model is not installed.';
+  }
+
+  @override
+  String get workspaceAiRequestError =>
+      'The local AI request failed. You can retry it.';
+
+  @override
+  String get workspaceAiResponseLabel => 'Response';
 }

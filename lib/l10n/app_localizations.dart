@@ -1129,6 +1129,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to assign item to Workspace'**
   String get assignWorkspaceError;
+
+  /// No description provided for @localAiSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local AI'**
+  String get localAiSectionTitle;
+
+  /// No description provided for @localAiSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'LifeOS uses the locally installed Ollama runtime. No Workspace data is sent to a cloud AI service.'**
+  String get localAiSectionDescription;
+
+  /// No description provided for @localAiRequiredModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Required model: {model}'**
+  String localAiRequiredModel(String model);
+
+  /// No description provided for @localAiStatusNotChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Status not checked'**
+  String get localAiStatusNotChecked;
+
+  /// No description provided for @localAiStatusChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking local AI…'**
+  String get localAiStatusChecking;
+
+  /// No description provided for @localAiStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama and the required model are available'**
+  String get localAiStatusReady;
+
+  /// No description provided for @localAiStatusRuntimeUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama is unavailable'**
+  String get localAiStatusRuntimeUnavailable;
+
+  /// No description provided for @localAiStatusModelMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ollama is available, but the required model is missing'**
+  String get localAiStatusModelMissing;
+
+  /// No description provided for @localAiStatusError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to check local AI'**
+  String get localAiStatusError;
+
+  /// No description provided for @localAiRefreshAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get localAiRefreshAction;
+
+  /// No description provided for @localAiRuntimeSetupInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Install and start Ollama, then refresh the status.'**
+  String get localAiRuntimeSetupInstruction;
+
+  /// No description provided for @localAiModelSetupInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Install the model manually with: ollama pull {model}'**
+  String localAiModelSetupInstruction(String model);
+
+  /// No description provided for @localAiProcessingNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'AI processing runs locally on this device. Workspace data is sent only to the local Ollama runtime and is not stored as AI history by LifeOS.'**
+  String get localAiProcessingNotice;
+
+  /// No description provided for @workspaceAskAiAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask local AI'**
+  String get workspaceAskAiAction;
+
+  /// No description provided for @workspaceAiDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about this Workspace'**
+  String get workspaceAiDialogTitle;
+
+  /// No description provided for @workspaceAiQuestionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Question'**
+  String get workspaceAiQuestionLabel;
+
+  /// No description provided for @workspaceAiQuestionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a question'**
+  String get workspaceAiQuestionRequired;
+
+  /// No description provided for @workspaceAiSendAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get workspaceAiSendAction;
+
+  /// No description provided for @workspaceAiClearAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get workspaceAiClearAction;
+
+  /// No description provided for @workspaceAiChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking local AI availability…'**
+  String get workspaceAiChecking;
+
+  /// No description provided for @workspaceAiReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Local model {model} is ready.'**
+  String workspaceAiReady(String model);
+
+  /// No description provided for @workspaceAiRuntimeUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Local AI is unavailable because Ollama is not running.'**
+  String get workspaceAiRuntimeUnavailable;
+
+  /// No description provided for @workspaceAiModelMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The required local model {model} is not installed.'**
+  String workspaceAiModelMissing(String model);
+
+  /// No description provided for @workspaceAiRequestError.
+  ///
+  /// In en, this message translates to:
+  /// **'The local AI request failed. You can retry it.'**
+  String get workspaceAiRequestError;
+
+  /// No description provided for @workspaceAiResponseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Response'**
+  String get workspaceAiResponseLabel;
 }
 
 class _AppLocalizationsDelegate

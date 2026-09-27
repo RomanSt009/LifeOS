@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/backup/lifeos_backup_operations.dart';
 import '../../l10n/app_localizations.dart';
+import '../ai/local_ai_settings_section.dart';
 import '../tasks/task_list_providers.dart';
 import '../notes/note_providers.dart';
 import '../relationships/relationship_providers.dart';
@@ -41,6 +42,8 @@ class _BackupSettingsPageState extends ConsumerState<BackupSettingsPage> {
           localizations.settingsTitle,
           style: Theme.of(context).textTheme.headlineMedium,
         ),
+        const SizedBox(height: 16),
+        const LocalAiSettingsSection(),
         const SizedBox(height: 16),
         Card(
           child: Padding(

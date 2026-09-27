@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
+import '../presentation/ai/local_ai_providers.dart';
 import '../presentation/shell/lifeos_shell_page.dart';
 import '../presentation/notes/note_providers.dart';
 import '../presentation/relationships/relationship_providers.dart';
@@ -130,6 +131,15 @@ class _LifeOSAppState extends State<LifeOSApp> {
         ),
         createLifeOsNoteInWorkspaceProvider.overrideWithValue(
           widget.dependencies.createNoteInWorkspace,
+        ),
+        checkLifeOsLocalAiAvailabilityProvider.overrideWithValue(
+          widget.dependencies.checkLocalAiAvailability,
+        ),
+        askAboutLifeOsWorkspaceProvider.overrideWithValue(
+          widget.dependencies.askAboutWorkspace,
+        ),
+        lifeOsLocalAiModelNameProvider.overrideWithValue(
+          widget.dependencies.localAiModelName,
         ),
       ],
       child: MaterialApp(

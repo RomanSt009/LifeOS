@@ -18,7 +18,7 @@ void main() {
           return switch (request.url.path) {
             '/api/version' => http.Response('{"version":"0.12.0"}', 200),
             '/api/tags' => http.Response(
-              '{"models":[{"name":"qwen3:4b"}]}',
+              '{"models":[{"name":"qwen2.5-coder:7b"}]}',
               200,
             ),
             _ => http.Response('', 404),
@@ -68,7 +68,7 @@ void main() {
     test('matches the fixed model identifier exactly', () async {
       final reader = _reader(
         _successfulClient(
-          modelsJson: '{"models":[{"name":"qwen3:4b-latest"}]}',
+          modelsJson: '{"models":[{"name":"qwen2.5-coder:7b-latest"}]}',
         ),
       );
 
@@ -76,7 +76,7 @@ void main() {
         await reader.read(),
         LifeOsLocalAiAvailability.runtimeAvailableModelMissing,
       );
-      expect(lifeOsOllamaModel, 'qwen3:4b');
+      expect(lifeOsOllamaModel, 'qwen2.5-coder:7b');
     });
 
     test('maps malformed version JSON to a typed failure', () async {

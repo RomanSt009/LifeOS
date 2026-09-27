@@ -7,6 +7,7 @@ import '../../domain/entities/lifeos_note.dart';
 import '../../domain/entities/lifeos_task.dart';
 import '../../domain/entities/lifeos_workspace.dart';
 import '../../l10n/app_localizations.dart';
+import '../ai/workspace_ai_dialog.dart';
 import '../notes/note_providers.dart';
 import '../navigation/lifeos_feature_command.dart';
 import '../tasks/task_list_providers.dart';
@@ -614,6 +615,12 @@ class _WorkspaceDetail extends ConsumerWidget {
               icon: const Icon(Icons.add_link),
               label: Text(localizations.workspaceAttachExistingAction),
             ),
+            OutlinedButton.icon(
+              key: const Key('workspace-ask-ai-action'),
+              onPressed: () => _showAi(context),
+              icon: const Icon(Icons.auto_awesome_outlined),
+              label: Text(localizations.workspaceAskAiAction),
+            ),
           ],
         ),
         const SizedBox(height: 20),
@@ -627,6 +634,13 @@ class _WorkspaceDetail extends ConsumerWidget {
               _WorkspaceMembers(workspaceId: workspace.id, members: items),
         ),
       ],
+    );
+  }
+
+  Future<void> _showAi(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => WorkspaceAiDialog(workspaceId: workspace.id),
     );
   }
 

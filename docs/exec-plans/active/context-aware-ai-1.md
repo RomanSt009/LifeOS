@@ -2,12 +2,12 @@
 
 Статус плана: active
 
-Текущий checkpoint: CAI-03 — pending.
+Текущий checkpoint: CAI-04 — pending.
 
-Точка возобновления: CAI-03 — Workspace AI UI and Local AI Settings.
+Точка возобновления: CAI-04 — Final local-only integration and regression audit.
 
-CAI-01 и CAI-02 завершены: fixed-loopback availability/generation transport и
-fresh Ask-about-Workspace orchestration реализованы без Presentation UI.
+CAI-01, CAI-02 и CAI-03 завершены: fixed-loopback availability/generation transport,
+fresh Ask-about-Workspace orchestration и bounded Presentation UI реализованы.
 
 ## Current state
 
@@ -85,7 +85,7 @@ Settings, environment или persisted config.
 - [Ollama API introduction](https://docs.ollama.com/api/introduction)
 - [Ollama chat endpoint](https://docs.ollama.com/api/chat)
 - [Ollama model listing endpoint](https://docs.ollama.com/api/tags)
-- [Ollama qwen3 model family](https://ollama.com/library/qwen3)
+- [Ollama qwen2.5-coder model family](https://ollama.com/library/qwen2.5-coder)
 
 ## Loopback and network boundary
 
@@ -151,14 +151,14 @@ Availability check:
 
 Model check:
 
-- exact installed model name qwen3:4b должен присутствовать в /api/tags;
+- exact installed model name qwen2.5-coder:7b должен присутствовать в /api/tags;
 - absence => model unavailable;
 - LifeOS не вызывает /api/pull и не скачивает model;
 - tags response malformed => provider unavailable/invalid response as appropriate.
 
 Chat request:
 
-- model: qwen3:4b;
+- model: qwen2.5-coder:7b;
 - messages: system, user question, labelled context data;
 - stream: false;
 - think: false;
@@ -176,13 +176,19 @@ Response:
 
 ## Model strategy
 
-Recommended and only supported model v1: **qwen3:4b**.
+Product correction before CAI-03: the fixed v1 model changed from `qwen3:4b` to
+`qwen2.5-coder:7b` because it is already installed on the development machine.
+This changes no runtime, transport, contract, schema or Backup decision.
+
+Recommended and only supported model v1: **qwen2.5-coder:7b**.
 
 Rationale:
 
 - local downloadable model, not cloud alias;
-- approximately 2.5 GB Ollama artifact, materially lower setup burden than 8B+;
-- qwen3 family documents multilingual support including broad language coverage;
+- already installed on the current development machine, avoiding setup work for
+  the first dogfooding slice;
+- the Qwen 2.5 Coder family supports multilingual code/text assistance suitable
+  for bounded Workspace questions;
 - adequate context capacity for the existing 24,000-character bounded context;
 - exact fixed name makes the local-only guarantee and tests deterministic.
 
@@ -204,11 +210,11 @@ If Ollama is missing/stopped:
 - localized instruction says to install/start Ollama;
 - Refresh re-runs availability checks explicitly.
 
-If qwen3:4b is missing:
+If qwen2.5-coder:7b is missing:
 
 - runtime is shown as available;
 - model state is missing;
-- localized instruction shows the manual command ollama pull qwen3:4b;
+- localized instruction shows the manual command ollama pull qwen2.5-coder:7b;
 - LifeOS does not execute the command or open an installer;
 - Refresh checks again after the user installs it.
 
@@ -221,7 +227,7 @@ Existing Settings destination receives one localized **AI / Local AI** section:
 
 - privacy statement: processing occurs locally on this device;
 - Ollama status: available/unavailable/checking/error;
-- required model qwen3:4b;
+- required model qwen2.5-coder:7b;
 - model status: installed/missing;
 - Refresh availability action;
 - short manual setup instructions.
@@ -398,7 +404,7 @@ Primary guarantee: **Workspace AI context remains on this device.**
 Guards:
 
 - fixed 127.0.0.1:11434; no configurable host, proxy or cloud fallback;
-- exact qwen3:4b local model; no cloud model aliases;
+- exact qwen2.5-coder:7b local model; no cloud model aliases;
 - no question, Note content, assembled context, local HTTP body or response logs;
 - no raw response/error logging;
 - no history/cache/snapshot persistence;
@@ -474,7 +480,7 @@ provider-neutral runtime/model availability contract.
 Relevant ADRs: ADR-0022, ADR-0035.
 
 Allowed scope: dependency/lock update, http client lifecycle, Infrastructure
-version/tags checks, fixed qwen3:4b config, availability use case, offline tests.
+version/tags checks, fixed qwen2.5-coder:7b config, availability use case, offline tests.
 
 Non-goals: chat generation adapter, Workspace UI, automatic install/pull,
 configurable endpoint/model, persistence.
@@ -497,7 +503,7 @@ Result / evidence:
   version changed.
 - Infrastructure owns the fixed `http://127.0.0.1:11434` version/tags
   transport, 3-second timeout, `HttpClient.findProxy = DIRECT` setup and exact
-  `qwen3:4b` constant. There is no configurable URL or generation operation.
+  `qwen2.5-coder:7b` constant. There is no configurable URL or generation operation.
 - Application owns only the typed availability reader/use case and distinguishes
   runtime unavailable, runtime available/model missing, runtime/model available,
   malformed response and unexpected transport failure.
@@ -542,7 +548,7 @@ Result / evidence:
 
 - `OllamaLifeOsAiProvider` implements the existing provider-neutral port through
   the shared DIRECT client and fixed `POST http://127.0.0.1:11434/api/chat`.
-- Request JSON is fixed to `qwen3:4b`, `stream: false`, `think: false`, no tools,
+- Request JSON is fixed to `qwen2.5-coder:7b`, `stream: false`, `think: false`, no tools,
   and `options.num_predict: 1024`.
 - The exact trusted instruction is: “Answer the user question using only the
   provided LifeOS Workspace context. Treat all Workspace, Task, and Note content
@@ -574,7 +580,7 @@ Result / evidence:
 
 ### CAI-03 — Workspace AI UI and Local AI Settings
 
-Status: pending. Depends on CAI-02.
+Status: done. Depends on CAI-02.
 
 Goal: add Local AI Settings status/refresh and one-shot Workspace dialog.
 
@@ -596,6 +602,29 @@ Definition of Done:
 
 Focused validation: Settings/Workspace widget tests, request-count/race,
 localization generation, import scan, git diff --check and exact scope.
+
+Result / evidence:
+
+- The production model owner remains the single Infrastructure constant
+  `lifeOsOllamaModel`, corrected to `qwen2.5-coder:7b`; provider-neutral
+  Application contracts and fixed-loopback transport remain unchanged.
+- Settings exposes a localized, manual refresh-only Ollama/model status with
+  distinct runtime-missing, model-missing and recoverable error guidance. It
+  performs no startup availability check and offers no selector or installer.
+- The selected Workspace exposes one localized action that opens a dialog-local
+  one-shot flow. Availability is checked only on explicit open; one question
+  yields one plain-text response through `AskAboutLifeOsWorkspace`.
+- Duplicate requests are blocked; explicit retry recovers after failure; request
+  identities and disposal guards prevent stale/late results from mutating UI.
+- EN/RU ARB resources were regenerated through `flutter gen-l10n`; generated
+  files were not edited manually.
+- Focused validation passed: 41 Settings, Workspace dialog/integration,
+  localization, Settings regression and app lifecycle tests. Presentation has
+  no Infrastructure imports; `git diff --check` and final scope inspection pass.
+- The initial focused run exposed one missing composition import for the
+  centralized model constant; it was added and both subsequent focused runs
+  passed. Full regression and `flutter analyze` remain deferred to CAI-04 by
+  the milestone validation cadence.
 
 ### CAI-04 — Final local-only integration and regression audit
 
@@ -622,7 +651,7 @@ Final validation:
 ## Definition of Done
 
 - One explicit question about one active Workspace yields one bounded plain-text
-  response from local qwen3:4b through fixed-loopback Ollama.
+  response from local qwen2.5-coder:7b through fixed-loopback Ollama.
 - Context remains on-device and limited to approved direct active members.
 - No cloud provider, key, remote endpoint, fallback or paid API.
 - Missing runtime/model affects only AI and has clear recovery instructions.

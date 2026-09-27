@@ -4,6 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lifeos/application/ai/lifeos_ai_provider.dart';
+import 'package:lifeos/application/ai/lifeos_local_ai_availability.dart';
+import 'package:lifeos/application/use_cases/ask_about_lifeos_workspace.dart';
+import 'package:lifeos/application/use_cases/build_lifeos_ai_context.dart';
+import 'package:lifeos/application/use_cases/check_lifeos_local_ai_availability.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_entity_in_workspace.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_workspace.dart';
 import 'package:lifeos/application/use_cases/delete_lifeos_task.dart';
@@ -12,6 +17,7 @@ import 'package:lifeos/application/use_cases/get_lifeos_workspace_context.dart';
 import 'package:lifeos/application/use_cases/get_lifeos_workspaces.dart';
 import 'package:lifeos/application/use_cases/lifeos_workspace_lifecycle.dart';
 import 'package:lifeos/application/use_cases/lifeos_workspace_membership.dart';
+import 'package:lifeos/application/use_cases/request_lifeos_ai_completion.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_task.dart';
 import 'package:lifeos/application/workspaces/lifeos_workspace_context_reader.dart';
 import 'package:lifeos/application/workspaces/lifeos_workspace_member_creation_store.dart';
@@ -25,6 +31,7 @@ import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
 import 'package:lifeos/domain/repositories/lifeos_workspace_membership_repository.dart';
 import 'package:lifeos/domain/repositories/lifeos_workspace_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
+import 'package:lifeos/presentation/ai/local_ai_providers.dart';
 import 'package:lifeos/presentation/notes/note_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list_providers.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
@@ -483,6 +490,21 @@ void main() {
     });
   }
 
+  testWidgets('opens Local AI dialog from the selected Workspace', (
+    tester,
+  ) async {
+    final harness = _Harness.seeded();
+    await _pump(tester, harness);
+    await _openSeededWorkspace(tester, harness);
+
+    await tester.tap(find.byKey(const Key('workspace-ask-ai-action')));
+    await tester.pumpAndSettle();
+
+    expect(harness.aiAvailability.calls, 1);
+    expect(find.text('Ask about this Workspace'), findsOneWidget);
+    expect(find.text('Local model qwen2.5-coder:7b is ready.'), findsOneWidget);
+  });
+
   testWidgets('renders new static strings in Russian', (tester) async {
     final harness = _Harness.seeded();
     await _pump(tester, harness, locale: const Locale('ru'));
@@ -576,6 +598,9 @@ final class _Harness {
   final _NoteRepository noteRepository;
   late final _ContextReader contextReader;
   late final _CreationStore creationStore;
+  late final _AiProvider aiProvider;
+  late final _AvailabilityReader aiAvailability;
+  late final AskAboutLifeOsWorkspace askAboutWorkspace;
   late final dynamic overrides;
   var _id = 100;
   var _seconds = 100;
@@ -595,7 +620,21 @@ final class _Harness {
       taskRepository,
       noteRepository,
     );
+    aiProvider = _AiProvider();
+    aiAvailability = _AvailabilityReader();
+    askAboutWorkspace = AskAboutLifeOsWorkspace(
+      buildContext: BuildLifeOsAiContext(
+        workspaceRepository: workspaceRepository,
+        workspaceContextReader: contextReader,
+      ),
+      requestCompletion: RequestLifeOsAiCompletion(aiProvider),
+    );
     overrides = [
+      checkLifeOsLocalAiAvailabilityProvider.overrideWithValue(
+        CheckLifeOsLocalAiAvailability(aiAvailability),
+      ),
+      askAboutLifeOsWorkspaceProvider.overrideWithValue(askAboutWorkspace),
+      lifeOsLocalAiModelNameProvider.overrideWithValue('qwen2.5-coder:7b'),
       createLifeOsWorkspaceProvider.overrideWithValue(
         CreateLifeOsWorkspace(
           repository: workspaceRepository,
@@ -940,6 +979,26 @@ final class _CreationStore implements LifeOsWorkspaceMemberCreationStore {
     noteCreateCalls++;
     await notes.save(note);
     memberships.values.add(membership);
+  }
+}
+
+final class _AvailabilityReader implements LifeOsLocalAiAvailabilityReader {
+  var calls = 0;
+
+  @override
+  Future<LifeOsLocalAiAvailability> read() async {
+    calls++;
+    return LifeOsLocalAiAvailability.runtimeAvailableModelAvailable;
+  }
+}
+
+final class _AiProvider implements LifeOsAiProvider {
+  final requests = <LifeOsAiRequest>[];
+
+  @override
+  Future<LifeOsAiResponse> generate(LifeOsAiRequest request) async {
+    requests.add(request);
+    return LifeOsAiResponse(text: 'Local answer');
   }
 }
 

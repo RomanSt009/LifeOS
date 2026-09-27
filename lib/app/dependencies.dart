@@ -33,6 +33,7 @@ import '../domain/repositories/lifeos_note_repository.dart';
 import '../domain/repositories/lifeos_relationship_repository.dart';
 import '../domain/repositories/lifeos_workspace_membership_repository.dart';
 import '../domain/repositories/lifeos_workspace_repository.dart';
+import '../infrastructure/ai/ollama/lifeos_ollama_configuration.dart';
 import '../infrastructure/ai/ollama/lifeos_ollama_http_transport.dart';
 import '../infrastructure/ai/ollama/ollama_lifeos_ai_provider.dart';
 import '../infrastructure/ai/ollama/ollama_lifeos_local_ai_availability_reader.dart';
@@ -96,6 +97,7 @@ class LifeOsAppDependencies {
     required this.checkLocalAiAvailability,
     required this.requestAiCompletion,
     required this.askAboutWorkspace,
+    required this.localAiModelName,
   }) : _localAiHttpClient = localAiHttpClient;
 
   final LifeOsDatabase database;
@@ -137,6 +139,7 @@ class LifeOsAppDependencies {
   final CheckLifeOsLocalAiAvailability checkLocalAiAvailability;
   final RequestLifeOsAiCompletion requestAiCompletion;
   final AskAboutLifeOsWorkspace askAboutWorkspace;
+  final String localAiModelName;
   final http.Client _localAiHttpClient;
 
   Future<void>? _closeFuture;
@@ -383,6 +386,7 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     checkLocalAiAvailability: checkLocalAiAvailability,
     requestAiCompletion: requestAiCompletion,
     askAboutWorkspace: askAboutWorkspace,
+    localAiModelName: lifeOsOllamaModel,
   );
 }
 

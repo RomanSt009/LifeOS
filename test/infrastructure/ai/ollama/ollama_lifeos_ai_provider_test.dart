@@ -29,7 +29,7 @@ void main() {
       expect(captured.method, 'POST');
       expect(captured.url.toString(), 'http://127.0.0.1:11434/api/chat');
       final body = jsonDecode(captured.body) as Map<String, dynamic>;
-      expect(body['model'], 'qwen3:4b');
+      expect(body['model'], 'qwen2.5-coder:7b');
       expect(body['stream'], isFalse);
       expect(body['think'], isFalse);
       expect(body, isNot(contains('tools')));
@@ -142,8 +142,10 @@ void main() {
     test('maps a missing fixed model to invalidConfiguration', () async {
       final provider = _provider(
         MockClient(
-          (_) async =>
-              http.Response('{"error":"model qwen3:4b not found"}', 404),
+          (_) async => http.Response(
+            '{"error":"model qwen2.5-coder:7b not found"}',
+            404,
+          ),
         ),
       );
 

@@ -256,6 +256,7 @@ LifeOsAppDependencies _createTestDependencies(LifeOsDatabase database) {
     ),
     requestAiCompletion: requestAiCompletion,
     askAboutWorkspace: askAboutWorkspace,
+    localAiModelName: 'test-model',
   );
 }
 
