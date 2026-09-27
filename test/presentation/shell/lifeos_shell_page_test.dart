@@ -42,6 +42,12 @@ void main() {
       taskAction: 'Add Task',
     ),
     (
+      name: 'standard desktop window',
+      size: const Size(1024, 768),
+      locale: const Locale('en'),
+      taskAction: 'Add Task',
+    ),
+    (
       name: 'moderately narrow desktop window',
       size: const Size(640, 600),
       locale: const Locale('ru'),
@@ -76,6 +82,24 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Layout check'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('navigation-workspaces-label')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('new-workspace-action')).hitTestable(),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(
+        find.byKey(const Key('workspace-unassigned-action')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('workspace-unassigned-action')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('back-from-unassigned')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
 
       await tester.tap(find.byKey(const Key('navigation-home-label')));
       await tester.pumpAndSettle();
@@ -135,8 +159,96 @@ void main() {
         find.byKey(const Key('backup-settings-page')).hitTestable(),
         findsOneWidget,
       );
+      await tester.ensureVisible(find.byKey(const Key('create-backup-button')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('create-backup-button')).hitTestable(),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(
+        find.byKey(const Key('refresh-local-ai-status')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('refresh-local-ai-status')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('keeps representative shell features usable with enlarged text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1024, 768));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      testApp(const Locale('en'), textScaler: const TextScaler.linear(1.5)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('home-new-task-action')).hitTestable(),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('navigation-workspaces-label')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('workspace-page-title')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('navigation-notes-label')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('note-content-field')).hitTestable(),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('navigation-settings-label')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('create-backup-button')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('create-backup-button')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps a bounded personal-scale Home list scrollable', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1024, 768));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final workspaces = ShellWorkspaceRepository([
+      for (var index = 0; index < 250; index += 1)
+        LifeOsWorkspace.createUserWorkspace(
+          id: LifeOsEntityId(
+            value: 'workspace-$index',
+            entityType: LifeOsEntityType.workspace,
+          ),
+          title: 'Workspace $index with a bounded long title',
+          description: 'Description ' * 20,
+          timestamp: DateTime.utc(2026, 9, 27),
+        ),
+    ]);
+
+    await tester.pumpWidget(
+      testApp(const Locale('en'), workspaceRepository: workspaces),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('home-workspace-workspace-249')),
+      800,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(
+      find.byKey(const ValueKey('home-workspace-workspace-249')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('exposes only the justified initial destinations', (
     tester,
@@ -1361,6 +1473,7 @@ Widget testApp(
   GlobalKey<LifeosShellPageState>? shellKey,
   LifeOsRelatedEntityReader? relatedReader,
   LifeOsUnifiedSearchReader? unifiedSearchReader,
+  TextScaler textScaler = TextScaler.noScaling,
 }) {
   final taskRepository = repository ?? EmptyLifeOsTaskRepository();
   final notes = noteRepository ?? EmptyLifeOsNoteRepository();
@@ -1413,6 +1526,10 @@ Widget testApp(
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+        child: child!,
+      ),
       home: LifeosShellPage(key: shellKey),
     ),
   );

@@ -232,8 +232,10 @@ class _WorkspacePageState extends ConsumerState<WorkspacePage> {
                 key: const Key('workspace-page-title'),
                 style: Theme.of(context).textTheme.headlineSmall,
               );
-              final actions = Row(
-                mainAxisSize: MainAxisSize.min,
+              final actions = Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   if (!_showTrash)
                     FilledButton.icon(
@@ -242,16 +244,13 @@ class _WorkspacePageState extends ConsumerState<WorkspacePage> {
                       icon: const Icon(Icons.add),
                       label: Text(localizations.workspaceCreateAction),
                     ),
-                  if (!_showTrash) ...[
-                    const SizedBox(width: 8),
+                  if (!_showTrash)
                     OutlinedButton.icon(
                       key: const Key('workspace-unassigned-action'),
                       onPressed: _showUnassignedItems,
                       icon: const Icon(Icons.inbox_outlined),
                       label: Text(localizations.unassignedTitle),
                     ),
-                  ],
-                  const SizedBox(width: 8),
                   IconButton(
                     key: const Key('workspace-trash-toggle'),
                     tooltip: _showTrash

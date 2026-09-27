@@ -471,7 +471,11 @@ void main() {
     expect(find.text('Seed Task'), findsOneWidget);
   });
 
-  for (final size in [const Size(1280, 800), const Size(640, 600)]) {
+  for (final size in [
+    const Size(1280, 800),
+    const Size(1024, 768),
+    const Size(640, 600),
+  ]) {
     testWidgets('is usable without overflow at ${size.width}x${size.height}', (
       tester,
     ) async {
@@ -489,6 +493,29 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('keeps a bounded personal-scale Workspace list usable', (
+    tester,
+  ) async {
+    final harness = _Harness.seeded(extraMembers: 250);
+    await _pump(tester, harness, size: const Size(1024, 768));
+    await _openSeededWorkspace(tester, harness);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('workspace-task-extra-249')),
+      600,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('workspace-detail-scroll')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('workspace-task-extra-249')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('opens Local AI dialog from the selected Workspace', (
     tester,

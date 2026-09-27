@@ -357,7 +357,7 @@ Result / evidence:
 
 ### STAB-02 — Desktop usability and bounded scale proof
 
-Status: pending; depends on STAB-01
+Status: done
 
 Goal: produce missing release evidence without expanding the feature set.
 
@@ -382,6 +382,43 @@ unresolved release blocker.
 
 Validation: focused responsive/accessibility/scale evidence plus `git diff --check`
 and scope inspection; do not run routine broad suites yet.
+
+Result / evidence:
+
+- Audited the production shell, Home, Workspaces/Unassigned, Tasks, Notes,
+  Unified Search, Settings/Backup/Restore, Local AI, Workspace AI and startup
+  recovery together with their focused widget/lifecycle tests at 1280x800,
+  1024x768 and 640x600. The previous 1024x768 gap is now covered in shell,
+  Workspace and mixed Search matrices.
+- Fixed one release-relevant compact-layout defect: Workspace header actions used
+  a non-wrapping Row, placing Unassigned outside the 640x600 shell content area.
+  A responsive Wrap keeps New, Unassigned and Trash reachable without a
+  viewport-specific branch.
+- Fixed one enlarged-text defect: the Workspace AI availability Row could overflow
+  while checking status. Its message now receives the remaining width and wraps.
+  Representative shell/Home, Workspace, Note and Settings coverage passes at 1.5x
+  text scale, and the long-question/long-response AI dialog passes at 640x600 and
+  1.5x text scale.
+- Existing Material controls, explicit labels/icons and focused tests cover keyboard
+  activation, focus-safe Note/Task shortcuts, dirty-state and destructive dialogs,
+  Search result activation, Settings actions, Local AI refresh, AI Retry/Close and
+  startup Retry/Exit. Completion, lifecycle, result type, AI status and errors are
+  not conveyed by color alone. No new accessibility blocker was found.
+- Bounded personal-scale evidence passes with 250 Home Workspaces, a Workspace
+  containing 252 direct members, mixed Search capped at 50 results, an 80-edge
+  adjacency read bounded to 7, and deterministic AI context item/character budgets.
+  Scrolling, ordering and bounded reads showed no release blocker or need for an
+  index, pagination, cache, FTS or schema decision.
+- Focused validation: 156 current tests PASS across shell/responsive, Workspaces,
+  Search, Workspace AI, app lifecycle/startup, Tasks, Notes, Related, Settings,
+  AI context and Drift Search/Related readers. Full analyze/regression remains
+  intentionally deferred to STAB-04.
+- Targeted debt scan found no actionable TODO/FIXME/HACK or stale qwen3/OpenAI
+  Presentation assumption. Existing documentation drift is STAB-03 work; retained
+  Task-specific Search and local lint suppressions remain bounded P2 cleanup.
+- No unresolved P0/P1/P2 UX issue was introduced or found. No ARB, dependency,
+  schemaVersion 4, migration, Backup v4, Restore, Outbox, generated file or
+  architecture boundary changed.
 
 ### STAB-03 — Documentation, Windows identity and portable package
 
@@ -452,13 +489,12 @@ conditional future gates, not decisions made by this investigation.
 
 - Product state: accepted feature boundary complete; stabilization evidence pending.
 - Architecture state: coherent; no blocking contradiction found.
-- Release state: **not ready**; STAB-01 closed the P0 and startup P1, while four
-  release-evidence/documentation/package P1 findings remain.
+- Release state: **not ready**; STAB-01 and STAB-02 closed the P0, startup,
+  desktop usability and bounded-scale evidence within their scope.
 - Recommended next action: begin
-  **STAB-02 — Desktop usability and bounded scale proof** only.
-- Resume checkpoint: `STAB-02`, status `pending`.
-- Investigation validation intentionally uses repository/document/code inspection
-  and the latest completed milestone evidence; no Flutter suite/analyze/build was
-  repeated for this docs-only checkpoint.
+  **STAB-03 — Documentation, Windows identity and portable package** only.
+- Resume checkpoint: `STAB-03`, status `pending`.
+- Broad analyze/regression and release-candidate integration remain reserved for
+  STAB-04 under the milestone validation cadence.
 - Deferred scope remains explicitly post-1.0 and must not be pulled into STAB work
   without real dogfooding evidence and the applicable gate.

@@ -234,6 +234,7 @@ void main() {
 
   for (final scenario in [
     (name: 'wide', size: const Size(1280, 800)),
+    (name: 'standard', size: const Size(1024, 768)),
     (name: 'narrow', size: const Size(640, 600)),
   ]) {
     testWidgets(

@@ -241,13 +241,18 @@ void main() {
     );
   });
 
-  testWidgets('remains scrollable without overflow on narrow desktop', (
+  testWidgets('remains scrollable with enlarged text on narrow desktop', (
     tester,
   ) async {
     final harness = _Harness(
       providerResults: [LifeOsAiResponse(text: 'Long response ' * 800)],
     );
-    await _pump(tester, harness, size: const Size(640, 600));
+    await _pump(
+      tester,
+      harness,
+      size: const Size(640, 600),
+      textScaler: const TextScaler.linear(1.5),
+    );
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('workspace-ai-question-field')),
@@ -328,6 +333,7 @@ Future<void> _pump(
   _Harness harness, {
   Locale locale = const Locale('en'),
   Size size = const Size(1280, 800),
+  TextScaler textScaler = TextScaler.noScaling,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -346,6 +352,10 @@ Future<void> _pump(
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+          child: child!,
+        ),
         home: Scaffold(
           body: WorkspaceAiDialog(workspaceId: harness.workspace.id),
         ),

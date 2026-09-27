@@ -247,7 +247,7 @@ class _WorkspaceAiDialogState extends ConsumerState<WorkspaceAiDialog> {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
           const SizedBox(width: 8),
-          Text(localizations.workspaceAiChecking),
+          Expanded(child: Text(localizations.workspaceAiChecking)),
         ],
       ),
       _WorkspaceAiAvailability.ready => Text(
