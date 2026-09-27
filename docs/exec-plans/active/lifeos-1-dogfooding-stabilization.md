@@ -422,7 +422,7 @@ Result / evidence:
 
 ### STAB-03 — Documentation, Windows identity and portable package
 
-Status: pending; depends on STAB-02
+Status: done
 
 Goal: make the implemented product installable, understandable and identifiable.
 
@@ -448,6 +448,50 @@ Windows profile for RC smoke.
 
 Validation: docs/link/metadata/dependency/scope checks and one Release build needed
 to prove packaging; `git diff --check`. Full regression remains STAB-04.
+
+Result / evidence:
+
+- Reconciled README and the current product, architecture, database, UI and roadmap
+  summaries with production schema v4, Workspaces, Unified Local Search, logical
+  Backup/Export v4 with historical Restore support, and local-only Ollama AI using
+  the fixed `qwen2.5-coder:7b` model. Added bounded Windows release, clean-profile,
+  update/recovery, privacy and RC dogfooding procedures.
+- Windows Release identity is consistently `LifeOS`: executable and window title,
+  ProductName, FileDescription, InternalName and OriginalFilename. No company/legal
+  publisher was invented; CompanyName is empty and copyright is the neutral
+  `Copyright (C) 2026. All rights reserved.`
+- Preserved the accepted application version `1.0.0+1` across `pubspec.yaml`, app
+  composition, Windows version resources and artifact naming. No release version
+  bump was made.
+- The only repository icon is the unchanged Flutter-initialized
+  `windows/runner/resources/app_icon.ico` (SHA-256
+  `C098D3FC85CACFF98B8E69811B48E9F0D852FCEE278132D794411D978869CBF8`). No approved
+  LifeOS brand asset exists, so replacement remains explicit post-1.0 P2 scope.
+- `flutter build windows --release` initially exposed a stale generated CMake cache
+  that still named the pre-identity target. After deleting only the verified ignored
+  `build/windows/x64` cache, the same command passed and produced
+  `build/windows/x64/runner/Release/LifeOS.exe` in 133.1 seconds.
+- Added `tool/package_windows_release.ps1`. It stages the complete Release directory,
+  validates required runtime files, rejects source/runtime/user-data leakage, creates
+  a top-level `LifeOS/` portable bundle and uses fail-if-exists output semantics.
+- Packaging passed for ignored artifact
+  `build/distributions/LifeOS-1.0.0+1-windows-x64.zip`: 13,532,966 bytes, 17 ZIP
+  entries, SHA-256
+  `86C824190B233D6E7D7E5847CD819C50ED98A2BDB1735D461FEF77309D75CA1F`. A repeated
+  packaging attempt failed as required and left the artifact hash unchanged.
+- Archive inspection found the executable, Flutter DLL/assets, ICU data, AOT
+  `app.so`, SQLite and file-selector runtime DLL, with no database, Backup,
+  `.obsidian`, test, source or secret-looking payload. Extraction and hidden launch
+  from a fresh temporary directory stayed alive for five seconds; the exact process
+  and validated temporary directory were then removed.
+- PowerShell syntax, documentation links, stale metadata/model/machine-path scans,
+  version consistency, dependency/schema/Backup/generated scope and repository
+  ignore behavior passed. `pubspec.lock`, dependencies, schemaVersion 4, migrations,
+  Backup v4 contracts and generated files are unchanged. `git diff --check` passed;
+  the unrelated user-owned `.obsidian/workspace.json` change remains untouched.
+- Installer, updater, signing, public distribution, automatic Ollama/model setup and
+  actual clean-profile/core-flow/Ollama RC execution remain outside STAB-03. The
+  documented procedures and portable artifact are ready for the STAB-04 final audit.
 
 ### STAB-04 — Final release-candidate integration audit
 
@@ -489,12 +533,12 @@ conditional future gates, not decisions made by this investigation.
 
 - Product state: accepted feature boundary complete; stabilization evidence pending.
 - Architecture state: coherent; no blocking contradiction found.
-- Release state: **not ready**; STAB-01 and STAB-02 closed the P0, startup,
-  desktop usability and bounded-scale evidence within their scope.
+- Release state: STAB-01 through STAB-03 are complete; final release-candidate
+  integration evidence is still pending.
 - Recommended next action: begin
-  **STAB-03 — Documentation, Windows identity and portable package** only.
-- Resume checkpoint: `STAB-03`, status `pending`.
-- Broad analyze/regression and release-candidate integration remain reserved for
-  STAB-04 under the milestone validation cadence.
+  **STAB-04 — Final release-candidate integration audit** only.
+- Resume checkpoint: `STAB-04`, status `pending`.
+- Broad analyze/regression, clean-profile/core-flow package smoke and real Ollama
+  integration remain reserved for STAB-04 under the milestone validation cadence.
 - Deferred scope remains explicitly post-1.0 and must not be pulled into STAB work
   without real dogfooding evidence and the applicable gate.

@@ -70,7 +70,7 @@ Sync:
 
 Приведённый выше список сохраняет исторический preliminary state документа. Текущий production stack использует Flutter/Dart, Riverpod, Drift/SQLite и ручной composition root с constructor injection. Desktop navigation реализована средствами Flutter SDK: `NavigationRail`, `IndexedStack` и shell-local destination state. GoRouter, Freezed и json_serializable не являются текущими dependencies.
 
-Sync и AI по-прежнему не реализованы; их архитектурные разделы ниже описывают future direction, а не current capabilities.
+Sync по-прежнему не реализован. Production local AI использует provider-neutral Application contracts и Infrastructure-only Ollama adapter на fixed loopback; cloud AI, provider selection, tools и mutations остаются future direction.
 
 ---
 
@@ -1476,7 +1476,7 @@ SQLite implementation
 
 # 58. MVP Boundary
 
-> **Уточнение:** этот раздел описывает широкую будущую границу product MVP. Он не равен завершённому execution milestone первого Task vertical slice в `docs/exec-plans/completed/lifeos-mvp.md`. Базовая Relationship vertical slice и последовательные migrations до schema v3 уже реализованы; Basic Logging, расширенная graph functionality и дальнейшая migration evolution из списка ниже ещё не реализованы.
+> **Уточнение:** этот раздел описывает широкую будущую границу product MVP, а не текущий release scope. Production уже содержит Task, Note, Relationship и Workspace vertical slices, migrations до schema v4, Unified Local Search, Backup/Restore v4 и bounded local AI. Basic Logging, Documents, расширенная graph functionality, Sync и дальнейшая schema evolution из списка ниже ещё не реализованы.
 
 Первая рабочая версия должна содержать:
 

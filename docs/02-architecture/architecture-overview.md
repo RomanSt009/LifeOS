@@ -199,7 +199,7 @@ AI Service
 
 Этот документ описывает только первоначальное направление.
 
-> **Уточнение текущего состояния (2026-09-12):** язык Dart, Flutter, SQLite/Drift, layered architecture, Riverpod, production database lifecycle, Task, Note и Relationship vertical slices, localization и Backup / Export v3 с Restore v1/v2/v3 уже определены поздними ADR и реализованы. Relationship пока ограничена ненаправленным kind `related`, contextual Task/Note UI и lifecycle unlink; unified Search и graph visualization отложены. Список ниже сохранён как исторический список открытых вопросов на момент создания документа. Sync, AI providers, plugins и encryption по-прежнему не имеют production implementation.
+> **Уточнение текущего состояния (2026-09-27):** Dart, Flutter, SQLite/Drift, layered architecture, Riverpod, единый production database lifecycle, Task/Note/Relationship/Workspace vertical slices, Unified Local Search, localization, Backup / Export v4 с Restore v1-v4 и provider-neutral local AI boundary уже реализованы. Ollama adapter остаётся Infrastructure-only и использует фиксированный loopback runtime. Relationship ограничена ненаправленным kind `related` и direct-neighbor UI. Список ниже сохранён как исторический; Sync, plugins, encryption, advanced Search и graph traversal остаются future scope.
 
 Следующие решения пока остаются открытыми:
 

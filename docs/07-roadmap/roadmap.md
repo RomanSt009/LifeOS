@@ -2,9 +2,9 @@
 
 **Статус:** Черновик
 **Версия:** 0.1
-**Последнее обновление:** 2026-08-09
+**Последнее обновление:** 2026-09-27
 
-> **Уточнение scope (2026-09-11):** этот roadmap описывает широкую product roadmap. Завершённый execution plan `lifeos-mvp.md` называл MVP первый ограниченный Task vertical slice и не означает завершение Этапа 3 ниже. Package/application metadata `1.0.0+1` в `pubspec.yaml` также не определяет продуктовую границу релиза. Формальные критерии LifeOS v1.0 пока не документированы отдельным решением.
+> **Уточнение scope (2026-09-27):** этапы ниже описывают широкую долгосрочную product roadmap, а не обязательный scope ближайшего release. Принятая граница LifeOS 1.0 уже включает Windows desktop shell, Workspaces, Tasks, Notes, Relationships, Unified Local Search, Backup/Restore v4, en/ru и bounded local AI через Ollama. Projects, Documents, Sync, advanced Search, cloud AI и остальные широкие этапы остаются deferred без обещанных дат.
 
 ## Этап 0 — Основа
 
@@ -116,6 +116,6 @@
 
 ## Текущий приоритет
 
-Ближайший приоритет — не добавление новых функций.
-
-Ближайший приоритет — создание стабильной архитектуры и Domain Model, способных поддерживать будущие функции без значительной переработки.
+Ближайший приоритет — завершить LifeOS 1.0 Dogfooding & Stabilization:
+документацию, Windows identity, portable package и финальный release-candidate
+integration gate. Новые feature milestones до этого не начинаются.
