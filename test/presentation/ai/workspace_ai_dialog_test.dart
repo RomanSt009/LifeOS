@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lifeos/application/ai/lifeos_ai_provider.dart';
@@ -145,6 +146,168 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('ignores a late error after dialog disposal', (tester) async {
+    final pending = Completer<LifeOsAiResponse>();
+    final harness = _Harness(providerResults: [pending.future]);
+    await _pump(tester, harness);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('workspace-ai-question-field')),
+      'Question',
+    );
+    await tester.tap(find.byKey(const Key('workspace-ai-send')));
+    await tester.pump();
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    pending.completeError(
+      const LifeOsAiProviderException(LifeOsAiProviderError.network),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Ctrl+Enter sends once and cannot duplicate a pending request', (
+    tester,
+  ) async {
+    final pending = Completer<LifeOsAiResponse>();
+    final harness = _Harness(providerResults: [pending.future]);
+    await _pump(tester, harness);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('workspace-ai-question-field')),
+      'Keyboard question',
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    expect(harness.provider.requests, hasLength(1));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    expect(harness.provider.requests, hasLength(1));
+
+    pending.complete(LifeOsAiResponse(text: 'Keyboard answer'));
+    await tester.pumpAndSettle();
+    expect(find.text('Keyboard answer'), findsOneWidget);
+  });
+
+  testWidgets('closing resets state and isolates another Workspace', (
+    tester,
+  ) async {
+    final first = _Harness(
+      workspaceId: 'workspace-a',
+      providerResults: [LifeOsAiResponse(text: 'Answer A')],
+    );
+    await _pump(tester, first);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('workspace-ai-question-field')),
+      'Question A',
+    );
+    await tester.tap(find.byKey(const Key('workspace-ai-send')));
+    await tester.pumpAndSettle();
+    expect(find.text('Answer A'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    final second = _Harness(
+      workspaceId: 'workspace-b',
+      providerResults: [LifeOsAiResponse(text: 'Answer B')],
+    );
+    await _pump(tester, second);
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('workspace-ai-question-field')),
+    );
+    expect(field.controller!.text, isEmpty);
+    expect(find.text('Answer A'), findsNothing);
+    expect(second.provider.requests, isEmpty);
+
+    await tester.enterText(
+      find.byKey(const Key('workspace-ai-question-field')),
+      'Question B',
+    );
+    await tester.tap(find.byKey(const Key('workspace-ai-send')));
+    await tester.pumpAndSettle();
+    expect(find.text('Answer B'), findsOneWidget);
+    expect(
+      second.provider.requests.single.context.rootWorkspace.workspaceId.value,
+      'workspace-b',
+    );
+  });
+
+  testWidgets('remains scrollable without overflow on narrow desktop', (
+    tester,
+  ) async {
+    final harness = _Harness(
+      providerResults: [LifeOsAiResponse(text: 'Long response ' * 800)],
+    );
+    await _pump(tester, harness, size: const Size(640, 600));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('workspace-ai-question-field')),
+      'Long question\n' * 20,
+    );
+    await tester.tap(find.byKey(const Key('workspace-ai-send')));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
+    expect(find.byKey(const Key('workspace-ai-response')), findsOneWidget);
+  });
+  testWidgets('maps every provider-neutral error without raw details', (
+    tester,
+  ) async {
+    for (final error in LifeOsAiProviderError.values) {
+      final harness = _Harness(
+        providerResults: [LifeOsAiProviderException(error)],
+      );
+      await _pump(tester, harness);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('workspace-ai-question-field')),
+        'Question',
+      );
+      await tester.tap(find.byKey(const Key('workspace-ai-send')));
+      await tester.pumpAndSettle();
+
+      if (error == LifeOsAiProviderError.unavailable) {
+        expect(
+          find.byKey(const Key('workspace-ai-runtime-unavailable')),
+          findsOneWidget,
+        );
+      } else if (error == LifeOsAiProviderError.invalidConfiguration) {
+        expect(
+          find.byKey(const Key('workspace-ai-model-missing')),
+          findsOneWidget,
+        );
+      } else {
+        expect(find.byKey(const Key('workspace-ai-error')), findsOneWidget);
+      }
+      expect(find.textContaining('private'), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
+  testWidgets('exposes labeled keyboard-accessible dialog controls', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await _pump(tester, _Harness());
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Question'), findsOneWidget);
+    expect(find.bySemanticsLabel('Send'), findsOneWidget);
+    expect(find.bySemanticsLabel('Clear'), findsOneWidget);
+    expect(find.bySemanticsLabel('Cancel'), findsOneWidget);
+    expect(find.text('Local model qwen2.5-coder:7b is ready.'), findsOneWidget);
+    semantics.dispose();
+  });
   testWidgets('localizes the dialog and fixed model status in Russian', (
     tester,
   ) async {
@@ -164,7 +327,12 @@ Future<void> _pump(
   WidgetTester tester,
   _Harness harness, {
   Locale locale = const Locale('en'),
+  Size size = const Size(1280, 800),
 }) async {
+  tester.view.devicePixelRatio = 1;
+  tester.view.physicalSize = size;
+  addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.view.resetPhysicalSize);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -191,9 +359,10 @@ final class _Harness {
     LifeOsLocalAiAvailability availability =
         LifeOsLocalAiAvailability.runtimeAvailableModelAvailable,
     List<Object>? providerResults,
+    String workspaceId = 'workspace-1',
   }) : workspace = LifeOsWorkspace(
-         id: const LifeOsEntityId(
-           value: 'workspace-1',
+         id: LifeOsEntityId(
+           value: workspaceId,
            entityType: LifeOsEntityType.workspace,
          ),
          title: 'Workspace',

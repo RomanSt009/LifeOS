@@ -80,6 +80,20 @@ void main() {
     );
   });
 
+  testWidgets('runtime guidance remains usable on narrow desktop', (
+    tester,
+  ) async {
+    final reader = _AvailabilityReader([
+      LifeOsLocalAiAvailability.runtimeUnavailable,
+    ]);
+    await _pump(tester, reader, size: const Size(640, 600));
+    await tester.tap(find.byKey(const Key('refresh-local-ai-status')));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Ollama is unavailable'), findsOneWidget);
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
+  });
   testWidgets('localizes Local AI settings in Russian', (tester) async {
     await _pump(
       tester,
@@ -97,7 +111,12 @@ Future<void> _pump(
   WidgetTester tester,
   _AvailabilityReader reader, {
   Locale locale = const Locale('en'),
+  Size size = const Size(1280, 800),
 }) async {
+  tester.view.devicePixelRatio = 1;
+  tester.view.physicalSize = size;
+  addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.view.resetPhysicalSize);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [

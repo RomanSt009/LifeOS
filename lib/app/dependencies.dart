@@ -98,7 +98,9 @@ class LifeOsAppDependencies {
     required this.requestAiCompletion,
     required this.askAboutWorkspace,
     required this.localAiModelName,
-  }) : _localAiHttpClient = localAiHttpClient;
+  }) : // Keep the public named parameter while retaining private lifecycle ownership.
+       // ignore: prefer_initializing_formals
+       _localAiHttpClient = localAiHttpClient;
 
   final LifeOsDatabase database;
   final LifeOsTaskRepository taskRepository;

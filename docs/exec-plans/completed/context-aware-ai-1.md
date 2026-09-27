@@ -1,10 +1,10 @@
 # Context-aware AI #1 — Local AI Investigation and Execution Plan
 
-Статус плана: active
+Статус плана: completed
 
-Текущий checkpoint: CAI-04 — pending.
+Текущий checkpoint: CAI-04 — done.
 
-Точка возобновления: CAI-04 — Final local-only integration and regression audit.
+Точка возобновления: нет — milestone завершён.
 
 CAI-01, CAI-02 и CAI-03 завершены: fixed-loopback availability/generation transport,
 fresh Ask-about-Workspace orchestration и bounded Presentation UI реализованы.
@@ -33,9 +33,9 @@ AI Foundation не меняется:
 - Ollama concepts не входят в Domain/Application;
 - Search, graph, Unassigned и вся база автоматически не расширяют context;
 - AI остаётся optional, read-only, non-streaming и runtime-only;
-- production AI adapter/UI/configuration пока отсутствуют;
+- production Ollama adapter, Local AI Settings и Workspace one-shot dialog реализованы;
 - schemaVersion == 4, Backup/Export writer — v4;
-- current pubspec не содержит direct HTTP dependency.
+- `http` является единственной direct AI transport dependency.
 
 ADR-0035 допускает concrete Cloud или Local provider и не требует external
 provider. Его disclosure rule относится к отправке данных внешнему provider.
@@ -127,8 +127,8 @@ cloud fallback. Production transport принудительно отключае
 - Ollama SDK не нужен, а official Dart SDK отсутствует;
 - secure-storage, provider SDK, retry и process-management packages не нужны.
 
-Dependency сейчас не добавляется. CAI-01 должен добавить только http direct,
-обновить lockfile штатно и не обновлять unrelated packages.
+CAI-01 добавил только `http` как direct dependency; lockfile не содержит
+unrelated package upgrades от этого milestone.
 
 ## Ollama runtime contract
 
@@ -176,9 +176,9 @@ Response:
 
 ## Model strategy
 
-Product correction before CAI-03: the fixed v1 model changed from `qwen3:4b` to
-`qwen2.5-coder:7b` because it is already installed on the development machine.
-This changes no runtime, transport, contract, schema or Backup decision.
+Product correction before CAI-03 fixed the v1 model as
+`qwen2.5-coder:7b`, already installed on the development machine. This
+changed no runtime, transport, contract, schema or Backup decision.
 
 Recommended and only supported model v1: **qwen2.5-coder:7b**.
 
@@ -628,7 +628,7 @@ Result / evidence:
 
 ### CAI-04 — Final local-only integration and regression audit
 
-Status: pending. Depends on CAI-01…CAI-03.
+Status: done. Depends on CAI-01…CAI-03.
 
 Goal: prove complete optional, bounded, local-only, read-only vertical slice.
 
@@ -647,6 +647,36 @@ Final validation:
 - responsive/accessibility/keyboard checks;
 - dependency, Windows build, schema v4, Backup v4, Outbox/generated guards;
 - git diff --check and exact Git status/scope.
+
+Result / evidence:
+
+- Final local-only contract passed: one explicit question about one active
+  Workspace builds fresh bounded direct-member context and sends one request to
+  fixed `http://127.0.0.1:11434/api/chat` through the DIRECT transport.
+- `qwen2.5-coder:7b` remains the single fixed production model constant used by
+  exact availability matching, generation, composition and localized status UI.
+- Request separation, 30 / 24,000 / 4,000 context budgets, Unicode-scalar-safe
+  truncation, response limits (256 KiB / 16,000 scalars), provider-neutral error
+  mapping and read-only/no-persistence behavior passed code and test audits.
+- No cloud/remote endpoint, proxy path, credential, provider/model selector,
+  automatic install/pull, Search/graph retrieval, tool, mutation, AI table,
+  Outbox or Backup extension exists. Domain remains AI-neutral; Application and
+  Presentation have no Infrastructure/HTTP/IO imports.
+- Focused final matrix passed: 75 tests across context, orchestration,
+  availability, adapter, Settings, Workspace dialog/integration and app
+  lifecycle/regressions. It covers duplicate keyboard Send, explicit retry,
+  late result/error disposal, Workspace isolation/reset, provider-neutral UI
+  errors, semantics labels and 640x600 responsive behavior.
+- Full regression suite passed: 417 tests. `flutter analyze` passed with no
+  issues; `flutter gen-l10n` produced no source drift; Windows Release build
+  passed. Schema remains v4, writer remains `V4BackupExportEncoder`, dependencies
+  and Drift generated files are unchanged by CAI-04.
+- Final audit found no architecture blocker. Narrow fixes were limited to three
+  justified analyzer suppressions for stable public named parameters/private
+  fields, missing Local AI provider overrides in legacy Shell test harnesses,
+  off-screen Backup/Restore test navigation, and missing final regression cases.
+- Live Ollama smoke was intentionally skipped; automated validation is fully
+  offline and does not require the installed runtime.
 
 ## Definition of Done
 
@@ -683,12 +713,17 @@ LifeOS 1.0 Dogfooding & Stabilization -> LifeOS 1.0.
 Cloud provider support не является обязательным ближайшим milestone и может
 рассматриваться только post-1.0 отдельным architecture/privacy decision.
 
-## Correction validation
+## Final milestone validation
 
-- Product decision applied before implementation; CAI-01 remains pending.
-- Pre-flight repository state retained: main, HEAD 823da02,
-  origin/main...HEAD = 0 0.
-- Pre-existing user-owned .obsidian/workspace.json untouched.
-- Only this execution plan is corrected.
-- Production Dart, tests, pubspec/lock, schema, Backup and generated unchanged.
-- Tests/analyze not run: docs-only correction.
+- Pre-flight: `main`, HEAD `cd3f196` contained CAI-03; working tree contained
+  only pre-existing `.obsidian/workspace.json`; `origin/main...HEAD` was `0 1`.
+- `flutter gen-l10n`: PASS, EN/RU resources current.
+- Focused CAI/relevant regression matrix: PASS, 75 tests.
+- `flutter analyze`: PASS, no issues.
+- Full `flutter test --reporter compact`: PASS, 417 tests.
+- Windows Release build: PASS.
+- Import, local-only endpoint/DIRECT, logging, Search/graph, process/tool,
+  dependency, schema v4, Backup v4 and Drift generated guards: PASS.
+- `git diff --check`: PASS.
+- User-owned `.obsidian/workspace.json` remained untouched.
+- Commit and push were not performed.

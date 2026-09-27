@@ -8,7 +8,10 @@ final class AskAboutLifeOsWorkspace {
   AskAboutLifeOsWorkspace({
     required BuildLifeOsAiContext buildContext,
     required RequestLifeOsAiCompletion requestCompletion,
-  }) : _buildContext = buildContext,
+  }) : // Keep stable public names while the collaborators remain encapsulated.
+       // ignore: prefer_initializing_formals
+       _buildContext = buildContext,
+       // ignore: prefer_initializing_formals
        _requestCompletion = requestCompletion;
 
   final BuildLifeOsAiContext _buildContext;

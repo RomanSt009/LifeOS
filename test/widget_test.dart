@@ -5,6 +5,7 @@ import 'package:lifeos/domain/entities/lifeos_entity.dart';
 import 'package:lifeos/domain/entities/lifeos_task.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
+import 'package:lifeos/presentation/ai/local_ai_providers.dart';
 import 'package:lifeos/presentation/shell/lifeos_shell_page.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 
@@ -15,6 +16,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          lifeOsLocalAiModelNameProvider.overrideWithValue('qwen2.5-coder:7b'),
           lifeOsTaskRepositoryProvider.overrideWithValue(
             EmptyLifeOsTaskRepository(),
           ),

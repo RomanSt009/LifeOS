@@ -21,6 +21,7 @@ import 'package:lifeos/domain/repositories/lifeos_note_repository.dart';
 import 'package:lifeos/domain/repositories/lifeos_task_repository.dart';
 import 'package:lifeos/domain/repositories/lifeos_workspace_repository.dart';
 import 'package:lifeos/l10n/app_localizations.dart';
+import 'package:lifeos/presentation/ai/local_ai_providers.dart';
 import 'package:lifeos/presentation/navigation/lifeos_destination.dart';
 import 'package:lifeos/presentation/notes/note_providers.dart';
 import 'package:lifeos/presentation/relationships/relationship_providers.dart';
@@ -1368,6 +1369,7 @@ Widget testApp(
 
   return ProviderScope(
     overrides: [
+      lifeOsLocalAiModelNameProvider.overrideWithValue('qwen2.5-coder:7b'),
       lifeOsTaskRepositoryProvider.overrideWithValue(taskRepository),
       lifeOsNoteRepositoryProvider.overrideWithValue(notes),
       getDirectLifeOsRelatedNeighborsProvider.overrideWithValue(

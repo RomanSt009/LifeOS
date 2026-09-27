@@ -16,6 +16,7 @@ import 'package:lifeos/l10n/app_localizations.dart';
 import 'package:lifeos/presentation/search/unified_search_providers.dart';
 import 'package:lifeos/presentation/settings/backup_settings_providers.dart';
 import 'package:lifeos/presentation/settings/lifeos_artifact_file_chooser.dart';
+import 'package:lifeos/presentation/ai/local_ai_providers.dart';
 import 'package:lifeos/presentation/shell/lifeos_shell_page.dart';
 import 'package:lifeos/presentation/tasks/task_completion_providers.dart';
 import 'package:lifeos/presentation/tasks/task_list_providers.dart';
@@ -50,6 +51,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            lifeOsLocalAiModelNameProvider.overrideWithValue(
+              'qwen2.5-coder:7b',
+            ),
             lifeOsTaskRepositoryProvider.overrideWithValue(repository),
             createLifeOsTaskProvider.overrideWithValue(
               CreateLifeOsTask(
@@ -80,6 +84,10 @@ void main() {
       expect(find.text('Old local Task'), findsOneWidget);
 
       await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const Key('restore-backup-button')),
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('restore-backup-button')));
       await tester.pumpAndSettle();
@@ -122,6 +130,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            lifeOsLocalAiModelNameProvider.overrideWithValue(
+              'qwen2.5-coder:7b',
+            ),
             lifeOsTaskRepositoryProvider.overrideWithValue(repository),
             createLifeOsTaskProvider.overrideWithValue(
               CreateLifeOsTask(
@@ -150,6 +161,8 @@ void main() {
 
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('create-backup-button')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('create-backup-button')));
       await tester.pumpAndSettle();
       expect(find.text('Backup created successfully.'), findsOneWidget);
@@ -175,6 +188,10 @@ void main() {
       expect(find.text('Created after Backup'), findsOneWidget);
 
       await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const Key('restore-backup-button')),
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('restore-backup-button')));
       await tester.pumpAndSettle();
@@ -225,6 +242,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          lifeOsLocalAiModelNameProvider.overrideWithValue('qwen2.5-coder:7b'),
           lifeOsTaskRepositoryProvider.overrideWithValue(taskRepository),
           createLifeOsTaskProvider.overrideWithValue(
             CreateLifeOsTask(
@@ -256,6 +274,8 @@ void main() {
     expect(find.text('Old Workspace'), findsOneWidget);
 
     await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('restore-backup-button')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('restore-backup-button')));
     await tester.pumpAndSettle();

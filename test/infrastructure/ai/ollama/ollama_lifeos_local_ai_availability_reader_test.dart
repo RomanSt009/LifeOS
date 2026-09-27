@@ -56,7 +56,7 @@ void main() {
 
     test('reports a missing fixed model without choosing a fallback', () async {
       final reader = _reader(
-        _successfulClient(modelsJson: '{"models":[{"name":"qwen3:8b"}]}'),
+        _successfulClient(modelsJson: '{"models":[{"name":"other-local-model:8b"}]}'),
       );
 
       expect(

@@ -86,6 +86,8 @@ void main() {
       () async {
         final bodies = <String>[
           '{',
+          '{"done":false,"message":{"role":"assistant","content":"partial"}}',
+          '{"done":true,"message":{"role":"user","content":"wrong role"}}',
           '{"done":true,"message":{"role":"assistant"}}',
           '{"done":true,"message":{"role":"assistant","content":"  "}}',
           jsonEncode({
