@@ -5,7 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:lifeos/app/app.dart';
 import 'package:lifeos/app/dependencies.dart';
+import 'package:lifeos/application/ai/lifeos_ai_provider.dart';
 import 'package:lifeos/application/ai/lifeos_local_ai_availability.dart';
+import 'package:lifeos/application/use_cases/ask_about_lifeos_workspace.dart';
+import 'package:lifeos/application/use_cases/build_lifeos_ai_context.dart';
 import 'package:lifeos/application/use_cases/check_lifeos_local_ai_availability.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_backup.dart';
 import 'package:lifeos/application/use_cases/create_lifeos_note.dart';
@@ -21,6 +24,7 @@ import 'package:lifeos/application/use_cases/delete_lifeos_task.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_task.dart';
 import 'package:lifeos/application/use_cases/delete_lifeos_note.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_note.dart';
+import 'package:lifeos/application/use_cases/request_lifeos_ai_completion.dart';
 import 'package:lifeos/application/use_cases/restore_lifeos_backup.dart';
 import 'package:lifeos/application/use_cases/search_lifeos_entities.dart';
 import 'package:lifeos/application/use_cases/unlink_lifeos_relationship.dart';
@@ -128,6 +132,16 @@ LifeOsAppDependencies _createTestDependencies(LifeOsDatabase database) {
   );
   DateTime clock() => DateTime.utc(2026, 9, 9);
   const backupExportEncoder = V1BackupExportEncoder();
+  final requestAiCompletion = RequestLifeOsAiCompletion(
+    const _UnavailableAiProvider(),
+  );
+  final askAboutWorkspace = AskAboutLifeOsWorkspace(
+    buildContext: BuildLifeOsAiContext(
+      workspaceRepository: workspaceRepository,
+      workspaceContextReader: contextReader,
+    ),
+    requestCompletion: requestAiCompletion,
+  );
   return LifeOsAppDependencies(
     database: database,
     taskRepository: taskRepository,
@@ -240,6 +254,8 @@ LifeOsAppDependencies _createTestDependencies(LifeOsDatabase database) {
     checkLocalAiAvailability: CheckLifeOsLocalAiAvailability(
       const _UnavailableLocalAiReader(),
     ),
+    requestAiCompletion: requestAiCompletion,
+    askAboutWorkspace: askAboutWorkspace,
   );
 }
 
@@ -265,4 +281,13 @@ class _UnavailableLocalAiReader implements LifeOsLocalAiAvailabilityReader {
   @override
   Future<LifeOsLocalAiAvailability> read() async =>
       LifeOsLocalAiAvailability.runtimeUnavailable;
+}
+
+class _UnavailableAiProvider implements LifeOsAiProvider {
+  const _UnavailableAiProvider();
+
+  @override
+  Future<LifeOsAiResponse> generate(LifeOsAiRequest request) {
+    throw const LifeOsAiProviderException(LifeOsAiProviderError.unavailable);
+  }
 }

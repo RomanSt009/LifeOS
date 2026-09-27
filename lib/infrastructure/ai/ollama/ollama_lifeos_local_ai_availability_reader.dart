@@ -41,7 +41,8 @@ final class OllamaLifeOsLocalAiAvailabilityReader
     LifeOsOllamaTransportException error,
   ) {
     return switch (error.failure) {
-      LifeOsOllamaTransportFailure.unavailable =>
+      LifeOsOllamaTransportFailure.unavailable ||
+      LifeOsOllamaTransportFailure.timeout =>
         LifeOsLocalAiAvailability.runtimeUnavailable,
       LifeOsOllamaTransportFailure.unexpected => _throwFailure(
         LifeOsLocalAiAvailabilityFailure.unexpectedTransport,

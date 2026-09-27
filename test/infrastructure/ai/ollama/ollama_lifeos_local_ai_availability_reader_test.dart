@@ -124,7 +124,10 @@ OllamaLifeOsLocalAiAvailabilityReader _reader(
   Duration timeout = lifeOsOllamaAvailabilityTimeout,
 }) {
   return OllamaLifeOsLocalAiAvailabilityReader(
-    FixedLoopbackLifeOsOllamaHttpTransport(client, timeout: timeout),
+    FixedLoopbackLifeOsOllamaHttpTransport(
+      client,
+      availabilityTimeout: timeout,
+    ),
   );
 }
 

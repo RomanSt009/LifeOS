@@ -1,5 +1,7 @@
 import 'package:http/http.dart' as http;
 
+import '../application/use_cases/ask_about_lifeos_workspace.dart';
+import '../application/use_cases/build_lifeos_ai_context.dart';
 import '../application/use_cases/check_lifeos_local_ai_availability.dart';
 import '../application/use_cases/create_lifeos_backup.dart';
 import '../application/use_cases/create_lifeos_note.dart';
@@ -21,6 +23,7 @@ import '../application/use_cases/delete_lifeos_note.dart';
 import '../application/use_cases/restore_lifeos_note.dart';
 import '../application/use_cases/unlink_lifeos_relationship.dart';
 import '../application/use_cases/export_lifeos_data.dart';
+import '../application/use_cases/request_lifeos_ai_completion.dart';
 import '../application/use_cases/restore_lifeos_backup.dart';
 import '../application/use_cases/search_lifeos_entities.dart';
 import '../application/backup/lifeos_backup_operations.dart';
@@ -31,6 +34,7 @@ import '../domain/repositories/lifeos_relationship_repository.dart';
 import '../domain/repositories/lifeos_workspace_membership_repository.dart';
 import '../domain/repositories/lifeos_workspace_repository.dart';
 import '../infrastructure/ai/ollama/lifeos_ollama_http_transport.dart';
+import '../infrastructure/ai/ollama/ollama_lifeos_ai_provider.dart';
 import '../infrastructure/ai/ollama/ollama_lifeos_local_ai_availability_reader.dart';
 import '../infrastructure/backup/files/lifeos_backup_file_reader.dart';
 import '../infrastructure/backup/formats/v4_backup_export_encoder.dart';
@@ -90,6 +94,8 @@ class LifeOsAppDependencies {
     required this.backupOperations,
     required http.Client localAiHttpClient,
     required this.checkLocalAiAvailability,
+    required this.requestAiCompletion,
+    required this.askAboutWorkspace,
   }) : _localAiHttpClient = localAiHttpClient;
 
   final LifeOsDatabase database;
@@ -129,6 +135,8 @@ class LifeOsAppDependencies {
   final RestoreLifeOsBackup restoreBackup;
   final LifeOsBackupOperations backupOperations;
   final CheckLifeOsLocalAiAvailability checkLocalAiAvailability;
+  final RequestLifeOsAiCompletion requestAiCompletion;
+  final AskAboutLifeOsWorkspace askAboutWorkspace;
   final http.Client _localAiHttpClient;
 
   Future<void>? _closeFuture;
@@ -323,6 +331,16 @@ Future<LifeOsAppDependencies> createProductionDependencies({
   final checkLocalAiAvailability = CheckLifeOsLocalAiAvailability(
     OllamaLifeOsLocalAiAvailabilityReader(localAiTransport),
   );
+  final requestAiCompletion = RequestLifeOsAiCompletion(
+    OllamaLifeOsAiProvider(localAiTransport),
+  );
+  final askAboutWorkspace = AskAboutLifeOsWorkspace(
+    buildContext: BuildLifeOsAiContext(
+      workspaceRepository: workspaceRepository,
+      workspaceContextReader: workspaceContextReader,
+    ),
+    requestCompletion: requestAiCompletion,
+  );
 
   return LifeOsAppDependencies(
     database: database,
@@ -363,6 +381,8 @@ Future<LifeOsAppDependencies> createProductionDependencies({
     backupOperations: backupOperations,
     localAiHttpClient: localAiHttpClient,
     checkLocalAiAvailability: checkLocalAiAvailability,
+    requestAiCompletion: requestAiCompletion,
+    askAboutWorkspace: askAboutWorkspace,
   );
 }
 
