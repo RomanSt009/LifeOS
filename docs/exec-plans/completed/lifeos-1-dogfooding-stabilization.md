@@ -1,9 +1,10 @@
 # LifeOS 1.0 Dogfooding & Stabilization
 
-Статус: investigation complete; stabilization pending
+Статус: completed; P0 = 0, P1 = 0
 
 Дата: 2026-09-27
-HEAD: `c7a68a6` (`test: complete context-aware local ai`)
+Дата завершения: 2026-09-28
+HEAD: `28c3a99` (`chore: prepare windows release packaging`)
 Ветка: `main`; `origin/main...HEAD = 0 0`
 
 ## Цель и sources of truth
@@ -16,8 +17,9 @@ production Dart, tests, dependencies, schema, Backup и generated files не м�
 docs, принятые ADR-0023 — ADR-0035, completed plans от MVP/persistence до
 Context-aware AI #1, фактические `lib/`, `test/`, `windows/` и pubspec.
 Поздние ADR, completed plans и production state имеют приоритет над stale prose.
-Последняя final validation: focused 75 PASS, analyze PASS, full suite 417 PASS,
-Windows Release build PASS.
+Последняя final validation: `flutter gen-l10n` PASS, EN/RU 200/200,
+`flutter analyze` PASS, full suite 430 PASS, focused release suites PASS,
+Windows Release build/package/clean-directory smoke PASS.
 
 ## Current product inventory
 
@@ -26,14 +28,14 @@ Windows Release build PASS.
 | Home | Workspace list, New Workspace, Unassigned, quick actions | Ready; Dashboard не нужен |
 | Workspaces / Unassigned | CRUD/Trash, attach/detach, mixed members, quick-create | Ready |
 | Tasks | Create/edit/complete/reopen/Trash, filters, shortcuts/context actions | Ready |
-| Notes | Plain-text explicit-save editor, dirty guards, Trash | Window-exit blocker |
+| Notes | Plain-text explicit-save editor, dirty guards, Trash | Ready; safe window exit verified |
 | Unified Search | Active Task/Note/Workspace, typed open, limit 50 | Ready |
 | Relationships / graph | Task/Note `related`, direct active neighbors, unlink | Ready for bounded 1.0 |
 | Backup / Export / Restore | Writer v4, Restore v1-v4, atomic replace | Ready by automated evidence |
-| Localization | `gen_l10n`, EN/RU, platform locale, EN fallback | 197/197 ARB keys |
+| Localization | `gen_l10n`, EN/RU, platform locale, EN fallback | 200/200 ARB keys |
 | Settings | Data transfer + Local AI | Functional; release/about metadata absent |
-| Local AI | Fixed local Ollama `qwen2.5-coder:7b`, explicit status refresh | Automated-ready; live smoke missing |
-| Ask about Workspace | Bounded, read-only, single-turn local request | Ready after live smoke |
+| Local AI | Fixed local Ollama `qwen2.5-coder:7b`, explicit status refresh | Ready; automated and real smoke pass |
+| Ask about Workspace | Bounded, read-only, single-turn local request | Ready; real smoke pass |
 
 Not implemented and not required for this boundary: Projects, Documents, Sync,
 full Dashboard, files/attachments, semantic/vector Search, cloud AI and graph
@@ -46,11 +48,9 @@ Local and Unified Search; Backup/Restore; Notes/schema foundation; Relationships
 Desktop Usability/Dogfooding; Workspace/schema v4/Backup v4; direct-neighbor
 Knowledge Graph; AI Foundation; Context-aware AI #1.
 
-No missing feature milestone is required for the accepted product concept. Early
-roadmap prose still names Dashboard/Documents in broad MVP and says 1.0 criteria
-are undefined, while later completed plans explicitly hand off Context-aware AI
--> stabilization -> LifeOS 1.0. This is a P1 docs inconsistency, not permission
-to restore deferred features.
+No missing feature milestone is required for the accepted product concept. Current
+README/roadmap/overview documentation was reconciled in STAB-03; historical prose
+does not restore deferred features.
 
 ## Deferred / post-1.0 boundary
 
@@ -71,31 +71,30 @@ Installer/signing не блокируют personal dogfooding 1.0.
 
 ## Issue matrix
 
-### P0 — release blocker (1)
+### P0 — release blockers (0 open)
 
 | ID | Finding | Evidence / required outcome |
 |---|---|---|
-| RR-P0-01 | Closing the app can silently discard a dirty Note draft | Dirty state private to `NotePage`; in-feature actions guarded, but `LifeOSApp.onExitRequested` closes dependencies and returns exit. Window close needs localized Save/Discard/Cancel; Cancel/failed save veto exit; persistence closes only after decision. |
+| RR-P0-01 | CLOSED — dirty Note app exit | Localized Save/Discard/Cancel, failed-save veto, duplicate-close/in-flight protection and dependency-close ordering pass the final lifecycle suite. |
 
 Persisted Domain data has no other identified P0: repository writes are atomic
 with Outbox, migrations transactional, Backup write atomic, Restore validates
 before one replace transaction.
 
-### P1 — must fix/prove before 1.0 (5)
+### P1 — must fix/prove before 1.0 (0 open; 5 closed)
 
 | ID | Finding | Required outcome |
 |---|---|---|
-| RR-P1-01 | Database/migration startup failure occurs before `runApp`, with no user recovery surface | Localized bounded retry/exit guidance; never auto-delete/reset DB |
-| RR-P1-02 | Release build exists, but Windows metadata/package is scaffold-like | Replace `com.example`/lowercase metadata after user confirmation; document complete portable bundle; launch smoke outside IDE |
-| RR-P1-03 | README/roadmap/overview docs still report schema/Backup v3, Task-only Search and no Workspace/AI | Reconcile current scope and add Windows/run/data/Backup/Ollama guidance |
-| RR-P1-04 | No clean-profile packaged RC dogfooding record | Run first-launch -> core flows -> restart using isolated app data |
-| RR-P1-05 | Real Ollama path has no recorded live smoke | With installed Ollama/model, prove one bounded Workspace answer and core-data isolation |
+| RR-P1-01 | CLOSED — startup failure recovery | Localized Retry/Exit, successful retry, non-destructive failure handling and no Ollama startup dependency pass. |
+| RR-P1-02 | CLOSED — Windows identity/package | `LifeOS` metadata, version `1.0.0+1`, full portable ZIP and independent normal-close smoke pass. |
+| RR-P1-03 | CLOSED — release documentation drift | README/current architecture/product/database/UI/roadmap and release/Ollama guidance match production. |
+| RR-P1-04 | CLOSED — isolated clean-profile core-flow smoke | User-reported safe isolated environment (`separate Windows user / VM / other PC`) passed fresh launch/DB, empty Home, Workspace/Task/Note creation, restart persistence, Backup UI and Local AI state. |
+| RR-P1-05 | CLOSED — real fixed-model app smoke | Settings detected Ollama and exact `qwen2.5-coder:7b`; one Workspace Ask returned non-empty text and the app remained stable. |
 
 ### P2 — desirable stabilization
 
-- explicit 1024x768 evidence (1280x800 and 640x600 already pass);
-- consolidated keyboard/focus/semantics release audit;
-- bounded thousands/low-tens-of-thousands scale measurement before any index;
+- default Flutter icon until an approved LifeOS brand asset exists;
+- broader thousands/low-tens-of-thousands scale measurement before any index;
 - two handwritten version owners: pubspec and `lifeOsApplicationVersion`;
 - optional About/version surface;
 - privacy-safe diagnostics only if startup/dogfooding proves necessary;
@@ -112,20 +111,20 @@ concrete P0/P1 need. Do not pull it into stabilization automatically.
 
 | Flow | State | Risk/class |
 |---|---|---|
-| First launch | Empty DB, Home and feature empty states exist | startup failure UI P1 |
+| First launch | Empty DB, Home and localized startup recovery states exist | Ready; clean-profile smoke pass |
 | Create/edit/Trash Workspace | Complete with visible errors | Ready |
 | Create Task/Note in Workspace | Atomic Entity + Membership | Ready |
 | Unassigned -> attach/detach | No Entity or Relationship mutation | Ready |
 | Edit/complete Task | Domain through UI, no-op/error/reopen covered | Ready |
-| Edit Note | Explicit save and in-app dirty guards | window exit P0 |
+| Edit Note | Explicit save, in-app and window-exit dirty guards | Ready |
 | Trash/Restore | Task/Note/Workspace feature Trash | Ready |
 | Relationship create/unlink | Endpoint/duplicate/self/confirmation/retry covered | Ready |
 | Related navigation | Typed Task/Note and dirty-decision preservation | Ready |
 | Unified Search | Typed Task/Note/Workspace, races and lifecycle freshness | Ready |
 | Backup / Export / Restore | v4 + historical Restore and refresh | Ready |
-| Local AI unavailable | Core app unaffected; localized recovery | P2 docs |
-| Local AI ready / Ask | Automated contracts pass | live smoke P1 |
-| Restart/reopen | File-backed persistence/migration/round-trip covered | packaged smoke P1 |
+| Local AI unavailable | Core app unaffected; localized recovery | Ready |
+| Local AI ready / Ask | Automated contracts and real fixed-model smoke pass | Ready |
+| Restart/reopen | File-backed persistence/migration/round-trip and clean-profile smoke pass | Ready |
 
 ## First-run, desktop UX and accessibility
 
@@ -138,8 +137,8 @@ concrete P0/P1 need. Do not pull it into stabilization automatically.
 - Standard Material controls, localized tooltips and feature-scoped shortcuts
   are used. Destructive shortcuts ignore text fields, modal routes, Trash and
   inactive destinations.
-- Existing tests cover 1280x800 and 640x600 across shell and key screens/dialogs.
-  Add 1024x768 evidence; no design-system/mobile rewrite.
+- Final tests cover 1280x800, 1024x768 and 640x600 across shell and key
+  screens/dialogs; no design-system/mobile rewrite was required.
 - No concrete focus trap, inaccessible essential control or overflow blocker was
   found. Consolidated RC accessibility verification remains P2.
 
@@ -170,8 +169,8 @@ concrete P0/P1 need. Do not pull it into stabilization automatically.
   Drift mapping and transactional persistence stay in Infrastructure.
 - Task create/edit/complete/reopen/Trash and Note create/edit/save/Trash have
   focused and restart evidence. Note content whitespace is preserved.
-- The only release-blocking Note defect is app-exit handling of a dirty draft.
-  Rich text, Markdown semantics, attachments, autosave and revision history stay
+- App-exit dirty-draft handling is closed by localized, deterministic lifecycle
+  coverage. Rich text, Markdown semantics, attachments, autosave and revision history stay
   outside 1.0.
 
 ### Workspace, Relationships and graph
@@ -210,12 +209,12 @@ concrete P0/P1 need. Do not pull it into stabilization automatically.
 
 ## Localization, errors and lifecycle
 
-- EN/RU ARB parity is 197/197 keys; localization stays in Presentation and the
+- EN/RU ARB parity is 200/200 keys; localization stays in Presentation and the
   platform-locale/English-fallback contract is tested. Generated localization
   files are source-generated and must not be edited manually.
-- Feature loading/empty/error/retry states are present. The material remaining
-  error gap is pre-`runApp` database/migration/bootstrap failure, which currently
-  has no user-visible recovery surface.
+- Feature loading/empty/error/retry states are present. Pre-`runApp`
+  database/migration/bootstrap failure now has localized Retry/Exit without raw
+  exception details or destructive reset.
 - Composition root owns one production database/repository lifecycle. Navigation,
   Search and AI do not create persistence owners. Normal app exit closes owned
   resources, but it must first resolve a dirty Note safely.
@@ -226,8 +225,8 @@ concrete P0/P1 need. Do not pull it into stabilization automatically.
   FTS, pagination or caching layer. Stabilization should measure realistic local
   profiles before changing schema or search architecture.
 - Repository inventory contains 72 test files and roughly 405 declared test calls;
-  the last final suite reported 417 PASS because of parameterized cases. The last
-  completed milestone also reports analyze, localization, architecture/schema/
+  the current final suite reports 430 PASS because of parameterized cases. The
+  final audit also reports analyze, localization, architecture/schema/
   Backup/dependency/generated guards and Windows Release build PASS.
 - No `Future.delayed`/`Timer`-driven test dependency or known flaky suite was found.
   `pumpAndSettle` use should be watched but is not itself a release defect.
@@ -495,7 +494,7 @@ Result / evidence:
 
 ### STAB-04 — Final release-candidate integration audit
 
-Status: pending; depends on STAB-03
+Status: done; depends on STAB-03
 
 Goal: prove the Definition of Ready and finish the milestone; no new feature work.
 
@@ -515,6 +514,71 @@ Only bounded fixes to concrete RC defects are allowed. Any new architecture,
 schema/Backup format, dependency, feature or public-distribution requirement stops
 at its applicable gate.
 
+
+Result / evidence:
+
+- Pre-flight PASS: `main`, HEAD `28c3a99`, `origin/main...HEAD = 0 0`; STAB-03
+  is committed and the only pre-existing working-tree change was user-owned
+  `.obsidian/workspace.json`.
+- Localization PASS: `flutter gen-l10n` produced no diff; EN/RU parity is 200/200;
+  localization/import and hardcoded Presentation literal scans pass.
+- Static/full validation PASS: `flutter analyze` reports no issues; full
+  `flutter test --reporter compact` passes 430/430.
+- Focused release gates PASS: file-backed migration 9/9; Backup/Restore/Export
+  81/81; Local AI 49/49; app/Presentation lifecycle, startup, responsive,
+  accessibility and keyboard matrix 160/160; Unified Search/Relationship graph/
+  Workspace 112/112. These runs overlap the full suite by design.
+- Migration evidence covers fresh v4, frozen v1 -> v4, v2 -> v4, v3 -> v4,
+  transactional rollback, future-version rejection, foreign-key/quick checks and
+  Outbox preservation. No schema v5 or generated-schema change exists.
+- Backup evidence covers writer v4, historical v1-v3 restore, all current Domain
+  State including lifecycle, validation-before-mutation, one replace transaction,
+  rollback, cleared Outbox, preserved installation device identity, exact metadata,
+  reopen and separate deterministic Export. No Backup v5 exists.
+- Final architecture/import/routing/localization scans PASS. Domain, Application
+  and Presentation forbidden-import counts are zero; localization stays outside
+  Domain/Application/Infrastructure; no routing package or hardcoded Presentation
+  literal candidate was found. Direct dependency audit matches the approved set;
+  AI adds only direct `http`.
+- Security/privacy PASS by code and repository inspection: fixed loopback
+  `127.0.0.1:11434`, DIRECT proxy, no cloud endpoint, API secret, tool/mutation
+  authority or prompt/context/response logging. The sole secret-pattern hit is the
+  explicit prohibited-code example in ADR-0010, not a credential.
+- Responsive/accessibility evidence passes 1280x800, 1024x768, 640x600 and 1.5x
+  text-scale coverage for representative shell/Home, Workspace, Task, Note, Search,
+  Settings/Backup, Local AI, AI dialog and startup states. Keyboard activation,
+  focus-safe dialogs and non-color-only status coverage pass.
+- Fresh `flutter build windows --release` PASS in 35.6 seconds. Final metadata is
+  `LifeOS`, version `1.0.0+1`, empty CompanyName and neutral copyright.
+- Final ignored RC artifact:
+  `build/stab04-distributions/LifeOS-1.0.0+1-windows-x64.zip`, 13,532,966 bytes,
+  17 entries, SHA-256
+  `7292FDBF3BD13C92D329F66FA3B31C5C410F3158480EF8F33AC845209F697996`.
+  Inspection found the complete runtime and no source, tests, database, Backup,
+  `.obsidian`, Ollama model or secret. Fail-if-exists preserved the hash.
+- Clean-directory packaged smoke PASS from a fresh temporary directory: process
+  stayed healthy, title/ProductName were `LifeOS`, version was `1.0.0+1`, normal
+  window close returned exit code 0, and only the validated temp directory was
+  removed. The real user profile was not deleted or reset.
+- Repository hygiene PASS apart from the known tracked Obsidian configuration;
+  `.obsidian/workspace.json` remains the untouched user-owned diff. No DB, ZIP,
+  model or build artifact is tracked; no machine-specific path or current-scope
+  qwen3/OpenAI/Task-only Search assertion remains. One Flutter-generated CMake TODO
+  is harmless P3 template debt.
+- Manual clean-profile smoke PASS using the user-reported safe isolated environment
+  `separate Windows user / VM / other PC`: fresh launch and database initialization,
+  empty Home, Workspace/Task/Note creation, restart persistence, reachable Backup UI
+  and sensible Local AI state all passed.
+- Real Ollama smoke PASS: Settings detected the runtime and exact fixed
+  `qwen2.5-coder:7b`; one synthetic Workspace Ask returned a non-empty plain-text
+  response, the dialog closed normally and the application stayed stable.
+- Release criteria 1 through 9 PASS. Final classification is P0 = 0, P1 = 0;
+  accepted/deferred P2 = default icon, duplicate version owner, legacy
+  Task-search/lint cleanup; P3 = the explicit post-1.0 scope and harmless CMake TODO.
+- No production code, tests, dependency, schema, Backup, generated output or release
+  documentation required a STAB-04 fix. The checkpoint and milestone are complete.
+  LifeOS 1.0 Release Candidate READY: **YES**.
+
 Definition of Done: every LifeOS 1.0 readiness item is evidenced, no P0/P1 remains,
 validation passes, the plan records exact artifact/Git state, and this plan moves to
 `completed/`. Do not start a post-1.0 milestone automatically.
@@ -531,14 +595,13 @@ conditional future gates, not decisions made by this investigation.
 
 ## Investigation result and resume point
 
-- Product state: accepted feature boundary complete; stabilization evidence pending.
+- Product state: accepted LifeOS 1.0 feature boundary and release evidence complete.
 - Architecture state: coherent; no blocking contradiction found.
-- Release state: STAB-01 through STAB-03 are complete; final release-candidate
-  integration evidence is still pending.
-- Recommended next action: begin
-  **STAB-04 — Final release-candidate integration audit** only.
-- Resume checkpoint: `STAB-04`, status `pending`.
-- Broad analyze/regression, clean-profile/core-flow package smoke and real Ollama
-  integration remain reserved for STAB-04 under the milestone validation cadence.
+- Release state: STAB-01 through STAB-04 are complete; all nine Definition of Ready
+  criteria pass, P0 = 0 and P1 = 0.
+- Resume checkpoint: none. The milestone is completed; do not create or begin a new
+  execution plan automatically.
+- LifeOS 1.0 Release Candidate READY: **YES**. Tag, GitHub Release, publication,
+  commit and push require separate explicit user approval.
 - Deferred scope remains explicitly post-1.0 and must not be pulled into STAB work
   without real dogfooding evidence and the applicable gate.
