@@ -1572,7 +1572,7 @@ SQLite implementation
 
 # 61. Открытые архитектурные решения
 
-> **Историческая сверка:** State Management реализован через Riverpod; dependency wiring — через manual composition, constructor injection и Riverpod overrides; SQLite package/ORM — Drift согласно ADR-0021. Эти пункты ниже были открыты на момент создания документа. Encryption, Cloud Provider, Backend, Authentication, AI provider/runtime, embeddings/vector search, Sync protocol и file sync остаются нерешёнными либо future scope.
+> **Историческая сверка:** State Management реализован через Riverpod; dependency wiring — через manual composition, constructor injection и Riverpod overrides; SQLite package/ORM — Drift согласно ADR-0021. Эти пункты ниже были открыты на момент создания документа. Для выпущенного LifeOS 1.0.0 local AI provider/runtime уже определены: Ollama с fixed qwen2.5-coder:7b. Encryption, Cloud Provider, Backend, Authentication, дальнейший provider selection, embeddings/vector search, Sync protocol и file sync остаются future gates.
 
 Пока не определены:
 

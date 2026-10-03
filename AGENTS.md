@@ -14,14 +14,14 @@ Potential future platforms:
 - iOS
 - Web
 
-The project is currently in the early implementation stage.
+LifeOS 1.0.0 has been released. Current work is post-release maintenance and evidence-led milestone planning.
 
 The repository contains:
 
 - architectural documentation;
 - ADRs;
-- Flutter project skeleton;
-- initial Windows application target.
+- production Flutter Windows application;
+- completed vertical slices and release documentation.
 
 Do not assume that undocumented functionality already exists.
 
@@ -559,25 +559,15 @@ When there are multiple reasonable implementation choices, explain the trade-off
 
 ## 25. Current Project Stage
 
-LifeOS is currently transitioning from architectural documentation to implementation.
+LifeOS 1.0.0 is released for Windows desktop. The accepted production baseline
+includes Workspaces, Tasks, Notes, bounded Relationships, Unified Local Search,
+Backup/Restore and optional local Ollama AI.
 
-Current state:
+Use docs/07-roadmap/roadmap.md for post-release priorities and gates. Completed
+plans are historical evidence, not active work. Do not treat vision capabilities
+or deferred functionality as implemented or automatically approved.
 
-```
-Architecture documentation
-        ↓
-Flutter project skeleton
-        ↓
-Windows build verified
-        ↓
-Implementation begins
-```
-
-The current Flutter project is intentionally minimal.
-
-Do not interpret missing functionality as an error.
-
-The project should be developed incrementally.
+The project should continue incrementally through evidence-led vertical slices.
 
 ---
 

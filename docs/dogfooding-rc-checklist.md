@@ -1,4 +1,4 @@
-# LifeOS 1.0 RC dogfooding checklist
+# LifeOS 1.0 release / post-release dogfooding checklist
 
 Используйте отдельный временный Windows profile, Windows Sandbox или VM и
 распакованный portable ZIP. Не удаляйте существующие данные основного profile.
@@ -30,5 +30,5 @@
 - [ ] На синтетическом Workspace выполняется один **Ask about this Workspace**.
 - [ ] Ответ отображается; LifeOS не предлагает cloud fallback или API key.
 
-Live Ollama smoke остаётся ручной проверкой STAB-04 и не входит в
+STAB-04 завершён; live Ollama smoke остаётся ручной release/maintenance проверкой и не входит в
 автоматизированный test suite.

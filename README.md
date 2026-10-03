@@ -4,7 +4,7 @@
 
 ## Статус проекта
 
-**Фаза:** LifeOS 1.0 dogfooding release candidate / Windows desktop
+**Фаза:** LifeOS 1.0.0 выпущен / Windows desktop
 
 LifeOS — local-first Windows desktop application на Flutter с layered architecture, Riverpod и file-backed SQLite через Drift.
 
@@ -24,7 +24,7 @@ LifeOS — local-first Windows desktop application на Flutter с layered archi
 
 Sync, Projects, Documents, full Dashboard, advanced Search, cloud AI и graph visualization остаются отложенным scope.
 
-`version: 1.0.0+1` в `pubspec.yaml` является текущей package/application metadata. Private dogfooding distribution использует unsigned portable ZIP полного Windows Release-каталога, без installer.
+`version: 1.0.0+1` в `pubspec.yaml` является текущей package/application metadata. Текущий выпуск использует unsigned portable ZIP полного Windows Release-каталога, без installer.
 
 ## Архитектура
 
@@ -119,7 +119,7 @@ Backup — не raw database copy. Active Outbox и `device_id` не экспо�
 - cloud AI, provider/model selection, AI history, tools и mutations;
 - installer, code signing и auto-update.
 
-Сроки для этого scope не обещаются.
+Сроки для этого scope не обещаются. Post-release maintenance, commitment levels и architecture gates зафиксированы в [canonical roadmap](docs/07-roadmap/roadmap.md).
 
 ## Vision
 
@@ -148,4 +148,4 @@ LifeOS стремится стать персональной цифровой �
 ## Лицензия
 
 Проект распространяется как **All Rights Reserved**. Отдельная модель публичного
-лицензирования до private dogfooding release не определена.
+лицензирования для текущего выпуска не определена.

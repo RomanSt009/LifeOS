@@ -1,6 +1,6 @@
 # Windows release and portable package
 
-LifeOS 1.0 использует portable ZIP полного Flutter Windows Release-каталога.
+Выпущенный LifeOS 1.0.0 использует portable ZIP полного Flutter Windows Release-каталога.
 Это не installer и не portable-data mode: пользовательская SQLite database
 остаётся в Windows application-support directory, а не рядом с executable.
 
@@ -67,10 +67,10 @@ developer configuration.
    Relationships, Search или Backup.
 5. Закройте приложение штатно и удалите только временный распакованный каталог.
 
-## Clean-profile smoke для STAB-04
+## Clean-profile smoke для release / maintenance
 
 Не удаляйте и не переименовывайте реальный application-support profile.
-Безопасный RC smoke выполняется из отдельной временной Windows user account
+Безопасный release smoke выполняется из отдельной временной Windows user account
 или Windows Sandbox/VM:
 
 1. распаковать проверенный ZIP;

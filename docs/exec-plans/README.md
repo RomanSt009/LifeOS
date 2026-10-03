@@ -6,34 +6,19 @@
 
 ## Где Codex хранит прогресс
 
-Текущий основной активный план:
+Текущих active execution plans нет. LifeOS 1.0.0 выпущен; stabilization и
+POST-1.0 Roadmap Reconciliation завершены и находятся в `completed/`.
 
-```text
-docs/exec-plans/active/workspace-vertical-slice.md
-```
-
-Milestone: Workspace Vertical Slice.
-
-Текущая точка возобновления: WS-02 — Schema v4 migration foundation. WS-01
-завершён как documentation/reconciliation и quick-create transaction gate.
+Следующего feature checkpoint пока нет. Приоритеты и architecture gates:
+[canonical roadmap](../07-roadmap/roadmap.md). Не продолжать исторический WS-02.
 
 Структура каталогов:
 
 ```text
 docs/exec-plans/
 ├── README.md
-├── active/
-│   └── workspace-vertical-slice.md
-└── completed/
-    ├── backup-export.md
-    ├── documentation-reconciliation.md
-    ├── desktop-shell-navigation.md
-    ├── local-search.md
-    ├── lifeos-mvp.md
-    ├── notes-vertical-slice.md
-    ├── relationships-vertical-slice.md
-    ├── desktop-usability-dogfooding-alpha.md
-    └── dogfooding-ux-improvements-1.md
+├── active/       (сейчас пуст)
+└── completed/    (исторические milestones, включая reconciliation)
 ```
 
 - `active/` содержит планы, которые Codex может выполнять сейчас;

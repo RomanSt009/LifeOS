@@ -8,7 +8,7 @@
 
 LifeOS — это персональная цифровая операционная система, которая объединяет информацию, задачи, проекты, файлы, знания и AI-помощь.
 
-> **Текущее состояние (2026-09-27):** это описание целевого продукта. В production repository реализованы desktop shell, Workspaces/Unassigned, локальные Task и Note, ненаправленная Relationship Entity типа `related`, Unified Local Search по Task/Note/Workspace, en/ru localization, SQLite schema v4, Backup / Export v4 с Restore v1-v4 и опциональный local-only Ollama flow **Ask about this Workspace**. Projects, Documents, Sync, advanced Search, graph visualization, дополнительные Relationship kinds и cloud AI остаются будущим scope.
+> **Текущее состояние (2026-10-02):** LifeOS 1.0.0 выпущен. Документ сохраняет описание целевого продукта; оно не расширяет принятый release scope. В production repository реализованы desktop shell, Workspaces/Unassigned, локальные Task и Note, ненаправленная Relationship Entity типа `related`, Unified Local Search по Task/Note/Workspace, en/ru localization, SQLite schema v4, Backup / Export v4 с Restore v1-v4 и опциональный local-only Ollama flow **Ask about this Workspace**. Projects, Documents, Sync, advanced Search, graph visualization, дополнительные Relationship kinds и cloud AI остаются будущим scope.
 
 ## Проблема
 

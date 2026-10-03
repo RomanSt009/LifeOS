@@ -6,6 +6,13 @@
 
 ---
 
+> **Production boundary (2026-10-02):** LifeOS 1.0.0 выпущен с optional local-only
+> Ollama, fixed qwen2.5-coder:7b и bounded read-only Workspace Ask по ADR-0035 и
+> completed Context-aware AI #1. Cloud-first, Router, RAG, tools/history и широкие
+> context sources ниже — future architecture, не текущие возможности. Runtime и
+> fixed model для 1.0 уже выбраны; future provider/model decisions остаются gates
+> [post-1.0 roadmap](../07-roadmap/roadmap.md).
+
 # 1. Назначение
 
 Этот документ описывает архитектуру искусственного интеллекта в LifeOS.

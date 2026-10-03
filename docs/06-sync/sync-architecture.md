@@ -6,6 +6,12 @@
 
 ---
 
+> **Production boundary (2026-10-02):** LifeOS 1.0.0 выпущен без Sync.
+> Stable installation identity и atomic Outbox — только local foundation.
+> Optional local Ollama уже реализован; cloud/auth/backend/remote protocol,
+> conflicts и encryption ниже остаются future decisions. Перед Sync implementation
+> требуется отдельный investigation/ADR, см. [roadmap](../07-roadmap/roadmap.md).
+
 # 1. Назначение
 
 Этот документ описывает архитектуру синхронизации данных LifeOS между устройствами.

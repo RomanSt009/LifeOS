@@ -24,7 +24,7 @@ related:
 
 > **LifeOS — это не приложение. Это цифровая операционная система человеческой жизни.**
 
-> **Уточнение текущего состояния:** этот документ описывает долгосрочную концепцию. В production repository сейчас реализованы Task, Note и ненаправленная Relationship Entity типа `related`, включая contextual Task/Note UI; Workspace, полноценный knowledge graph, дополнительные Relationship kinds и AI ещё не реализованы, а точная Domain-семантика Workspace не определена принятым ADR.
+> **Уточнение текущего состояния:** этот документ описывает долгосрочную концепцию. В выпущенном LifeOS 1.0.0 реализованы Task, Note, Workspace/Unassigned и memberships по ADR-0034, ненаправленные `related` Relationships и bounded one-hop navigation, Unified Local Search, Backup/Restore v4 и optional local Ollama AI. Полноценный graph visualization/traversal, дополнительные Relationship kinds, cloud AI и другие vision capabilities остаются будущим scope.
 
 ---
 
